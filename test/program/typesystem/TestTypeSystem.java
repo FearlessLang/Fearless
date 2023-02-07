@@ -159,7 +159,7 @@ public class TestTypeSystem {
     package test
     Res1:{} Res2:{}
     FortyTwo:{ .get: Res1 -> Res1 }
-    FortyThree:{ .get: Res1 -> Res2 }
+    FortyThree:{ .get: Res2 -> Res2 }
     A[N]:{ .count: N, .sum: N }
     B:A[FortyTwo]{ .count -> FortyTwo, .sum -> FortyThree }
     """); }
