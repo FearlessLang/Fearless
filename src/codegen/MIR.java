@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, property = "op")
 @JsonSerialize
 public interface MIR {
-  L out();
-
   static String getName(Id.DecId dec) {
     return getBase(dec.name())+"_"+dec.gen()+"_"+0;
   }
@@ -45,13 +43,12 @@ public interface MIR {
     static long N = 0;
     L(Mdf mdf) { this(mdf, N++); }
   }
-  record X(L out) implements MIR  {}
-  record MCall(L out, L recv, String name, List<L> args) implements MIR {}
-  record NewLambda(L out, String kind, String name, Map<String, L> captures) implements MIR {}
-  record NewDynLambda(L out, String name, Map<String, L> captures) implements MIR {}
-  record NewInlineLambda(L out, String name, Map<String, L> captures) implements MIR {}
-  record NewStaticLambda(L out, String name) implements MIR {}
-  record Share(L out, L lambda) implements MIR {}
+  record X(Mdf mdf, String name) implements MIR  {}
+  record MCall(Mdf mdf, MIR recv, String name, List<MIR> args) implements MIR {}
+  record NewLambda(Mdf mdf, String kind, String name, String selfName, List<X> captures) implements MIR {}
+  record NewDynLambda(Mdf mdf, String name, String selfName, List<X> captures) implements MIR {}
+  record NewStaticLambda(Mdf mdf, String name, String selfName) implements MIR {}
+  record Share(MIR e) implements MIR {}
   record RefK(L out, L v) implements MIR {}
   record DeRef(L out, L ref) implements MIR {}
   record RefSwap(L out, L ref, L v) implements MIR {}
