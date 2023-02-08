@@ -20,7 +20,8 @@ public class JavaCodegen implements MIRVisitor<String> {
     var gens = trait.gens().isEmpty() ? "" : "<"+String.join(",", trait.gens())+">";
     var impls = trait.impls().isEmpty() ? "" : " extends " + String.join(",", trait.impls());
     var start = "interface "+name+gens+impls+"{\n";
-    return start + trait.meths().entrySet().stream()
+    var singletonGet = trait.canSingleton() ? name+" _$self = new "+name+"(){};" : "";
+    return start + singletonGet + trait.meths().entrySet().stream()
       .map(kv->visitMeth(kv.getKey(), kv.getValue()))
       .collect(Collectors.joining("\n")) + "}";
   }

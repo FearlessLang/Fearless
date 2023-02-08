@@ -21,7 +21,7 @@ public class TestJavaCodegen {
         List.of("base.Main"),
         Map.of("$35_0", new MIR.Meth(
           Mdf.imm,
-          List.of(), List.of(new MIR.X(Mdf.lent, "s", "base.System")), "test.Bar",
+          List.of(), List.of(new MIR.X(Mdf.lent, "s", "base.System")), "test.Bar_0_0",
           Optional.of(new MIR.NewStaticLambda(Mdf.imm, "test.Bar_0_0"))
         ))
       ),
@@ -35,7 +35,7 @@ public class TestJavaCodegen {
         List.of(),
         Map.of("$35_0", new MIR.Meth(
           Mdf.imm,
-          List.of("R"), List.of(new MIR.X(Mdf.lent, "s", "base.System")), "R",
+          List.of("R"), List.of(new MIR.X(Mdf.lent, "s", "base.System_0_0")), "R",
           Optional.empty()
         ))
       )

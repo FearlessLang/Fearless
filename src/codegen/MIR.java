@@ -37,7 +37,11 @@ public interface MIR {
   }
 
   record Package(Map<String, Trait> ds) {}
-  record Trait(List<String> gens, List<String> impls, Map<String, Meth> meths) {}
+  record Trait(List<String> gens, List<String> impls, Map<String, Meth> meths) {
+    public boolean canSingleton() {
+      return meths().values().stream().noneMatch(Meth::isAbs);
+    }
+  }
   record Meth(Mdf mdf, List<String> gens, List<X> xs, String rt, Optional<MIR> body) {
     public boolean isAbs() { return body.isEmpty(); }
   }
