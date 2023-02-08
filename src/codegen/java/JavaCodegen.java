@@ -17,26 +17,26 @@ public class JavaCodegen implements MIRVisitor<String> {
       .collect(Collectors.joining("\n"));
   }
   public String visitTrait(String name, MIR.Trait trait) {
-    var gens = trait.gens().isEmpty() ? "" : "<"+String.join(",", trait.gens())+">";
-    var impls = trait.impls().isEmpty() ? "" : " extends " + String.join(",", trait.impls());
-    var start = "interface "+name+gens+impls+"{\n";
+//    var gens = trait.gens().isEmpty() ? "" : "<"+String.join(",", trait.gens())+">";
+//    var impls = trait.impls().isEmpty() ? "" : " extends " + String.join(",", trait.impls());
+    var start = "interface "+name+"{\n";
     var singletonGet = trait.canSingleton() ? name+" _$self = new "+name+"(){};" : "";
     return start + singletonGet + trait.meths().entrySet().stream()
       .map(kv->visitMeth(kv.getKey(), kv.getValue()))
       .collect(Collectors.joining("\n")) + "}";
   }
   public String visitMeth(String name, MIR.Meth meth) {
-    var gens = meth.gens().isEmpty() ? "" : "<"+String.join(",", meth.gens())+"> ";
+//    var gens = meth.gens().isEmpty() ? "" : "<"+String.join(",", meth.gens())+"> ";
     var args = meth.xs().stream()
       .map(this::typePair)
       .collect(Collectors.joining(","));
-    var start = "public "+gens+meth.rt()+" "+name+"("+args+")";
+    var start = "public Object "+name+"("+args+")";
     if (meth.body().isEmpty()) { return start + ";"; }
     return start + "{\nreturn "+meth.body().get().accept(this)+";\n}";
   }
 
   public String visitX(MIR.X x) {
-    return x.name();
+    return "(("+x.type()+")"+x.name()+")";
   }
 
   public String visitMCall(MIR.MCall mCall) {
@@ -68,6 +68,6 @@ public class JavaCodegen implements MIRVisitor<String> {
   }
 
   private String typePair(MIR.X x) {
-    return x.type()+" "+x.name();
+    return "Object"+" "+x.name();
   }
 }
