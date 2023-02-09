@@ -6,6 +6,7 @@ import id.Id;
 import id.Mdf;
 import program.CM;
 import program.Program;
+import utils.Bug;
 import utils.Streams;
 import visitors.InjectionVisitor;
 
@@ -228,7 +229,10 @@ public record InferBodies(ast.Program p) {
   Optional<E> var(Map<String, T> gamma, E.X e) {
     if (!e.t().isInfer()) { return Optional.empty(); }
     Optional<E> res = Optional.ofNullable(gamma.get(e.name())).map(e::withT);
-    assert res.map(e1->!e1.equals(e)).orElse(false);
+    if (!res.map(e1->!e1.equals(e)).orElse(false)) {
+      // TODO: X not found compiler error
+      throw Bug.todo();
+    }
     return res;
   }
 

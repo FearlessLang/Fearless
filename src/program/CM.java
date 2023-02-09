@@ -23,32 +23,33 @@ public interface CM {
   default String toStringSimplified(){ return c() + ", " + name(); }
   static CM of(Id.IT<T> c, ast.E.Meth m, ast.E.Sig sig){ return new CoreCM(c,m,sig); }
   static CM of(Id.IT<T> c, astFull.E.Meth m, ast.E.Sig sig){ return new FullCM(c,m,sig); }
-}
-record CoreCM(Id.IT<T> c, ast.E.Meth m, ast.E.Sig sig) implements CM{
-  public Id.MethName name(){ return m.name(); }
-  public List<String> xs(){ return m.xs(); }
-  public boolean isAbs(){ return m.isAbs(); }
-  public CM withSig(ast.E.Sig sig){ return new CoreCM(c, m, sig); }
-  public Pos pos() { return this.m.posOrUnknown(); }
 
-  @Override
-  public String toString() {
-    return c + "," + mdf() + " " + name() + "(" + String.join(",", m.xs()) + ")"
-      + sig.gens() + sig.ts() + ":" + ret()
-      + (isAbs() ? "abs" : "impl");
+  record CoreCM(Id.IT<T> c, ast.E.Meth m, ast.E.Sig sig) implements CM{
+    public Id.MethName name(){ return m.name(); }
+    public List<String> xs(){ return m.xs(); }
+    public boolean isAbs(){ return m.isAbs(); }
+    public CM withSig(ast.E.Sig sig){ return new CoreCM(c, m, sig); }
+    public Pos pos() { return this.m.posOrUnknown(); }
+
+    @Override
+    public String toString() {
+      return c + "," + mdf() + " " + name() + "(" + String.join(",", m.xs()) + ")"
+        + sig.gens() + sig.ts() + ":" + ret()
+        + (isAbs() ? "abs" : "impl");
+    }
   }
-}
-record FullCM(Id.IT<T> c, astFull.E.Meth m, ast.E.Sig sig) implements CM{
-  public Id.MethName name(){ return m.name().orElseThrow(); }
-  public List<String> xs(){ return m.xs(); }
-  public boolean isAbs(){ return m.isAbs(); }
-  public CM withSig(ast.E.Sig sig){ return new FullCM(c, m, sig); }
-  public Pos pos() { return this.m.posOrUnknown(); }
+  record FullCM(Id.IT<T> c, astFull.E.Meth m, ast.E.Sig sig) implements CM{
+    public Id.MethName name(){ return m.name().orElseThrow(); }
+    public List<String> xs(){ return m.xs(); }
+    public boolean isAbs(){ return m.isAbs(); }
+    public CM withSig(ast.E.Sig sig){ return new FullCM(c, m, sig); }
+    public Pos pos() { return this.m.posOrUnknown(); }
 
-  @Override
-  public String toString() {
-    return c + "," + mdf() + " " + name() + "(" + String.join(",", m.xs()) + ")"
-      + sig.gens() + sig.ts() + ":" + ret()
-      + (isAbs() ? "abs" : "impl");
+    @Override
+    public String toString() {
+      return c + "," + mdf() + " " + name() + "(" + String.join(",", m.xs()) + ")"
+        + sig.gens() + sig.ts() + ":" + ret()
+        + (isAbs() ? "abs" : "impl");
+    }
   }
 }

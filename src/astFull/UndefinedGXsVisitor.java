@@ -15,7 +15,7 @@ public class UndefinedGXsVisitor implements FullCollectorVisitor<Set<Id.GX<T>>> 
     defined = new HashSet<>(topLevelGXs);
   }
 
-  public Set<Id.GX<T>> get() {
+  public Set<Id.GX<T>> res() {
     var intersection = new HashSet<>(undefined);
     intersection.retainAll(defined);
     assert intersection.isEmpty();

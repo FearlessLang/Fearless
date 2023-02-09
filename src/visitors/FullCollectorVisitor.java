@@ -8,7 +8,7 @@ import program.inference.RefineTypes;
 import java.util.Collection;
 
 public interface FullCollectorVisitor<C extends Collection<?>> extends FullVisitor<Void> {
-  C get();
+  C res();
 
   default Void visitMCall(E.MCall e) {
     e.receiver().accept(this);
