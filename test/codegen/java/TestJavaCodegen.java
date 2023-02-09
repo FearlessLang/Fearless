@@ -79,4 +79,19 @@ interface Fear8$36_0 extends test.Ok_0{
     Yo:{ .lm: Ok -> {'ok ok# } }
     Foo:{}
     """);}
+
+  @Test void bools() {ok("""
+    """, """
+    package test
+    Sealed:{}
+    Bool:Sealed{
+      .and(b: Bool): Bool,
+      .or(b: Bool): Bool,
+      .not: Bool,
+      ?[R](f: mut ThenElse[R]): R, // ?  because `bool ? { .then->aa, .else->bb }` is kinda like a ternary
+      }
+    True:Bool{ .and(b) -> b, .or(b) -> this, .not -> False, ?(f) -> f.then() }
+    False:Bool{ .and(b) -> this, .or(b) -> b, .not -> True, ?(f) -> f.else() }
+    ThenElse[R]:{ mut .then: R, mut .else: R, }
+    """);}
 }
