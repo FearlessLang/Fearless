@@ -33,7 +33,7 @@ public class JavaCodegen implements MIRVisitor<String> {
       .collect(Collectors.joining(","));
     var visibility = concrete ? "public " : "default ";
     if (meth.isAbs()) { visibility = ""; }
-    var start = visibility+gens+meth.rt()+" "+name+"("+args+")";
+    var start = visibility+gens+meth.rt()+" "+name(name)+"("+args+")";
     if (meth.body().isEmpty()) { return start + ";"; }
     return start + "{\n"+selfVar+"return "+meth.body().get().accept(this)+";\n}";
   }
@@ -43,7 +43,7 @@ public class JavaCodegen implements MIRVisitor<String> {
   }
 
   public String visitMCall(MIR.MCall mCall) {
-    var start = mCall.recv().accept(this)+"."+mCall.name()+"(";
+    var start = mCall.recv().accept(this)+"."+name(mCall.name())+"(";
     var args = mCall.args().stream()
       .map(a->a.accept(this))
       .collect(Collectors.joining(","));
@@ -78,9 +78,9 @@ public class JavaCodegen implements MIRVisitor<String> {
 //  }
 
   private String typePair(MIR.X x) {
-    return x.type()+" "+x.name();
+    return x.type()+" "+name(x.name());
   }
   private String name(String x) {
-    return x.equals("this") ? "f$thiz" : x;
+    return x.equals("this") ? "f$thiz" : x+"$";
   }
 }
