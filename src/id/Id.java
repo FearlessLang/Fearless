@@ -28,6 +28,9 @@ public class Id {
   }
   public record DecId(String name,int gen){
     public DecId{ assert validDecName(name) && gen>=0; }
+    public String pkg() {
+      return name.split("\\..+$")[0];
+    }
     @Override public String toString() {
       return String.format("%s/%d", name, gen);
     }

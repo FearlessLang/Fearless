@@ -1,14 +1,16 @@
 package visitors;
 
 import codegen.MIR;
+import id.Id;
 
+import java.util.List;
 import java.util.Map;
 
 public interface MIRVisitor<R> {
   // Structure
-  R visitPackage(String pkg, Map<String, MIR.Trait> ds);
-  R visitTrait(String pkg, String name, MIR.Trait trait);
-  R visitMeth(String name, MIR.Meth meth, String selfName, boolean concrete);
+  R visitProgram(Map<String, List<MIR.Trait>> pkgs, Id.DecId entry);
+  R visitTrait(String pkg, MIR.Trait trait);
+  R visitMeth(MIR.Meth meth, String selfName, boolean concrete);
 
   // Expressions/values
   R visitX(MIR.X x);

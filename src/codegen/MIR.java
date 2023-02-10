@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 public interface MIR {
   <R> R accept(MIRVisitor<R> v);
 
-  record Program(Map<String, Trait> ds) {}
-  record Trait(List<String> gens, List<String> its, Map<String, Meth> meths) {
+  record Program(Map<String, List<Trait>> pkgs) {}
+  record Trait(String name, List<String> gens, List<String> its, List<Meth> meths) {
     public boolean canSingleton() {
       return false; // TODO
 //      return meths().values().stream().noneMatch(Meth::isAbs);

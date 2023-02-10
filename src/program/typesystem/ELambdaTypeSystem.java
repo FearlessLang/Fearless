@@ -46,7 +46,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     //var errMdf = expectedT.map(ti->!p().isSubType(ti.mdf(),b.mdf())).orElse(false);
     //after discussion, line above not needed
     var expectedT=expectedT().stream()
-      .filter(ti->b.its().contains(ti.itOrThrow()))
+      .filter(ti->ti.match(gx->true, it->b.its().contains(it)))
       .findFirst();
     T retT = expectedT //TOP LEVEL = declared type
       .map(t->t.withMdf(b.mdf()))

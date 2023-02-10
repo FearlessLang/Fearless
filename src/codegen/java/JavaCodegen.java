@@ -1,31 +1,43 @@
 package codegen.java;
 
+import ast.T;
 import codegen.MIR;
+import codegen.MIRInjectionVisitor;
+import id.Id;
 import utils.Bug;
 import visitors.MIRVisitor;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JavaCodegen implements MIRVisitor<String> {
-  public String visitPackage(String pkg, Map<String, MIR.Trait> ds) {
-    return "interface "+pkg+"{" + ds.entrySet().stream()
-      .map(kv->visitTrait(pkg, kv.getKey(), kv.getValue()))
+  public String visitProgram(Map<String, List<MIR.Trait>> pkgs, Id.DecId entry) {
+    var entryName = getName(entry);
+    var init = "\npublic static void main(String[] args){ base.Main_0 entry = new "+entryName+"(){}; entry.$35$(); }\n";
+
+    return "interface FProgram{" + pkgs.entrySet().stream()
+      .map(pkg->visitPackage(pkg.getKey(), pkg.getValue()))
+      .collect(Collectors.joining("\n"))+init+"}";
+  }
+  public String visitPackage(String pkg, List<MIR.Trait> ds) {
+    return "interface "+pkg+"{" + ds.stream()
+      .map(t->visitTrait(pkg, t))
       .collect(Collectors.joining("\n")) + "\n}";
   }
-  public String visitTrait(String pkg, String name, MIR.Trait trait) {
-    var shortName = name;
-    if (name.startsWith(pkg)) { shortName = name.substring(pkg.length()+1); }
+  public String visitTrait(String pkg, MIR.Trait trait) {
+    var shortName = trait.name();
+    if (trait.name().startsWith(pkg)) { shortName = trait.name().substring(pkg.length()+1); }
     var gens = trait.gens().isEmpty() ? "" : "<"+String.join(",", trait.gens())+">";
-    var its = trait.its().stream().filter(tr->!tr.equals(name)).collect(Collectors.joining(","));
+    var its = trait.its().stream().filter(tr->!tr.equals(trait.name())).collect(Collectors.joining(","));
     var impls = its.isEmpty() ? "" : " extends "+its;
     var start = "interface "+shortName+gens+impls+"{\n";
-    var singletonGet = trait.canSingleton() ? name+" _$self = new "+name+"(){};" : "";
-    return start + singletonGet + trait.meths().entrySet().stream()
-      .map(kv->visitMeth(kv.getKey(), kv.getValue(), "this", false))
+    var singletonGet = trait.canSingleton() ? trait.name()+" _$self = new "+ trait.name()+"(){};" : "";
+    return start + singletonGet + trait.meths().stream()
+      .map(m->visitMeth(m, "this", false))
       .collect(Collectors.joining("\n")) + "}";
   }
-  public String visitMeth(String name, MIR.Meth meth, String selfName, boolean concrete) {
+  public String visitMeth(MIR.Meth meth, String selfName, boolean concrete) {
     var selfVar = "var "+name(selfName)+" = this;\n";
     var gens = meth.gens().isEmpty() ? "" : "<"+String.join(",", meth.gens())+"> ";
     var args = meth.xs().stream()
@@ -33,7 +45,7 @@ public class JavaCodegen implements MIRVisitor<String> {
       .collect(Collectors.joining(","));
     var visibility = concrete ? "public " : "default ";
     if (meth.isAbs()) { visibility = ""; }
-    var start = visibility+gens+meth.rt()+" "+name(name)+"("+args+")";
+    var start = visibility+gens+meth.rt()+" "+name(meth.name())+"("+args+")";
     if (meth.body().isEmpty()) { return start + ";"; }
     return start + "{\n"+selfVar+"return "+meth.body().get().accept(this)+";\n}";
   }
@@ -56,7 +68,7 @@ public class JavaCodegen implements MIRVisitor<String> {
 //      .map(c->"public _$capture_"+c.name()+"() { return "+c.name()+"; }")
 //      .collect(Collectors.joining("\n"));
     var ms = l.meths().stream()
-      .map(m->visitMeth(m.name(), m, l.selfName(), true))
+      .map(m->visitMeth(m, l.selfName(), true))
       .collect(Collectors.joining("\n"));
     return start + ms + "}";
   }
@@ -82,5 +94,16 @@ public class JavaCodegen implements MIRVisitor<String> {
   }
   private String name(String x) {
     return x.equals("this") ? "f$thiz" : x+"$";
+  }
+  private static String getName(Id.GX<T> gx) { return getBase(gx.name()); }
+  private static String getName(Id.IT<T> it) { return getName(it.name()); }
+  private static String getName(Id.DecId d) { return getBase(d.name())+"_"+d.gen(); }
+  private static String getName(Id.MethName m) { return getBase(m.name()); }
+  private static String getBase(String name) {
+    if (name.startsWith(".")) { name = name.substring(1); }
+    return name.chars().mapToObj(c->{
+      if (c == '.' || Character.isAlphabetic(c) || Character.isDigit(c)) { return Character.toString(c); }
+      return "$"+c;
+    }).collect(Collectors.joining());
   }
 }

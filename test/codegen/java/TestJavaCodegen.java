@@ -1,12 +1,8 @@
 package codegen.java;
 
 import codegen.MIRInjectionVisitor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import failure.CompileError;
+import id.Id;
 import main.Main;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
 import program.inference.InferBodies;
@@ -18,7 +14,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestJavaCodegen {
-  void ok(String expected, String... content){
+  void ok(String expected, String entry, String... content){
     assert content.length > 0;
     Main.resetAll();
     AtomicInteger pi = new AtomicInteger();
@@ -31,14 +27,14 @@ public class TestJavaCodegen {
     var inferred = new InferBodies(inferredSigs).inferAll(p);
     inferred.typeCheck();
     var mir = new MIRInjectionVisitor().visitProgram(inferred);
-    var java = new JavaCodegen().visitPackage("test", mir.ds());
+    var java = new JavaCodegen().visitProgram(mir.pkgs(), new Id.DecId(entry, 0));
     Err.strCmp(expected, java);
   }
 
   @Test void emptyProgram() { ok("""
     interface test{
     }
-    """, """
+    """, "fake", """
     package test
     """);}
 
@@ -73,7 +69,7 @@ X $35$();}
 interface Fear8$36_0 extends test.Ok_0{
 }
 }
-    """, """
+    """, "fake", """
     package test
     Baz[X]:{ #: X }
     Bar:Baz[Foo]{ # -> Foo, .loop: Baz[Bar] -> this.loop }
@@ -134,7 +130,7 @@ interface Fear8$36_0 extends test.Ok_0{
     interface Fear8$36_0 extends test.Bool_0,test.True_0{
     }
     }
-    """, """
+    """, "fake.Fake", """
     package test
     Sealed:{}
     Bool:Sealed{
@@ -147,4 +143,18 @@ interface Fear8$36_0 extends test.Ok_0{
     False:Bool{ .and(b) -> this, .or(b) -> b, .not -> True, ?(f) -> f.else() }
     ThenElse[R]:{ mut .then: R, mut .else: R, }
     """);}
+  @Test void multiPackage() { ok("""
+    """, "test.HelloWorld", """
+    package test
+    alias base.Main as Main, alias base.Void as Void,
+    HelloWorld:Main{
+      #s -> Foo
+    }
+    Foo:{}
+    """, """
+    package base
+    Void:{} Sealed:{}
+    Main:{ #[R](s: lent System): R }
+    System:Sealed{}
+    """); }
 }

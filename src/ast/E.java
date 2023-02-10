@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public interface E extends HasPos {
   E accept(CloneVisitor v);
   <R>  R accept(Visitor<R> v);
-  <R>  R accept(GammaVisitor<R> v, Map<String, T> gamma);
+  <R>  R accept(GammaVisitor<R> v, String pkg, Map<String, T> gamma);
 
   record Lambda(Mdf mdf, List<Id.IT<T>> its, String selfName, List<Meth> meths, Optional<Pos> pos) implements E {
     public Lambda {
@@ -34,8 +34,8 @@ public interface E extends HasPos {
     @Override public <R> R accept(Visitor<R> v) {
       return v.visitLambda(this);
     }
-    @Override public <R> R accept(GammaVisitor<R> v, Map<String, T> gamma) {
-      return v.visitLambda(this, gamma);
+    @Override public <R> R accept(GammaVisitor<R> v, String pkg, Map<String, T> gamma) {
+      return v.visitLambda(pkg, this, gamma);
     }
     public ast.E.Lambda withMeths(List<Meth> meths) {
       return new ast.E.Lambda(mdf, its, selfName, meths, pos);
@@ -51,7 +51,7 @@ public interface E extends HasPos {
     public MCall{ assert receiver!=null && name.num()==es.size() && ts!=null; }
     @Override public E accept(CloneVisitor v){return v.visitMCall(this);}
     @Override public <R> R accept(Visitor<R> v){return v.visitMCall(this);}
-    @Override public <R> R accept(GammaVisitor<R> v, Map<String, T> gamma) {return v.visitMCall(this, gamma);}
+    @Override public <R> R accept(GammaVisitor<R> v, String pkg, Map<String, T> gamma) {return v.visitMCall(pkg, this, gamma);}
     @Override public String toString() {
       return String.format("%s %s%s(%s)", receiver, name, ts, es);
     }
@@ -65,7 +65,7 @@ public interface E extends HasPos {
     }
     @Override public E accept(CloneVisitor v){ return v.visitX(this); }
     @Override public <R> R accept(Visitor<R> v){ return v.visitX(this); }
-    @Override public <R> R accept(GammaVisitor<R> v, Map<String, T> gamma) {return v.visitX(this, gamma);}
+    @Override public <R> R accept(GammaVisitor<R> v, String pkg, Map<String, T> gamma) {return v.visitX(this, gamma);}
     @Override public String toString(){ return name; }
   }
   record Meth(Sig sig, MethName name, List<String> xs, Optional<E> body, Optional<Pos> pos) implements HasPos{

@@ -14,46 +14,48 @@ import visitors.GammaVisitor;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
 public class MIRInjectionVisitor implements GammaVisitor<MIR> {
-  record FreshTrait(String name, MIR.Trait t){}
-  private final List<FreshTrait> freshTraits = new ArrayList<>();
+  private final List<MIR.Trait> freshTraits = new ArrayList<>();
 
   public MIR.Program visitProgram(Program p) {
-    Map<String, MIR.Trait> ds = Mapper.ofMut(c->p.ds().values().forEach(d->c.put(getName(d.name()), visitDec(d, p))));
-    freshTraits.forEach(ft->ds.put(ft.name, ft.t));
+    var traits = p.ds().values().stream().map(d->visitDec(d.name().pkg(), d, p)).toList();
+    Map<String, List<MIR.Trait>> ds = Stream.concat(
+        traits.stream(),
+        freshTraits.stream()
+      ).collect(Collectors.groupingBy(t->t.name().split("\\..+$")[0]));
     return new MIR.Program(ds);
   }
-  public MIR.Trait visitDec(T.Dec dec, Program p) {
+  public MIR.Trait visitDec(String pkg, T.Dec dec, Program p) {
     List<String> gens = dec.gxs().stream().map(MIRInjectionVisitor::getName).toList();
     var ms = p.meths(dec.toIT(), 0).stream()
-      .collect(Collectors.toMap(
-        cm->getName(cm.name()),
-        cm->{
-          var m = p.ds().get(cm.c().name())
-            .lambda()
-            .meths()
-            .stream()
-            .filter(mi->mi.name().equals(cm.name()))
-            .findAny()
-            .orElseThrow();
-          return visitMeth(m, Map.of(dec.lambda().selfName(), new T(cm.mdf(), dec.toIT())));
-        }
-      ));
+      .map(cm->{
+        var m = p.ds().get(cm.c().name())
+          .lambda()
+          .meths()
+          .stream()
+          .filter(mi->mi.name().equals(cm.name()))
+          .findAny()
+          .orElseThrow();
+        return visitMeth(pkg, m, Map.of(dec.lambda().selfName(), new T(cm.mdf(), dec.toIT())));
+      })
+      .toList();
     return new MIR.Trait(
+      getName(dec.name()),
       gens,
       dec.lambda().its().stream().distinct().map(MIRInjectionVisitor::getName).toList(),
       ms
     );
   }
 
-  public MIR.MCall visitMCall(E.MCall e, Map<String, T> gamma) {
+  public MIR.MCall visitMCall(String pkg, E.MCall e, Map<String, T> gamma) {
     return new MIR.MCall(
-      e.receiver().accept(this, gamma),
+      e.receiver().accept(this, pkg, gamma),
       getName(e.name()),
-      e.es().stream().map(ei->ei.accept(this, gamma)).toList()
+      e.es().stream().map(ei->ei.accept(this, pkg, gamma)).toList()
     );
   }
 
@@ -63,19 +65,19 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     return new MIR.X(type.mdf(), x, getName(type));
   }
 
-  public MIR.Lambda visitLambda(E.Lambda e, Map<String, T> gamma) {
+  public MIR.Lambda visitLambda(String pkg, E.Lambda e, Map<String, T> gamma) {
     var captureCollector = new CaptureCollector();
     captureCollector.visitLambda(e);
     List<MIR.X> captures = captureCollector.res().stream().map(x->visitX(x, gamma)).toList();
 
     var fresh = new Id.DecId(Id.GX.fresh().name(), 0);
-    var freshName = getName(fresh);
-    MIR.Trait freshTrait = new MIR.Trait(List.of(), e.its().stream().distinct().map(MIRInjectionVisitor::getName).toList(), Map.of());
-    freshTraits.add(new FreshTrait(freshName, freshTrait));
+    var freshName = pkg+"."+getName(fresh);
+    MIR.Trait freshTrait = new MIR.Trait(freshName, List.of(), e.its().stream().distinct().map(MIRInjectionVisitor::getName).toList(), List.of());
+    freshTraits.add(freshTrait);
 
     var g = new HashMap<>(gamma);
     g.put(e.selfName(), new T(e.mdf(), new Id.IT<>(fresh, List.of())));
-    List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(m, g)).toList();
+    List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(pkg, m, g)).toList();
     return new MIR.Lambda(
       e.mdf(),
       freshName,
@@ -86,7 +88,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     );
   }
 
-  public MIR.Meth visitMeth(E.Meth m, Map<String, T> gamma) {
+  public MIR.Meth visitMeth(String pkg, E.Meth m, Map<String, T> gamma) {
     var g = new HashMap<>(gamma);
     List<MIR.X> xs = Streams.zip(m.xs(), m.sig().ts())
       .map((x,t)->{
@@ -102,7 +104,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       gens,
       xs,
       getNameGens(m.sig().ret()),
-      m.body().map(e->e.accept(this, g))
+      m.body().map(e->e.accept(this, pkg, g))
     );
   }
 

@@ -1,5 +1,6 @@
 module FearlessCompiler {//TODO: can I use suppress warnings here?
-  requires antlr;
+  requires antlr4;
+  requires org.antlr.antlr4.runtime;
   requires org.junit.jupiter.api;
   requires org.opentest4j;
   requires com.fasterxml.jackson.core;
