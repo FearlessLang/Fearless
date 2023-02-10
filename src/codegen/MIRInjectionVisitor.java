@@ -91,7 +91,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     List<MIR.X> xs = Streams.zip(m.xs(), m.sig().ts())
       .map((x,t)->{
         g.put(x, t);
-        return new MIR.X(t.mdf(), x, getName(t));
+        return new MIR.X(t.mdf(), x, getNameGens(t));
       })
       .toList();
     List<String> gens = m.sig().gens().stream().map(MIRInjectionVisitor::getName).toList();
@@ -117,7 +117,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       }
     );
   }
-  private static String getName(Id.GX<T> gx) { return gx.name(); }
+  private static String getName(Id.GX<T> gx) { return getBase(gx.name()); }
   private static String getName(Id.IT<T> it) { return getName(it.name()); }
   private static String getName(Id.DecId d) { return getBase(d.name())+"_"+d.gen(); }
   private static String getName(Id.MethName m) { return getBase(m.name()); }

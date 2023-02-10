@@ -36,6 +36,8 @@ public class TestJavaCodegen {
   }
 
   @Test void emptyProgram() { ok("""
+    interface test{
+    }
     """, """
     package test
     """);}
@@ -44,30 +46,30 @@ public class TestJavaCodegen {
 interface test{interface Foo_0{
 }
 interface Bar_0 extends test.Baz_1{
-default test.Baz_1<test.Bar_0> loop(){
+default test.Baz_1<test.Bar_0> loop$(){
 var f$thiz = this;
-return f$thiz.loop();
+return f$thiz.loop$();
 }
-default test.Foo_0 $35(){
+default test.Foo_0 $35$(){
 var f$thiz = this;
 return new Fear7$36_0(){
 };
 }}
 interface Yo_0{
-default test.Ok_0 lm(){
+default test.Ok_0 lm$(){
 var f$thiz = this;
 return new Fear8$36_0(){
-public test.Ok_0 $35(){
-var ok = this;
-return ok.$35();
+public test.Ok_0 $35$(){
+var ok$ = this;
+return ok$.$35$();
 }};
 }}
 interface Fear7$36_0 extends test.Foo_0{
 }
 interface Ok_0{
-test.Ok_0 $35();}
+test.Ok_0 $35$();}
 interface Baz_1<X>{
-X $35();}
+X $35$();}
 interface Fear8$36_0 extends test.Ok_0{
 }
 }
@@ -81,6 +83,57 @@ interface Fear8$36_0 extends test.Ok_0{
     """);}
 
   @Test void bools() {ok("""
+    interface test{interface ThenElse_1<R>{
+    R else$();
+    R then$();}
+    interface True_0 extends test.Bool_0{
+    default <X0$470$36> X0$470$36 $63$(test.ThenElse_1<X0$470$36> f$){
+    var f$thiz = this;
+    return f$.then$();
+    }
+    default test.Bool_0 not$(){
+    var f$thiz = this;
+    return new Fear7$36_0(){
+    };
+    }
+    default test.Bool_0 or$(test.Bool_0 b$){
+    var f$thiz = this;
+    return f$thiz;
+    }
+    default test.Bool_0 and$(test.Bool_0 b$){
+    var f$thiz = this;
+    return b$;
+    }}
+    interface Bool_0 extends test.Sealed_0{
+    <R> R $63$(test.ThenElse_1<R> f$);
+    test.Bool_0 not$();
+    test.Bool_0 or$(test.Bool_0 b$);
+    test.Bool_0 and$(test.Bool_0 b$);}
+    interface False_0 extends test.Bool_0{
+    default <X0$470$36> X0$470$36 $63$(test.ThenElse_1<X0$470$36> f$){
+    var f$thiz = this;
+    return f$.else$();
+    }
+    default test.Bool_0 not$(){
+    var f$thiz = this;
+    return new Fear8$36_0(){
+    };
+    }
+    default test.Bool_0 or$(test.Bool_0 b$){
+    var f$thiz = this;
+    return b$;
+    }
+    default test.Bool_0 and$(test.Bool_0 b$){
+    var f$thiz = this;
+    return f$thiz;
+    }}
+    interface Sealed_0{
+    }
+    interface Fear7$36_0 extends test.Bool_0,test.False_0{
+    }
+    interface Fear8$36_0 extends test.Bool_0,test.True_0{
+    }
+    }
     """, """
     package test
     Sealed:{}
