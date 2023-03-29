@@ -7,8 +7,13 @@
       </value>
     </option>
     <option name="LINE_SEPARATOR" value="&#10;" />
+    <JavaCodeStyleSettings>
+      <option name="DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION" value="true" />
+      <option name="DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER" value="true" />
+    </JavaCodeStyleSettings>
     <codeStyleSettings language="JAVA">
       <option name="SPACE_AROUND_LAMBDA_ARROW" value="false" />
+      <option name="METHOD_ANNOTATION_WRAP" value="1" />
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
         <option name="CONTINUATION_INDENT_SIZE" value="2" />
