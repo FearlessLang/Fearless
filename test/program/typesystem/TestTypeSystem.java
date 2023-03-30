@@ -1,6 +1,12 @@
 package program.typesystem;
 
 import net.jqwik.api.Example;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.From;
+import net.jqwik.api.Property;
+import net.jqwik.api.domains.Domain;
+import program.Program;
+import utils.CoreGenerator;
 
 import static program.typesystem.RunTypeSystem.fail;
 import static program.typesystem.RunTypeSystem.ok;
@@ -9,6 +15,10 @@ public class TestTypeSystem {
   //  TODO: mut Box[read X] is not valid even after promotion
   // TODO: .m: mut Box[mdf X] must return lent Box[read Person] if mdf X becomes read X (same with lent)
   // TODO: Factory of mutBox and immBox, what types do we get?
+
+  @Property @Domain(CoreGenerator.class) void notSureYet(@ForAll ast.Program p){
+    System.out.println(p);
+  }
 
   @Example void emptyProgram(){ ok("""
     package test

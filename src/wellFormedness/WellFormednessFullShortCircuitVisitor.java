@@ -66,7 +66,7 @@ Evil:Main{
     ...
  */
 
-// TODO: rule about iso only being used once? Do we not need it becuase we never capture iso as iso
+// TODO: rule about iso only being used once? Do we not need it because we never capture iso as iso
 public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisitorWithEnv<CompileError> {
   @Override public Optional<CompileError> visitMCall(E.MCall e) {
     return e.ts().flatMap(this::noIsoParams)
