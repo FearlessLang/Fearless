@@ -1,0 +1,5 @@
+package base.caps
+alias base.Sealed as Sealed,
+alias base.Void as Void,
+alias base.Str as Str,
+alias base.Opt as Opt,

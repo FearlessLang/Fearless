@@ -1,34 +1,28 @@
 package base.caps
-alias base.Sealed as Sealed, alias base.Void as Void, alias base.Str as Str,
-
-LentReturnStmt[R]:{ lent #: mdf R }
+_LentReturnStmt[R]:{ lent #: mdf R }
 System[R]:Sealed{
 //  lent .use[C](c: CapFactory[lent _RootCap, lent C], cont: mut UseCapCont[C, mdf R]): mdf R -> Block[mdf R]
 //    .var[lent C] cap = { c#_RootCap }
 //    .var[mdf R] res = { cont#(cap, this) }
 //    .do{ c.close(cap) }
 //    .return{ res },
-  lent .use[C](c: CapFactory[lent _RootCap, lent C], cont: mut UseCapCont[C, mdf R]): mdf R ->
+  lent .var[X](x: lent _LentReturnStmt[mdf X], cont: lent _VarCont[mdf X, mdf R]): mdf R ->
+    cont#(x#, this),
+  lent .use[C](c: CapFactory[lent _RootCap, lent C], cont: lent UseCapCont[C, mdf R]): mdf R ->
     cont#(c#_RootCap, this), // TODO: use a block here to call c.close afterwards
   // mut .clone(): iso System[mdf R] -> {},
-  lent .return(ret: lent LentReturnStmt[mdf R]): mdf R -> ret#
+  lent .return(ret: lent _LentReturnStmt[mdf R]): mdf R -> ret#,
+  lent .clone: iso CapSupplier[_RootCap] -> { _RootCap }
   }
 
 _RootCap:Sealed,IO{
   .print(msg) -> this.print(msg),
   .println(msg) -> this.println(msg),
   }
-UseCapCont[C, R]:{ mut #(cap: lent C, self: lent System[mdf R]): mdf R }
+UseCapCont[C, R]:{ lent #(cap: lent C, self: lent System[mdf R]): mdf R }
+_VarCont[X, R]:{ lent #(x: mdf X, self: lent System[mdf R]): mdf R }
 CapFactory[C,R]:{
   #(auth: lent C): lent R,
   .close(c: lent R): Void,
   }
-IO:{
-  lent .print(msg: Str): Void,
-  lent .println(msg: Str): Void,
-  }
-IO':CapFactory[lent _RootCap, lent IO]{
-  #(auth: lent _RootCap): lent IO -> this.scope(auth),
-  .scope(auth: lent IO): lent IO -> auth,
-  .close(c: lent IO): Void -> {},
-  }
+CapSupplier[C]:Sealed{ iso *: lent C }

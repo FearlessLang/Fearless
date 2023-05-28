@@ -1,0 +1,19 @@
+package base.caps
+Log[T]:{
+  read #(t: T): Void -> this#t,
+  read .reader: CapFactory[lent IO, lent LogReader[mdf T]] -> {
+    .close(c) -> {},
+    #(auth) -> {'reader .lastValue -> {} }
+    }
+  }
+LogReader[T]:{ // TODO: this will become a flow
+   lent .lastValue: mut Opt[mdf T]
+  }
+//Log'[T]:CapFactory[lent _RootCap, lent Log[mdf T]]{
+//  #(auth: lent IO): lent Log[mdf T] -> {'log
+//    #(t) -> {},
+//    * -> log*
+//    },
+//  .close(c: lent Log[mdf T]): Void -> {},
+//  }
+

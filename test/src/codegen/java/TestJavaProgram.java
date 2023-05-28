@@ -373,6 +373,26 @@ public class TestJavaProgram {
     "bye"
   ), getCliArgsOrElse, Base.mutBaseAliases); }
 
+  @Test void logBox1() { ok(new Res("Nothing to see here", "", 0), "test.MyApp", """
+    package test
+    alias base.caps.Log as Log, alias base.caps.LogReader as LogReader,
+    MyApp:Main[Void]{ _, s -> s
+      .use[LogReader[Str]] log1 = Log[Str].reader
+      .use[IO] io = IO'
+      .return{ io.println(log1.lastValue | "Nothing to see here") }
+      }
+    """, Base.mutBaseAliases); }
+  @Test void logBox2() { ok(new Res("Nothing to see here", "", 0), "test.MyApp", """
+    package test
+    alias base.caps.Log as Log, alias base.caps.LogReader as LogReader,
+    MyApp:Main[Void]{ _, s -> s
+      .var[base.caps.CapSupplier[base.caps._RootCap]] s1 = s.clone
+      .use[LogReader[Str]] log1 = Log[Str].reader
+      .use[IO] io = IO'
+      .return{ io.println(log1.lastValue | "Nothing to see here") }
+      }
+    """, Base.mutBaseAliases); }
+
 //  @Test void ref1() { ok(new Res("", "", 0), "test.Test", """
 //    package test
 //    alias base.Main as Main, alias base.Void as Void, alias base.Assert as Assert,
