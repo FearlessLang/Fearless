@@ -243,7 +243,6 @@ public class TestJavaProgram {
     Test:Main[Void]{ _, _ -> Assert#(False, ((0 - 2) - 9223372036854775807) .str, { Void }) }
     """);}
 
-  // TODO: using brackets around (io, s') breaks antlr, fix the grammar
   @Test void println() { ok(new Res("Hello, World!", "", 0), "test.Test", """
     package test
     alias base.Main as Main, alias base.Void as Void,

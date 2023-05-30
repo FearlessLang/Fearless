@@ -14,10 +14,7 @@ System[R]:Sealed{
   lent .return(ret: lent LentReturnStmt[mdf R]): mdf R -> ret#
   }
 
-_RootCap:Sealed,IO{
-  .print(msg) -> this.print(msg),
-  .println(msg) -> this.println(msg),
-  }
+_RootCap:Sealed{}
 UseCapCont[C, R]:{ mut #(cap: lent C, self: lent System[mdf R]): mdf R }
 CapFactory[C,R]:{
   #(auth: lent C): lent R,
@@ -28,7 +25,9 @@ IO:{
   lent .println(msg: Str): Void,
   }
 IO':CapFactory[lent _RootCap, lent IO]{
-  #(auth: lent _RootCap): lent IO -> this.scope(auth),
-  .scope(auth: lent IO): lent IO -> auth,
+  #(auth: lent _RootCap): lent IO -> {'self
+    .print(msg) -> self.print(msg),
+    .println(msg) -> self.println(msg),
+  },
   .close(c: lent IO): Void -> {},
   }

@@ -195,7 +195,7 @@ public record MagicImpls(JavaCodegen gen, Program p) implements magic.MagicImpls
     };
   }
 
-  @Override public MagicTrait<String> rootCap(MIR.Lambda l, MIR e) {
+  @Override public MagicTrait<String> io(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
       @Override public MIR.Lambda instance() { return l; }
