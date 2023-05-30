@@ -768,4 +768,11 @@ public class TestTypeSystem {
       .b2(m: imm M): mut M -> (this.myF#m).mutMe,
       }
     """); }
+
+  @Test void noIsoTwice1() { fail("""
+    """, """
+    package test
+    Caps:{} Void:{}
+    A:{ .break(x1: iso Caps, x2: iso Caps): Void -> this.break(x1, x1) }
+    """); }
 }

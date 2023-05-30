@@ -3,8 +3,7 @@ package base
 Do:{ #[R]: mut Block[mdf R] -> {} }
 Block[R]:{
   mut .return(a: mut ReturnStmt[mdf R]): mdf R -> a#,
-  mut .do(a: mut DoRunner): mut Block[mdf R] -> this._do(a#),
-    mut ._do(v: Void): mut Block[mdf R] -> {},
+  mut .do(a: mut DoRunner): mut Block[mdf R] -> Yeet.with(a#, this),
   mut .var[X](x: mut ReturnStmt[mdf X], cont: mut Continuation[mdf X, mdf R]): mdf R -> cont#(x#, this),
   mut .if(a: mut Condition): mut BlockIf[mdf R] -> a# ? {
     .then -> mut BlockIfTrue[mdf R]{ this },
@@ -22,8 +21,7 @@ BlockIfTrue[R]:BlockIf[mdf R]{
   .return(a) -> this._return(a#),
     mut ._return(x: mdf R): mut DecidedBlock[mdf R] -> { x },
   .error(a) -> this.error(a),
-  .do(a) -> this._do(a#),
-    mut ._do(v: Void): mut Block[mdf R] -> this._outer,
+  .do(a) -> Yeet.with(a#, this._outer),
   }
 BlockIfFalse[R]:BlockIf[mdf R]{
   .return(a) -> this._outer,
@@ -38,8 +36,10 @@ DecidedBlock[R]:Block[mdf R],NoMutHyg[mdf R]{
   .if(a) -> BlockIfFalse[mdf R]{ this },
   }
 
+ReturnStmtLent[R]:{ lent #: mdf R }
 ReturnStmt[R]:NoMutHyg[mdf R]{ mut #: mdf R }
 DoRunner:{ mut #: Void }
+DoRunnerLent:{ lent #: Void }
 Condition:{ mut #: Bool }
 Continuation[X,R]:{ mut #(x: mdf X, self: mut Block[mdf R]): mdf R }
 

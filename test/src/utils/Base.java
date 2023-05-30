@@ -1,7 +1,10 @@
 package utils;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 public interface Base {
@@ -13,38 +16,31 @@ public interface Base {
     );
   }
 
-  static String load(String prefix, String file) {
-    var path = prefix+"/"+file;
-    var in = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
-    assert in != null: path+" is not present";
-    return new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n"));
+  static String load(String file) { return read(Path.of("base", file)); }
+  static String loadImm(String file) { return read(Path.of("immBase", file)); }
+  static String read(Path path) {
+    try {
+      return Files.readString(path, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
-  static String load(String file) { return load("base", file); }
-  static String loadImm(String file) { return load("immBase", file); }
 
-  String[] baseLib = {
-    load("lang.fear"),
-    load("caps/caps.fear"),
-    load("bools.fear"),
-    load("nums.fear"),
-    load("strings.fear"),
-    load("assertions.fear"),
-    load("ref.fear"),
-    load("optionals.fear"),
-    load("block.fear"),
-    load("errors.fear"),
-    load("lists.fear")
-  };
-
-  String[] immBaseLib = {
-    loadImm("lang.fear"),
-    loadImm("bools.fear"),
-    loadImm("nums.fear"),
-    loadImm("strings.fear"),
-    loadImm("assertions.fear"),
-    loadImm("optionals.fear"),
-    loadImm("lists.fear")
-  };
+  static String[] readAll(String prefix) {
+    try {
+      var root = Thread.currentThread().getContextClassLoader().getResource(prefix).toURI();
+      try(var fs = Files.walk(Path.of(root))) {
+        return fs
+          .filter(Files::isRegularFile)
+          .map(Base::read)
+          .toArray(String[]::new);
+      }
+    } catch (IOException | URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  String[] baseLib = readAll("base");
+  String[] immBaseLib = readAll("immBase");
 
   String minimalBase = """
     package base

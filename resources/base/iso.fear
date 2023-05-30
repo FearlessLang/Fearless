@@ -1,0 +1,16 @@
+package base
+
+IsoBox:{ #[T](x: iso T): IsoBox[T] -> this#x } // todo: magic
+IsoBox[T]:Sealed{
+  .swap(x: iso T): iso T,
+  <-(f: mut IsoBoxCAS[T]): iso T,
+  }
+IsoBoxCAS[T]:{ mut #(x: iso T): iso T }
+
+Capsule:{ #[T](x: iso T): mut Capsule[T] -> this#x } // todo: magic
+Capsule[T]:{
+  /// Only has a value the first time it is called
+  lent .match[R](m: mut CapsuleMatch[T, mdf R]): mdf R -> m.none,
+  lent !: iso T -> this!, // todo: throw
+  }
+CapsuleMatch[T,R]:NoMutHyg[R]{ mut .some(x: iso T): mdf R, mut .none: mdf R }

@@ -228,7 +228,7 @@ public interface Program {
     return res;
   }
 
-  static record RenameGens(Map<Id.GX<T>,Id.GX<T>> subst) implements CloneVisitor {
+  record RenameGens(Map<Id.GX<T>,Id.GX<T>> subst) implements CloneVisitor {
     public Id.GX<T> visitGX(Id.GX<T> t) {
       var thisSubst = subst.get(t);
       if (thisSubst != null) { return thisSubst; }

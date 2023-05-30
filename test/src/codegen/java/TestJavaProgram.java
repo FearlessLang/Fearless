@@ -267,6 +267,17 @@ public class TestJavaProgram {
       .return{ io.println("Hello, World!") }
       }
     """); }
+  @Test void printlnSugarMultiCap() { ok(new Res("yeet\nHello, World!", "", 0), "test.Test", """
+    package test
+    alias base.Main as Main, alias base.Void as Void,
+    alias base.caps.IO as IO, alias base.caps.IO' as IO',
+    Test:Main[Void]{ _, s -> s
+      .use[IO] io1 = IO'
+      .use[IO] io2 = IO'
+      .do{ io2.println("yeet") }
+      .return{ io1.println("Hello, World!") }
+      }
+    """); }
 
   @Disabled
   @Test void printlnSugarInferUse() { ok(new Res("Hello, World!", "", 0), "test.Test", """

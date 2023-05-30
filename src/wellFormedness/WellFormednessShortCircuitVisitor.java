@@ -14,7 +14,7 @@ import visitors.ShortCircuitVisitor;
 import java.util.List;
 import java.util.Optional;
 
-// TODO: Sealed and _C/_m restrictions
+// TODO: _C/_m restrictions
 public class WellFormednessShortCircuitVisitor implements ShortCircuitVisitor<CompileError> {
   private final Program p;
   private Optional<String> pkg = Optional.empty();
