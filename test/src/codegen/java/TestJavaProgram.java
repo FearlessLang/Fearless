@@ -279,6 +279,22 @@ public class TestJavaProgram {
       }
     """); }
 
+  @Test void capShare1() { ok(new Res("Hello, World!", "", 0), "test.Test", """
+    package test
+    Test:Main[Void]{ _, s -> s
+      .use[IO] io1 = IO'
+      .var[base.caps.CapabilityBox[base.caps._RootCap]] s' = {s.share}
+      .return{ io1.println("Hello, World!") }
+//      .return{Do#
+////        .var[System] s2 = s.share
+//        .return{ s'#
+//          .use[IO] io2 = IO'
+//          .return{ io1.println("Hello, World!") }
+//          }
+//        }
+      }
+    """, Base.mutBaseAliases); }
+
   @Disabled
   @Test void printlnSugarInferUse() { ok(new Res("Hello, World!", "", 0), "test.Test", """
     package test

@@ -3,7 +3,9 @@ alias base.Sealed as Sealed, alias base.Void as Void, alias base.Str as Str, ali
 alias base.Capsule as Capsule, alias base.ReturnStmtLent as ReturnStmt, alias base.DoRunnerLent as DoRunner,
 
 
-System[R]:System[_RootCap, mdf R]{ _RootCap }
+System[R]:System[_RootCap, mdf R]{
+  ._auth -> { _RootCap }
+  }
 System[Authority, R]:Sealed{
 //  lent .use[C](c: CapFactory[lent _RootCap, lent C], cont: mut UseCapCont[C, mdf R]): mdf R -> Block[mdf R]
 //    .var[lent C] cap = { c#_RootCap }
@@ -13,27 +15,33 @@ System[Authority, R]:Sealed{
   lent .use[C](c: CapFactory[lent Authority, lent C], cont: lent UseCapCont[Authority, C, mdf R]): mdf R ->
     cont#(c#(this._auth#), this), // TODO: use a block here to call c.close afterwards
   // mut .clone(): iso System[mdf R] -> {},
+  lent .var[X](x: lent IsoRetStmt[X], cont: lent VarCont[Authority, mdf X, mdf R]): mdf R -> cont#(x#, this),
   lent .do(ret: lent DoRunner): lent System[Authority, mdf R] -> Yeet.with(ret#, this),
   lent .return(ret: lent ReturnStmt[mdf R]): mdf R -> ret#,
-  lent .share: iso CapabilityBox[Authority] -> this._share(Capsule#(this._auth)),
-    lent ._share(auth: mut Capsule[Authority]): iso CapabilityBox[Authority] -> iso CapabilityBox[Authority]{
-      iso #[R']: lent System[Authority, mdf R'] -> lent System[Authority, mdf R']{ auth! }
-      },
+//  lent .share: iso CapabilityBox[Authority] -> this._share(Capsule#(this._auth)),
+//    lent ._share(auth: mut Capsule[Authority]): iso CapabilityBox[Authority] -> iso CapabilityBox[Authority]{
+//      iso #[R']: lent System[Authority, mdf R'] -> lent System[Authority, mdf R']{ auth! }
+//      },
 //  lent .share: iso CapabilityBox[Authority] -> this._share(this._auth),
 //    lent ._share(sys: lent System[C, mdf R]): iso CapabilityBox[Authority] -> iso CapabilityBox[Authority]{
 //        sys
 ////      iso #[R']: lent System[Authority, mdf R'] -> lent System[Authority, mdf R']{ auth }
 //      },
-  lent ._auth: _RawCapabilityBox[Authority],
+  lent .share: iso CapabilityBox[Authority] -> this._share(this._auth),
+    lent ._share(auth: _RawCapFactory[Authority]): iso CapabilityBox[Authority] -> {{{ auth# }}},
+  lent ._auth: _RawCapFactory[Authority],
   }
 
 CapabilityBox[C]:{
   iso #[R]: lent System[C, mdf R]
   }
-_RawCapabilityBox[C]:{ #: iso C }
+_RawCapFactory[C]:{ #: iso C }
 
 _RootCap:Sealed{}
 UseCapCont[A,C,R]:{ lent #(cap: lent C, self: lent System[A, mdf R]): mdf R }
+VarCont[A,X,R]:{ lent #(x: iso X, self: lent System[A, mdf R]): mdf R }
+IsoRetStmt[R]:{ lent #: iso R }
+//ShareCapCont[A,R]:{ lent #(box: iso CapabilityBox[A], self: lent System[A, mdf R]): mdf R }
 CapFactory[C,R]:{
   #(auth: lent C): lent R,
   .close(c: lent R): Void,
