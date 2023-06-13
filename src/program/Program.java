@@ -339,23 +339,26 @@ public interface Program {
            - e?j is empty, Ds|- Ti<=Tj and not Ds|- Tj<=Ti
        */
     assert a.name().equals(b.name());
-    var ta = new T(Mdf.mut, a.c());
-    var tb = new T(Mdf.mut, b.c());
+
+    var ta = new T(Mdf.mdf, a.c());
+    var tb = new T(Mdf.mdf, b.c());
     if(tryIsSubType(tb, ta)){ return false; }
-    var ok=a.sig().gens().equals(b.sig().gens())
-      && a.sig().ts().equals(b.sig().ts())
+
+    var fittedSigB = TypeRename.coreRec(this, mdfOf(a.c().name())).renameSig(b.sig(), gx->null);
+    var ok=a.sig().gens().equals(fittedSigB.gens())
+      && a.sig().ts().equals(fittedSigB.ts())
       && a.mdf()==b.mdf();
     if(!ok){ return false; }
 
-    var isSubType = tryIsSubType(ta, tb) && tryIsSubType(a.ret(), b.ret());
+    var isSubType = tryIsSubType(ta, tb) && tryIsSubType(a.ret(), fittedSigB.ret());
     if(isSubType){ return true; }
 
-    var is1AbsAndRetEq = b.isAbs() && a.ret().equals(b.ret());
+    var is1AbsAndRetEq = b.isAbs() && a.ret().equals(fittedSigB.ret());
     if(is1AbsAndRetEq){ return true; }
 
     var is1AbsAndRetSubtype = b.isAbs()
-      && tryIsSubType(a.ret(), b.ret())
-      && !tryIsSubType(b.ret(), a.ret());
+      && tryIsSubType(a.ret(), fittedSigB.ret())
+      && !tryIsSubType(fittedSigB.ret(), a.ret());
     if(is1AbsAndRetSubtype){ return true; }
 
     return false;
@@ -377,6 +380,14 @@ public interface Program {
   default Id.IT<ast.T> liftIT(Id.IT<astFull.T>it){
     var ts = it.ts().stream().map(astFull.T::toAstT).toList();
     return new Id.IT<>(it.name(), ts);
+  }
+
+  default Mdf mdfOf(Id.DecId d) {
+    return switch (this) {
+      case ast.Program p -> p.of(d).lambda().mdf();
+      case astFull.Program p -> p.of(d).lambda().mdf().orElse(Mdf.mdf);
+      default -> throw Bug.of(new IllegalStateException("Unexpected value: " + this));
+    };
   }
 }
 //----

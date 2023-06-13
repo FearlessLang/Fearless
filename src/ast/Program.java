@@ -76,7 +76,7 @@ public class Program implements program.Program  {
 
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, E.Meth mi, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var cm = CM.of(t, mi, TypeRename.coreRec(this, recvMdf).renameSig(mi.sig(), f));
+    var cm = CM.of(recvMdf, t, mi, TypeRename.coreRec(this, recvMdf).renameSig(mi.sig(), f));
     return norm(cm);
   }
 }

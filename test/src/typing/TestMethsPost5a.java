@@ -605,4 +605,35 @@ public class TestMethsPost5a {
   @Test void bool5() { ok("""
     [bools.False[],imm.not/0()[][]:immbools.Bool[]impl,bools.False[],imm?/1(f)[X0/0$][mutbools.ThenElse[immX0/0$]]:immX0/0$impl,bools.False[],imm.or/1(b)[][immbools.Bool[]]:immbools.Bool[]impl,bools.False[],imm.and/1(b)[][immbools.Bool[]]:immbools.Bool[]impl]
     """, "bools.Fresh2", boolPkg); }
+
+  @Test void recMdfGX1() { ok("""
+    [test.A[],read.argh/0()[][]:muttest.Foo[]impl]
+    """, "test.A", """
+    package test
+    A:B[mut Foo]{ Foo }
+    B[X]:{ read .argh: recMdf X }
+    Foo:{}
+    """); }
+  @Test void recMdfGX2() { ok("""
+    [test.A[],read.argh/0()[][]:muttest.Foo[]impl]
+    """, "test.A", """
+    package test
+    A:B[mut Foo]{ read .argh: mut Foo -> Foo }
+    B[X]:{ read .argh: recMdf X }
+    Foo:{}
+    """); }
+  // see TestTypeSystem for IT2
+  @Test void recMdfIT1() { fail("""
+    In position [###]/Dummy0.fear:2:0
+    [E18 uncomposableMethods]
+    These methods could not be composed.
+    conflicts:
+    ([###]/Dummy0.fear:3:4) test.B[], .argh/0[](): recMdf test.Foo[]
+    ([###]/Dummy0.fear:2:5) test.A[], .argh/0[](): mut test.Foo[]
+    """, "test.A", """
+    package test
+    A:B{ read .argh: mut Foo -> Foo }
+    B:{ read .argh: recMdf Foo }
+    Foo:{}
+    """); }
 }

@@ -3,7 +3,6 @@ package program.inference;
 import ast.Program;
 import astFull.E;
 import astFull.T;
-import failure.Fail;
 import files.Pos;
 import id.Id;
 import id.Mdf;
@@ -51,7 +50,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     var ms = Streams.zip(lambda.meths(), res.sigs())
       .map(this::tM)
       .toList();
-//    Id.IT<T> lT = best(new T(Mdf.mdf, res.c()), l.t()).itOrThrow();S
+//    Id.IT<T> lT = best(new T(Mdf.mdf, res.c()), l.t()).itOrThrow();
     var newIT = replaceOnlyInfers(lambda.t(Mdf.mdf), new T(lambda.t(Mdf.mdf).mdf(), res.c()));
     return lambda.withMeths(ms).withIT(Optional.ofNullable(newIT.itOrThrow()));
   }

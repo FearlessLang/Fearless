@@ -540,13 +540,22 @@ public class TestRecMdf {
     A[X]:{ .foo(x: mut X): mut X -> mut B[mut X]{ x }.argh }
     B[X]:{ read .argh: recMdf X }
     """); }
+  @Test void recMdfInSubHyg1NotInline() { ok("""
+    package test
+    B:{ #[X](x: mut X): mut B[mut X] -> { x } }
+    B[X]:{ read .argh: recMdf X }
+    """); }
   @Test void recMdfInSubHyg2() { ok("""
     package test
     A:{ .foo(x: mut Foo): mut Foo -> mut B{ x }.argh }
     B:{ read .argh: recMdf Foo }
     Foo:{}
     """); }
-  @Test void recMdfInSubHyg3() { ok("""
+  @Test void recMdfInSubHyg3() { fail("""
+    In position [###]/Dummy0.fear:2:39
+    [E23 methTypeError]
+    Expected the method .argh/0 to return recMdf X1/0$, got mut X.
+    """, """
     package test
     A:{ .foo[X](x: mut X): mut X -> mut B{ x }.argh[mut X] }
     B:{ read .argh[X]: recMdf X }
@@ -565,7 +574,9 @@ public class TestRecMdf {
     """); }
   @Test void recMdfInSubHyg2a() { ok("""
     package test
-    A:{ .foo(x: mut Foo): mut B -> mut B{ x } }
+    A:{ .foo(x: mut Foo): mut B -> mut B{
+      read .argh: mut Foo -> x
+      }}
     B:{ read .argh: recMdf Foo }
     Foo:{}
     """); }

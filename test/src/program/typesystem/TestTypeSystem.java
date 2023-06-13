@@ -1060,4 +1060,12 @@ were valid:
     Bar[A]:{}
     Bar[A,B]:{}
     """); }
+
+  // Se TestMethsPost5a for the basic ones
+  @Test void recMdfIT2() { ok("""
+    package test
+    A:{ #: mut B -> mut B{ read .argh: mut Foo -> Foo } }
+    B:{ read .argh: recMdf Foo }
+    Foo:{}
+    """); }
 }

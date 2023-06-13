@@ -67,7 +67,7 @@ public class Program implements program.Program{
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, astFull.E.Meth mi, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
     var sig=mi.sig().orElseThrow();
-    var cm = CM.of(t, mi, TypeRename.coreRec(this, recvMdf).renameSig(new InjectionVisitor().visitSig(sig), f));
+    var cm = CM.of(recvMdf, t, mi, TypeRename.coreRec(this, recvMdf).renameSig(new InjectionVisitor().visitSig(sig), f));
     return norm(cm);
   }
   public Map<Id.DecId, T.Dec> ds() { return this.ds; }

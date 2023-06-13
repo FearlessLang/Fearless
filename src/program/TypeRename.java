@@ -61,6 +61,9 @@ public interface TypeRename<T>{
       if (recvMdf.isMdf() && t.mdf().isMdf()) {
         return t.withMdf(Mdf.recMdf);
       }
+      if (t.isIt() && !this.recvMdf.isMdf()) {
+        return t.withMdf(this.recvMdf);
+      }
       var resolvedMdf = recvMdf.adapt(t.mdf(), Mdf.AdaptType.ResolveRecMdf);
       return t.withMdf(resolvedMdf);
     }
@@ -95,7 +98,7 @@ public interface TypeRename<T>{
         if (isInfer(renamed)){ return renamed; }
         return fixMut(propagateMdf(mdf(t),renamed));
       },
-      it->fixMut(newT(mdf(t),renameIT(it,f)))
+      it->fixMut(propagateMdf(mdf(t), newT(mdf(t),renameIT(it,f))))
     );
   }
   default T propagateMdf(Mdf mdf, T t){
