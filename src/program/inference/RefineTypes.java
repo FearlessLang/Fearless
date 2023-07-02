@@ -100,7 +100,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     }
     return fixed;
   }
-  E fixType(E ie, T iT) {
+  public E fixType(E ie, T iT) {
     T ieT = iT.isInfer() ? ie.t(Mdf.imm) : ie.t(iT.mdf());
     return ie.withT(best(ie.mdf(), ieT, iT));
   }
@@ -155,8 +155,8 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
 //    }
     return new T(mdf, c1.withTs(refinedTs));
   }
-  record RP(T t1, T t2){
-    RP {
+  public record RP(T t1, T t2){
+    public RP {
       if (!t1.isInfer() && !t2.isInfer() && t1.mdf().isRecMdf()) { t1 = t1.withMdf(t2.mdf()); }
     }
 
@@ -258,7 +258,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     return rp;
   }
 
-  List<RP> refineSigGens(List<RP>rps, Set<Id.GX<ast.T>> freshInfers) {
+  public List<RP> refineSigGens(List<RP>rps, Set<Id.GX<ast.T>> freshInfers) {
     List<Sub> subs = collect(rps);
     Map<Id.GX<T>, T> map = toSub(subs);
     return rps.stream()
