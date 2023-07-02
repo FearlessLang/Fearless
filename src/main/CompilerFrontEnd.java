@@ -109,7 +109,7 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
     new WellFormednessFullShortCircuitVisitor().visitProgram(p).ifPresent(err->{ throw err; });
     var inferredSigs = p.inferSignaturesToCore();
     var inferred = new InferBodies(inferredSigs).inferAll(p);
-    new WellFormednessShortCircuitVisitor(inferred).visitProgram(inferred);
+    new WellFormednessShortCircuitVisitor(inferred).visitProgram(inferred).ifPresent(err->{ throw err; });
     inferred.typeCheck();
     return inferred;
   }
