@@ -212,9 +212,9 @@ public class TestTypeSystemWithBase {
   @Test void shouldPromoteList() { ok("""
     package test
     Foo:{
-      .toMut: mut List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).toList,
-      .toIso: iso List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).toList,
-      .toImm: List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).toList
+      .toMut: mut List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).list,
+      .toIso: iso List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).list,
+      .toImm: List[Int] -> (LListMut#[Int]35 + 52 + 84 + 14).list
       }
     """, Base.mutBaseAliases);}
 }
