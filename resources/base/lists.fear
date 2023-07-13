@@ -33,14 +33,19 @@ LListMatch[E,R]:{ mut .elem(head: E, tail: LList[E]): mdf R, mut .empty: mdf R }
 
 LListMut:{
   #[E](head: mdf E): mut LListMut[mdf E] -> this.cons(head, {}),
-  .cons[E](head: mdf E, tail: mut LListMut[mdf E]): mut LListMut[mdf E] -> {
+  .cons[E](head: mdf E, tail: mut LListMut[mdf E]): mut LListMut[mdf E] -> { 'list
     .match(m) -> m.elem(head, tail),
     .head -> Opt#[recMdf E](head),
     .headRaw -> Opt#[mdf E](head),
     .tail -> tail,
     .get(i) -> (i == 0u).ifHyg{ .then -> Opt#head, .else -> tail.get(i - 1u) },
+    .get2(i) -> (i == 0u).ifHyg(Get2Matcher#[recMdf E](head, Get2Else#[mdf E, recMdf E](tail, i))),
+      ._get2 -> head,
     },
   }
+Get2Matcher:{ lent #[E](head: mdf E, else: recMdf Get2Else[mdf E]): lent ThenElse[mdf E] -> { .then -> head, .else -> else# } }
+Get2Else:{ lent #[T,E](tail: recMdf LListMut[mdf T], i: UInt): recMdf Get2Else[mdf E] -> { tail.get2(i - 1u) } }
+Get2Else[E]:{ lent #: mdf E }
 LListMut[E]:Sealed,NoMutHyg[mdf E]{
   read .match[R](m: mut LListMutMatch[recMdf E, mdf E, mdf R]): mdf R -> m.empty,
   read .head: mut Opt[recMdf E] -> {},
@@ -51,6 +56,8 @@ LListMut[E]:Sealed,NoMutHyg[mdf E]{
     .empty -> {},
     .elem(h,t) -> (i == 0u).ifHyg{ .then -> Opt#h, .else -> t.look(i - 1u) }
     },
+  read .get2(i: UInt): recMdf E -> Abort!,
+    read ._get2: recMdf E -> Abort!,
   lent .get(i: UInt): mut Opt[mdf E] -> {},
   .getImm(i: UInt): iso Opt[E] -> (i == 0u).ifHyg[mut Opt[E]]{ .then -> this.head, .else -> this.tail.getImm(i - 1u) },
   read .iter: mut Iter[read E] -> Let.hyg{
