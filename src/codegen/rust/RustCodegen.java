@@ -3,12 +3,10 @@ package codegen.rust;
 import ast.T;
 import codegen.MIR;
 import id.Id;
-import magic.Magic;
 import utils.Bug;
 import utils.Push;
 import visitors.MIRVisitor;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,11 +31,14 @@ public class RustCodegen implements MIRVisitor<RustCodegen.RustProgram> {
       return new RustProgram();
     }
     var name = getName(trait.name());
-    return new RustProgram(List.of(name), List.of());
+    var ms = trait.meths().stream()
+      .map(m->visitMeth(m, "this", false))
+      .reduce(RustProgram::merge).orElseGet(RustProgram::new);
+    return new RustProgram(List.of(name), List.of()).merge(ms);
   }
 
   @Override public RustProgram visitMeth(MIR.Meth meth, String selfName, boolean concrete) {
-    throw Bug.todo();
+    return new RustProgram(List.of(), List.of(methName(getName(meth.name()))));
   }
 
   @Override public RustProgram visitX(MIR.X x, boolean checkMagic) {
@@ -52,8 +53,8 @@ public class RustCodegen implements MIRVisitor<RustCodegen.RustProgram> {
     throw Bug.todo();
   }
 
-  private String name(String x) {
-    return "r#" + x.replace("'", "\uD809\uDC6E"+(int)'\'')+"\uD809\uDC6E";
+  private String methName(String x) {
+    return x.replace("'", "\uD809\uDC6E"+(int)'\'')+"\uD809\uDC6E";
   }
   private List<String> getImplsNames(List<Id.IT<T>> its) {
     return its.stream()

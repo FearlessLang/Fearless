@@ -42,6 +42,6 @@ public class TestRustCodegen {
     """, "fake.Fake", false, """
     package test
     Foo:{}
-    Bar[X]:{}
+    Bar[X]:{ .a': Foo }
     """);}
 }
