@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class TestRustCodegen {
+public class TestRustMetadataGen {
   void ok(String expected, String entry, boolean loadBase, String... content) {
     assert content.length > 0;
     Main.resetAll();
@@ -34,15 +34,14 @@ public class TestRustCodegen {
     new WellFormednessShortCircuitVisitor(inferred).visitProgram(inferred);
     inferred.typeCheck();
     var mir = new MIRInjectionVisitor(inferred).visitProgram();
-    var rp = new RustMetadataGen().visitProgram(mir.pkgs(), new Id.DecId(entry, 0));
-    var rs = new RustCodegen(){}.generate(rp);
-    Err.strCmp(expected, rs);
+    var rs = new RustMetadataGen().visitProgram(mir.pkgs(), new Id.DecId(entry, 0));
+    Err.strCmp(expected, rs.toString());
   }
 
   @Test void emptyProgram() { ok("""
     """, "fake.Fake", false, """
     package test
-    Foo:{}
-    Bar[X]:{ .a': Bar[X] -> this }
+    Foo:{ .meee: Foo -> this }
+//    Bar[X]:{ .a': Bar[X] -> Foo }
     """);}
 }

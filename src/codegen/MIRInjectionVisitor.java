@@ -7,6 +7,7 @@ import id.Id;
 import id.Mdf;
 import program.CM;
 import program.TypeRename;
+import utils.Push;
 import utils.Streams;
 import visitors.CollectorVisitor;
 import visitors.GammaVisitor;
@@ -98,21 +99,20 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       );
     }
 
-    var fresh = new Id.DecId(Id.GX.fresh().name(), 0);
-    var freshName = new Id.DecId(pkg+"."+fresh, 0);
-    var freshDec = new T.Dec(freshName, List.of(), e, e.pos());
+    var fresh = new Id.DecId(pkg+"."+Id.GX.fresh().name(), 0);
+    var freshDec = new T.Dec(fresh, List.of(), e.withITs(Push.of(new Id.IT<>(fresh, List.of()), e.its())), e.pos());
     impls = impls.stream().filter(it->!it.name().equals(fresh)).toList();
-    var canSingletonTrait = p.meths(e.mdf(), freshDec.toIT(), 0).stream().noneMatch(CM::isAbs);
-    MIR.Trait freshTrait = new MIR.Trait(freshName, List.of(), impls, List.of(), canSingletonTrait);
-    freshTraits.add(freshTrait);
     p = p.withDec(freshDec);
+    var canSingletonTrait = p.meths(e.mdf(), freshDec.toIT(), 0).stream().noneMatch(CM::isAbs);
+    MIR.Trait freshTrait = new MIR.Trait(fresh, List.of(), impls, List.of(), canSingletonTrait);
+    freshTraits.add(freshTrait);
 
     var g = new HashMap<>(gamma);
     g.put(e.selfName(), new T(e.mdf(), new Id.IT<>(fresh, List.of())));
     List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(pkg, m, g)).toList();
     return new MIR.Lambda(
       e.mdf(),
-      freshName,
+      fresh,
       e.selfName(),
       impls,
       captures,

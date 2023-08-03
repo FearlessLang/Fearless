@@ -1,7 +1,7 @@
 package codegen;
 
-import ast.Program;
 import ast.T;
+import codegen.java.SimplifiedTraitMIRVisitor;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -17,6 +17,7 @@ import java.util.*;
 public interface MIR {
   <R> R accept(MIRVisitor<R> v);
   <R> R accept(MIRVisitor<R> v, boolean checkMagic);
+  MIR accept(SimplifiedTraitMIRVisitor v);
   T t();
 
   record Program(Map<String, List<Trait>> pkgs) {}
@@ -31,6 +32,7 @@ public interface MIR {
     public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitX(this, checkMagic);
     }
+    @Override public MIR accept(SimplifiedTraitMIRVisitor v) { return v.visitX(this); }
   }
   record MCall(MIR recv, Id.MethName name, List<MIR> args, T t) implements MIR {
     public <R> R accept(MIRVisitor<R> v) {
@@ -39,6 +41,7 @@ public interface MIR {
     public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitMCall(this, checkMagic);
     }
+    @Override public MIR accept(SimplifiedTraitMIRVisitor v) { return v.visitMCall(this); }
   }
   record Lambda(Mdf mdf, Id.DecId freshName, String selfName, List<Id.IT<T>> its, Set<X> captures, List<Meth> meths, boolean canSingleton) implements MIR {
     public <R> R accept(MIRVisitor<R> v) {
@@ -47,6 +50,7 @@ public interface MIR {
     public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitLambda(this, checkMagic);
     }
+    @Override public MIR accept(SimplifiedTraitMIRVisitor v) { return v.visitLambda(this); }
     public T t() {
       return new T(mdf, new Id.IT<>(freshName, Collections.nCopies(freshName.gen(), new T(Mdf.mdf, new Id.GX<>("FearIgnored$")))));
     }

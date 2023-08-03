@@ -5,13 +5,10 @@ import ast.T;
 import codegen.MIR;
 import id.Id;
 import magic.Magic;
-import magic.MagicTrait;
-import utils.Bug;
 import visitors.MIRVisitor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class JavaCodegen implements MIRVisitor<String> {
@@ -28,6 +25,7 @@ public class JavaCodegen implements MIRVisitor<String> {
   }
 
   public String visitProgram(Map<String, List<MIR.Trait>> pkgs, Id.DecId entry) {
+    pkgs = new SimplifiedTraitMIRVisitor().visitProgram(pkgs);
     assert pkgs.containsKey("base");
     var entryName = getName(entry);
     var init = "\nstatic void main(String[] args){ "+argsToLList()+" base.Main_0 entry = new "+entryName+"(){}; entry.$35$(new base$46caps.System_1(){}); }\n";

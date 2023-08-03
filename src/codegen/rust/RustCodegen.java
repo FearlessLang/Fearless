@@ -1,100 +1,127 @@
 package codegen.rust;
 
-import ast.T;
-import codegen.MIR;
-import id.Id;
-import utils.Bug;
-import utils.Push;
-import visitors.MIRVisitor;
-
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-public class RustCodegen implements MIRVisitor<RustCodegen.RustProgram> {
-  public record RustProgram(List<String> kinds, List<String> selectors) {
-    RustProgram() { this(List.of(), List.of()); }
-    RustProgram merge(RustProgram other) {
-      return new RustProgram(Push.of(this.kinds, other.kinds), Push.of(this.selectors, other.selectors));
-    }
-  }
-
-  @Override public RustProgram visitProgram(Map<String, List<MIR.Trait>> pkgs, Id.DecId entry) {
-    return pkgs.entrySet().stream()
-      .flatMap(kv->kv.getValue().stream().map(t->visitTrait(kv.getKey(), t)))
-      .reduce(RustProgram::merge)
-      .orElseGet(RustProgram::new);
-  }
-
-  @Override public RustProgram visitTrait(String pkg, MIR.Trait trait) {
-    if (pkg.equals("base") && trait.name().name().endsWith("Instance")) {
-      return new RustProgram();
-    }
-    var name = getName(trait.name());
-    var ms = trait.meths().stream()
-      .map(m->visitMeth(m, "this", false))
-      .reduce(RustProgram::merge).orElseGet(RustProgram::new);
-    return new RustProgram(List.of(name), List.of()).merge(ms);
-  }
-
-  @Override public RustProgram visitMeth(MIR.Meth meth, String selfName, boolean concrete) {
-    return new RustProgram(List.of(), List.of(methName(getName(meth.name()))));
-  }
-
-  @Override public RustProgram visitX(MIR.X x, boolean checkMagic) {
-    throw Bug.todo();
-  }
-
-  @Override public RustProgram visitMCall(MIR.MCall mCall, boolean checkMagic) {
-    throw Bug.todo();
-  }
-
-  @Override public RustProgram visitLambda(MIR.Lambda newL, boolean checkMagic) {
-    throw Bug.todo();
-  }
-
-  private String methName(String x) {
-    return x.replace("'", "\uD809\uDC6E"+(int)'\'')+"\uD809\uDC6E";
-  }
-  private List<String> getImplsNames(List<Id.IT<T>> its) {
-    return its.stream()
-      .map(this::getName)
-      .toList();
-  }
-  private String getName(T t) { return t.match(this::getName, this::getName); }
-  private String getRetName(T t) { return t.match(this::getName, it->getName(it, true)); }
-  private String getName(Id.GX<T> gx) { return "Object"; }
-  private String getName(Id.IT<T> it) { return getName(it, false); }
-  private String getName(Id.IT<T> it, boolean isRet) {
-    return switch (it.name().name()) {
-//      case "base.Int", "base.UInt" -> isRet ? "Long" : "long";
-//      case "base.Float" -> isRet ? "Double" : "double";
-//      case "base.Str" -> "String";
-      default -> {
-//        if (magic.isMagic(Magic.Int, it.name())) { yield isRet ? "Long" : "long"; }
-//        if (magic.isMagic(Magic.UInt, it.name())) { yield isRet ? "Long" : "long"; }
-//        if (magic.isMagic(Magic.Float, it.name())) { yield isRet ? "Double" : "double"; }
-//        if (magic.isMagic(Magic.Float, it.name())) { yield isRet ? "Double" : "double"; }
-//        if (magic.isMagic(Magic.Str, it.name())) { yield "String"; }
-        yield getName(it.name());
+public interface RustCodegen {
+  default String generate(RustMetadataGen.RustProgram p) {
+    var kinds = String.join(",\n", p.kinds());
+    var selectors = String.join(",\n", p.selectors());
+    var main = """
+      fn main() {
+        println!("yeet");
       }
-    };
+      """;
+    var methLookup = p.ms().entrySet().stream()
+      .map(kv->genMethLookup(p, kv.getKey(), kv.getValue()))
+      .collect(Collectors.joining(",\n"));
+    var ms = p.ms().values().stream()
+      .flatMap(Collection::stream)
+      .map(m->genMethImpl(p, m))
+      .collect(Collectors.joining("\n"));
+    return """
+          #![allow(dead_code)]
+          #![allow(unused)]
+          #![allow(non_snake_case)]
+          #![allow(non_camel_case_types)]
+          #![allow(uncommon_codepoints)]
+          #![allow(non_ascii_idents)]
+              
+          use std::borrow::Cow;
+          use std::cell::{RefCell, UnsafeCell};
+          use std::hint::unreachable_unchecked;
+          use std::mem::transmute;
+          use std::sync::Arc;
+          
+          %s
+          
+          #[derive(Copy, Clone)]
+          enum Kind {
+            %s
+          }
+          #[derive(Copy, Clone)]
+          enum Selector {
+            %s
+          }
+          
+          #[inline(always)]
+          const fn lookup(kind: Kind, selector: Selector) -> *const () {
+            match kind {
+              %s,
+              _ => unsafe { unreachable_unchecked() }
+            }
+          }
+          
+          %s
+          
+          trait Value<T> {
+              fn kind(&self) -> Kind;
+              fn ctx(&self) -> &T;
+          }
+          #[derive(Copy, Clone)]
+          struct B<T> {
+              kind: Kind,
+              ctx: T
+          }
+          type Singleton = B<()>;
+          type L<T> = Arc<UnsafeCell<B<T>>>;
+          impl Singleton {
+              const fn singleton(kind: Kind) -> Singleton {
+                  Self {
+                      kind,
+                      ctx: ()
+                  }
+              }
+          }
+          impl<T> B<T> {
+              const fn new(kind: Kind, ctx: T) -> Self {
+                  Self {
+                      kind,
+                      ctx
+                  }
+              }
+          }
+          impl<T> Value<T> for B<T> {
+              fn kind(&self) -> Kind {
+                  self.kind
+              }
+              
+              fn ctx(&self) -> &T {
+                  &self.ctx
+              }
+          }
+          impl<T> Value<T> for L<T> {
+              fn kind(self: &L<T>) -> Kind {
+                  unsafe { (*self.get()).kind }
+              }
+              
+              fn ctx<'a>(self: &'a L<T>) -> &'a T {
+                  &unsafe { &*self.get() }.ctx
+              }
+          }
+      """.formatted(main, kinds, selectors, methLookup, ms).stripIndent();
   }
-  private static String getPkgName(String pkg) {
-    return pkg.replace(".", "\uD809\uDC6E"+(int)'.');
-  }
-  protected static String getName(Id.DecId d) {
-    var pkg = getPkgName(d.pkg());
-    return pkg+"\uD809\uDC6E"+getBase(d.shortName())+"\uD809\uDC6E"+d.gen();
-  }
-  private static String getName(Id.MethName m) { return getBase(m.name()); }
-  private static String getBase(String name) {
-    if (name.startsWith(".")) { name = name.substring(1); }
-    return name.chars().mapToObj(c->{
-      if (c != '\'' && (c == '.' || Character.isAlphabetic(c) || Character.isDigit(c))) {
-        return Character.toString(c);
+
+  default String genMethLookup(RustMetadataGen.RustProgram p, String kind, List<RustMetadataGen.RustMeth> ms) {
+    var selectors = ms.stream()
+      .map(RustMetadataGen.RustMeth::key)
+      .map(mk->"Selector::"+mk.selector()+" => "+mk.toFnName()+" as *const (),")
+      .collect(Collectors.joining(",\n"));
+    return """
+      Kind::%s => match selector {
+        %s
+        _ => unsafe { unreachable_unchecked() }
       }
-      return "\uD809\uDC6E"+c;
-    }).collect(Collectors.joining());
+      """.formatted(kind, selectors);
+  }
+
+  default String genMethImpl(RustMetadataGen.RustProgram p, RustMetadataGen.RustMeth m) {
+    // TODO: args, real rt, and body
+    return """
+      fn %s() -> *const () {
+        todo!()
+      }
+      """.formatted(m.key().toFnName());
   }
 }
