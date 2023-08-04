@@ -8,7 +8,7 @@ import id.Mdf;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public interface CM {
+public sealed interface CM {
   Id.MethName name();
   List<String> xs();
   boolean isAbs();
