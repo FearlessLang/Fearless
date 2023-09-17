@@ -52,6 +52,10 @@ public interface MIR {
     public Lambda withITs(List<Id.IT<T>> its) {
       return new Lambda(mdf, freshName, selfName, its, captures, meths, canSingleton);
     }
+    public boolean isFinal() {
+      // TODO: could be used for future optimisations where we can use concrete types + static dispatch due to knowing that this is never extended
+      return false;
+    }
   }
 //  record Share(MIR e) implements MIR {
 //    public <R> R accept(MIRVisitor<R> v) {

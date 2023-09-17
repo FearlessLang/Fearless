@@ -76,7 +76,7 @@ public class JavaCodegen implements MIRVisitor<String> {
     var visibility = concrete ? "public " : "default ";
     if (meth.isAbs()) { visibility = ""; }
     var start = visibility+getRetName(meth.rt())+" "+name(getName(meth.name()))+"("+args+")";
-    if (meth.body().isEmpty()) { return start + ";"; }
+    if (meth.isAbs()) { return start + ";"; }
     return start + "{\n"+selfVar+"return (("+getName(meth.rt())+")("+meth.body().get().accept(this)+"));\n}";
   }
 
@@ -158,7 +158,6 @@ public class JavaCodegen implements MIRVisitor<String> {
       default -> {
         if (magic.isMagic(Magic.Int, it.name())) { yield isRet ? "Long" : "long"; }
         if (magic.isMagic(Magic.UInt, it.name())) { yield isRet ? "Long" : "long"; }
-        if (magic.isMagic(Magic.Float, it.name())) { yield isRet ? "Double" : "double"; }
         if (magic.isMagic(Magic.Float, it.name())) { yield isRet ? "Double" : "double"; }
         if (magic.isMagic(Magic.Str, it.name())) { yield "String"; }
         yield getName(it.name());
