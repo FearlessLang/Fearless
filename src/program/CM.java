@@ -7,6 +7,7 @@ import id.Mdf;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,7 @@ public interface CM {
     public Id.MethName name(){ return m.name(); }
     public List<String> xs(){ return m.xs(); }
     public boolean isAbs(){ return m.isAbs(); }
+    public Optional<ast.E> body(){ return m.body(); }
     public CM withSig(ast.E.Sig sig){ return new CoreCM(c, m, sig); }
     public Pos pos() { return this.m.posOrUnknown(); }
     @Override public Map<Id.GX<astFull.T>, Set<Mdf>> bounds() {

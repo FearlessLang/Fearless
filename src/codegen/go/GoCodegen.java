@@ -17,11 +17,10 @@ public class GoCodegen implements MIRVisitor<GoCodegen.Output> {
     public Output(String relative) { this(relative, ""); }
     public Output() { this("", ""); }
     Output merge(Output other) {
-      var global = this.global.isEmpty()
-        ? other.global
-        : other.global.isEmpty()
-          ? ""
-          : this.global+"\n"+other.global;
+      String global = this.global;
+      if (!this.global.isEmpty() && !other.global.isEmpty()) { global = this.global+"\n"+other.global; }
+      if (this.global.isEmpty()) { global = other.global(); }
+
       return new Output(this.relative+"\n"+other.relative, global);
     }
   }
@@ -46,7 +45,7 @@ public class GoCodegen implements MIRVisitor<GoCodegen.Output> {
         "math"
       )
       """;
-    return new Output(("package main\n"+imports+traits.global+"\n"+traits.relative+"\n"+init).replace("\n\n", "\n"));
+    return new Output(("package main\n"+traits.global+"\n"+traits.relative+"\n"+init).replace("\n\n", "\n"));
   }
   public Output visitPackage(String pkg, List<MIR.Trait> ds) {
     return ds.stream()
@@ -144,13 +143,13 @@ public class GoCodegen implements MIRVisitor<GoCodegen.Output> {
 
     // TODO: also create the struct here so we can model capturing as a struct field. We'll need to filter out lambda structs earlier
     var inlineTypeName = name(Id.GX.fresh().name());
-    relative = inlineTypeName+"{}";
+    relative = inlineTypeName+"{"+l.captures().stream().map(x->name(x.name())+": "+name(x.name())).collect(Collectors.joining(",\n"))+"}";
     var selfName = name(l.selfName())+" "+inlineTypeName;
     var struct = "type "+inlineTypeName+" struct {\n"+l.captures().stream()
       .filter(x->!x.name().equals(l.selfName()))
-      .map(x->x.name()+" "+getName(x.t(), NameKind.IFACE))
+      .map(x->name(x.name())+" "+getName(x.t(), NameKind.IFACE))
       .collect(Collectors.joining("\n"))+"\n}";
-    var globalMethImpls = l.meths().stream()
+    var globalMethImpls = l.allMeths().apply(l.captures())
       .map(m->visitMeth(m, l.selfName(), selfName, true))
       .reduce(Output::merge).orElseGet(Output::new);
     return new Output(relative, globalMethImpls.relative+"\n"+globalMethImpls.global+"\n"+struct);

@@ -7,7 +7,9 @@ import id.Id;
 import id.Mdf;
 import program.CM;
 import program.TypeRename;
+import utils.Mapper;
 import utils.Streams;
+import visitors.CloneVisitor;
 import visitors.CollectorVisitor;
 import visitors.GammaVisitor;
 
@@ -117,7 +119,12 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
         List.of(),
         captures,
         ms,
-        canSingleton
+        canSingleton,
+        g_->p.meths(e.mdf(), e, 0).stream().map(m->this.visitMeth(pkg, m, Mapper.of(map->{
+          g_.forEach(x->map.put(x.name(), x.t()));
+          map.put(e.selfName(), g.get(e.selfName()));
+          map.put("this", g.get("this"));
+        }), e))
       );
     }
 
@@ -140,7 +147,12 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       nonSelfImpls,
       captures,
       ms,
-      canSingletonTrait && ms.isEmpty()
+      canSingletonTrait && ms.isEmpty(),
+      g_->p.meths(e.mdf(), e, 0).stream().map(m->this.visitMeth(pkg, m, Mapper.of(map->{
+        g_.forEach(x->map.put(x.name(), x.t()));
+        map.put(e.selfName(), g.get(e.selfName()));
+        map.put("this", g.get("this"));
+      }), e))
     );
   }
 
@@ -161,6 +173,17 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       m.sig().ret(),
       m.body().map(e->e.accept(this, pkg, g))
     );
+  }
+  public MIR.Meth visitMeth(String pkg, CM m, Map<String, T> gamma, E.Lambda l) {
+    var originalBody = ((CM.CoreCM) m).body();
+    var lambdaBody = originalBody.map(e->e.accept(new CloneVisitor(){
+      @Override public E.X visitX(E.X e) {
+//        if (e.name().equals("this")) { return new E.X(l.selfName(), e.pos()); }
+        return CloneVisitor.super.visitX(e);
+      }
+    }));
+    E.Meth mi = new E.Meth(m.sig(), m.name(), m.xs(), lambdaBody, Optional.of(m.pos()));
+    return this.visitMeth(pkg, mi, gamma);
   }
 
   /** Removes any redundant ITs from the list of impls for a lambda. */

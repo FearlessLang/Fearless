@@ -9,6 +9,9 @@ import id.Mdf;
 import visitors.MIRVisitor;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "op")
 @JsonSerialize
@@ -39,7 +42,7 @@ public interface MIR {
       return v.visitMCall(this, checkMagic);
     }
   }
-  record Lambda(Mdf mdf, Id.DecId freshName, String selfName, List<Id.IT<T>> its, Set<X> captures, List<Meth> meths, boolean canSingleton) implements MIR {
+  record Lambda(Mdf mdf, Id.DecId freshName, String selfName, List<Id.IT<T>> its, Set<X> captures, List<Meth> meths, boolean canSingleton, Function<Set<X>, Stream<Meth>> allMeths) implements MIR {
     public <R> R accept(MIRVisitor<R> v) {
       return this.accept(v, true);
     }
@@ -50,7 +53,7 @@ public interface MIR {
       return new T(mdf, new Id.IT<>(freshName, Collections.nCopies(freshName.gen(), new T(Mdf.mdf, new Id.GX<>("FearIgnored$")))));
     }
     public Lambda withITs(List<Id.IT<T>> its) {
-      return new Lambda(mdf, freshName, selfName, its, captures, meths, canSingleton);
+      return new Lambda(mdf, freshName, selfName, its, captures, meths, canSingleton, allMeths);
     }
     public boolean isFinal() {
       // TODO: could be used for future optimisations where we can use concrete types + static dispatch due to knowing that this is never extended
