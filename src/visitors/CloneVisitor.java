@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public interface CloneVisitor{
   default E.Meth visitMeth(E.Meth e){
     return new E.Meth(
-      visitSig(e.sig()),
+      visitSig(e.sigs()),
       visitMethName(e.name()),
       e.xs(),
       e.body().map(b->b.accept(this)),

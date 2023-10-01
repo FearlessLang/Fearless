@@ -25,10 +25,10 @@ public record FullEnv(List<String> xs, List<T> ts, List<Id.GX<T>> gxs, T decT) {
   public FullEnv add(E.Meth m){
     return new FullEnv(
       Push.of(xs,m.xs()),
-      Push.of(ts,m.sig().map(E.Sig::ts)
+      Push.of(ts,m.sigs().map(E.Sig::ts)
         .orElseGet(()->Collections.nCopies(m.xs().size(), T.infer))),
-      m.sig().map(sig->Push.of(gxs,sig.gens())).orElse(gxs),
-      decT.withMdf(m.sig().map(E.Sig::mdf).orElse(decT.mdf()))
+      m.sigs().map(sig->Push.of(gxs,sig.gens())).orElse(gxs),
+      decT.withMdf(m.sigs().map(E.Sig::mdf).orElse(decT.mdf()))
     );
   }
   public FullEnv add(List<Id.GX<T>>gxs){ return new FullEnv(xs,ts,Push.of(gxs(),gxs),decT); }

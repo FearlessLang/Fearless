@@ -102,12 +102,12 @@ public interface EMethTypeSystem extends ETypeSystem {
     if (!(rec.rt() instanceof Id.IT<T> recIT)) { return Optional.empty(); }
     var sig = p().meths(rec.mdf(), recIT, m, depth()).map(cm -> {
       var mdf = rec.mdf();
-      Map<GX<T>,T> xsTsMap = Mapper.of(c->Streams.zip(cm.sig().gens(), ts).forEach(c::put));
-      var xbs = xbs().addBounds(cm.sig().gens(), cm.sig().bounds());
+      Map<GX<T>,T> xsTsMap = Mapper.of(c->Streams.zip(cm.sigs().gens(), ts).forEach(c::put));
+      var xbs = xbs().addBounds(cm.sigs().gens(), cm.sigs().bounds());
 
       var params = Push.of(
         fancyRename(rec.rt().toString(), rec.withMdf(cm.mdf()), mdf, xsTsMap, TypeRename.RenameKind.Arg, xbs),
-        Streams.zip(cm.xs(), cm.sig().ts())
+        Streams.zip(cm.xs(), cm.sigs().ts())
           .map((xi, ti)->fancyRename(xi+": "+ti.rt().toString(), ti, mdf, xsTsMap, TypeRename.RenameKind.Arg, xbs))
           .toList()
       );

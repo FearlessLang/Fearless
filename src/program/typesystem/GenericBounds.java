@@ -34,7 +34,7 @@ public interface GenericBounds {
     if (gensValid.isPresent()) { return gensValid; }
     CM cm = p.meths(recvMdf, recvIT, name, depth).orElseThrow();
     // TODO: throw error if type args.len != cm.sig.len (user code is wrong)
-    return Streams.zip(typeArgs, cm.sig().gens())
+    return Streams.zip(typeArgs, cm.sigs().gens())
       .map((t, gx)->{
         var bounds = cm.bounds().getOrDefault(gx, XBs.defaultBounds);
         return validGenericMdf(xbs, bounds.isEmpty() ? XBs.defaultBounds : bounds, t);

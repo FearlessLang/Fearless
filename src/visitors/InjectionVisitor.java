@@ -5,7 +5,6 @@ import astFull.E;
 import failure.Fail;
 import id.Id;
 import id.Mdf;
-import program.typesystem.XBs;
 import utils.Bug;
 import utils.Mapper;
 import utils.Push;
@@ -90,7 +89,7 @@ public class InjectionVisitor implements FullVisitor<ast.E>{
   public ast.E.Meth visitMeth(E.Meth m){
     // TODO: throw CompileError (i.e. no single abstract method)
     return new ast.E.Meth(
-      visitSig(m.sig().orElseThrow()),
+      visitSig(m.sigs().orElseThrow()),
       m.name().orElseThrow(),
       m.xs(),
       m.body().map(b->b.accept(this)),

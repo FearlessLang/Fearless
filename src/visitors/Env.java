@@ -26,9 +26,9 @@ public record Env(List<String> xs, List<T> ts, List<Id.GX<T>> gxs, T decT, List<
   public Env add(E.Meth m){
     return new Env(
       Push.of(xs,m.xs()),
-      Push.of(ts,m.sig().ts()),
-      Push.of(gxs, m.sig().gens()),
-      decT.withMdf(m.sig().mdf()),
+      Push.of(ts,m.sigs().ts()),
+      Push.of(gxs, m.sigs().gens()),
+      decT.withMdf(m.sigs().mdf()),
       Push.of(ms, m.name()),
       Mapper.ofMut(c->{
         c.putAll(usages);

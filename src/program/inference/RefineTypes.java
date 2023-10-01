@@ -24,7 +24,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
   }
 
   E.Lambda fixLambda(E.Lambda lambda, int depth) {
-    if (lambda.meths().stream().anyMatch(m->m.sig().isEmpty())) {
+    if (lambda.meths().stream().anyMatch(m->m.sigs().isEmpty())) {
       return lambda;
     }
 
@@ -62,9 +62,9 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
         with replaceOnlyInfer(iTi,iT'i)=iT"i
       assert iTs1==Xs
      */
-    assert m.sig().isPresent();
-    var oldS=m.sig().get();
-    var refinedSig = refined.toSig(m.sig().flatMap(E.Sig::pos));
+    assert m.sigs().isPresent();
+    var oldS=m.sigs().get();
+    var refinedSig = refined.toSig(m.sigs().flatMap(E.Sig::pos));
     assert oldS.gens().equals(refinedSig.gens());
     var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
     var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
@@ -72,7 +72,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     return m.withSigs(oldS);
   }
   RefinedSig tSigOf(E.Meth m){
-    var sig = m.sig().orElseThrow();
+    var sig = m.sigs().orElseThrow();
     var name = m.name().orElseThrow();
     var gens = sig.gens().stream().map(g->new T(Mdf.mdf,g)).toList();
     return new RefinedSig(sig.mdf(), name, gens, sig.bounds(), sig.ts(),sig.ret());
@@ -169,7 +169,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
   }
 
   RefinedSig freshXs(Optional<CM> cm, Id.MethName name, List<Id.GX<ast.T>> gxs) {
-    var sig = cm.map(cmi->cmi.sig().toAstFullSig()).orElseThrow();
+    var sig = cm.map(cmi->cmi.sigs().toAstFullSig()).orElseThrow();
     assert sig.gens().size() == gxs.size();
     var tgxs = gxs.stream().map(gx->new T(Mdf.mdf, gx.toFullAstGX())).toList();
     var f = renamer.renameFun(tgxs,sig.gens());

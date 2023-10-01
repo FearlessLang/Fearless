@@ -27,7 +27,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     Program p0=p().withDec(d);
 
     var validMethods = b.meths().stream()
-      .filter(m->filterByMdf(mdf,m.sig().mdf()))
+      .filter(m->filterByMdf(mdf,m.sigs().mdf()))
       .toList();
     if (validMethods.size() != b.meths().size()) {
       throw Fail.uncallableMeths(
@@ -89,15 +89,15 @@ interface ELambdaTypeSystem extends ETypeSystem{
   }
   default Optional<CompileError> mOk(String selfName, T selfT, E.Meth m){
     var xbs_ = xbs();
-    for (var gx : m.sig().gens()) {
-      var bounds = m.sig().bounds().get(gx);
+    for (var gx : m.sigs().gens()) {
+      var bounds = m.sigs().bounds().get(gx);
       if (bounds == null || bounds.isEmpty()) { continue; }
       xbs_ = xbs_.add(gx.name(), bounds);
     }
     final var xbs = xbs_;
     var typeSysBounded = (ELambdaTypeSystem) withXBs(xbs);
 
-    var sigInvalid = Stream.concat(m.sig().ts().stream(), Stream.of(m.sig().ret()))
+    var sigInvalid = Stream.concat(m.sigs().ts().stream(), Stream.of(m.sigs().ret()))
       .map(t->GenericBounds.validGenericT(p(), xbs, t))
       .filter(Optional::isPresent)
       .map(Optional::get)
@@ -108,11 +108,11 @@ interface ELambdaTypeSystem extends ETypeSystem{
       return Optional.empty();
     }
     var e   = m.body().orElseThrow();
-    var mMdf = m.sig().mdf();
+    var mMdf = m.sigs().mdf();
 
 //    var selfTi = selfT;
-    var args = m.sig().ts();
-    var ret = m.sig().ret();
+    var args = m.sigs().ts();
+    var ret = m.sigs().ret();
     // todo: assert empty gamma for MDF mdf
     var g0  = g().captureSelf(xbs(), selfName, selfT, mMdf);
     Mdf selfTMdf = g0.get(selfName).mdf();
@@ -147,9 +147,9 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var g0 = readOnlyAsReadG.captureSelf(xbs(), selfName, selfT, mMdf.isReadOnly() ? Mdf.read : mMdf);
     var gg  = Streams.zip(
       m.xs(),
-      m.sig().ts().stream().map(t->t.mdf().isReadOnly() ? t.withMdf(Mdf.read) : t).toList()
+      m.sigs().ts().stream().map(t->t.mdf().isReadOnly() ? t.withMdf(Mdf.read) : t).toList()
     ).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sig().ret());
+    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sigs().ret());
   }
 
   default Optional<CompileError> mOkIsoPromotion(String selfName, T selfT, E.Meth m, Mdf mMdf) {
@@ -162,9 +162,9 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var g0 = mutAsLentG.captureSelf(xbs(), selfName, selfT, mMdf.isMut() ? Mdf.lent : mMdf);
     var gg  = Streams.zip(
       m.xs(),
-      m.sig().ts().stream().map(t->t.mdf().isMut() ? t.withMdf(Mdf.lent) : t).toList()
+      m.sigs().ts().stream().map(t->t.mdf().isMut() ? t.withMdf(Mdf.lent) : t).toList()
     ).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sig().ret().withMdf(Mdf.mut));
+    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sigs().ret().withMdf(Mdf.mut));
   }
 
   default Optional<CompileError> mOkImmPromotion(String selfName, T selfT, E.Meth m, Mdf mMdf, Mdf selfTMdf) {
@@ -178,8 +178,8 @@ interface ELambdaTypeSystem extends ETypeSystem{
       @Override public List<String> dom() { return g().dom(); }
     };
     var g0 = selfTMdf.isLikeMut() || selfTMdf.isRecMdf() ? Gamma.empty() : noMutyG.captureSelf(xbs(), selfName, selfT, mMdf);
-    var gg = Streams.zip(m.xs(), m.sig().ts()).filter((x,t)->!t.mdf().isLikeMut() && !t.mdf().isRecMdf()).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sig().ret().withMdf(Mdf.readOnly));
+    var gg = Streams.zip(m.xs(), m.sigs().ts()).filter((x, t)->!t.mdf().isLikeMut() && !t.mdf().isRecMdf()).fold(Gamma::add, g0);
+    return isoAwareJudgment(gg, m, m.body().orElseThrow(), m.sigs().ret().withMdf(Mdf.readOnly));
   }
 
   /** G;XBs |= e : T */

@@ -81,7 +81,7 @@ public class Program implements program.Program{
     Function<Id.GX<ast.T>, ast.T> f = TypeRename.core(this).renameFun(t.ts(), gxs);
     var bounds = XBs.empty().addBounds(gxs, Mapper.of(xbs->d.bounds().forEach((gx,bs)->xbs.put(new Id.GX<>(gx.name()), bs))));
     return d.lambda().meths().stream()
-      .filter(mi->mi.sig().isPresent())
+      .filter(mi->mi.sigs().isPresent())
       .map(mi->cm(recvMdf, t, mi, bounds, f))
       .toList();
   }
@@ -103,13 +103,13 @@ public class Program implements program.Program{
 
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, astFull.E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var sig=mi.sig().orElseThrow();
+    var sig=mi.sigs().orElseThrow();
     var cm = CM.of(t, mi, TypeRename.coreRec(this, recvMdf).renameSig(new InjectionVisitor().visitSig(sig), xbs, f));
     return norm(cm);
   }
   private CM cmCore(Id.IT<ast.T> t, astFull.E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var sig=mi.sig().orElseThrow();
+    var sig=mi.sigs().orElseThrow();
     var cm = CM.of(t, mi, TypeRename.core(this).renameSig(new InjectionVisitor().visitSig(sig), xbs, f));
     return norm(cm);
   }
@@ -211,14 +211,14 @@ public class Program implements program.Program{
     }
     E.Meth inferSignature(T.Dec dec, E.Meth m) {
       try {
-        if(m.sig().isPresent()){ return m; }
+        if(m.sigs().isPresent()){ return m; }
         var name=m.name().orElseGet(() -> onlyAbs(dec));
         if (m.xs().size() != name.num()) { throw Fail.cannotInferSig(dec.name(), name); }
         var namedMeth = m.withName(name);
         assert name.num()==namedMeth.xs().size();
         var inferred = p.meths(Mdf.recMdf, dec.toAstT(), name, 0)
           .orElseThrow(()->Fail.cannotInferSig(dec.name(), name));
-        return namedMeth.withSigs(inferred.sig().toAstFullSig());
+        return namedMeth.withSigs(inferred.sigs().toAstFullSig());
       } catch (CompileError e) {
         throw e.pos(m.pos());
       }

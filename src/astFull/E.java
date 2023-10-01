@@ -128,7 +128,7 @@ public sealed interface E extends HasPos {
     @Override public <R> R accept(FullVisitor<R> v){return v.visitX(this);}
     @Override public String toString(){ return name+":"+t; }
   }
-  record Meth(Optional<List<Sig>> sig,Optional<MethName> name, List<String>xs, Optional<E> body, Optional<Pos> pos) implements HasPos {
+  record Meth(Optional<List<Sig>> sigs, Optional<MethName> name, List<String>xs, Optional<E> body, Optional<Pos> pos) implements HasPos {
     public Meth {
       // TODO: throw a Fail error (can be caused by implementing a method of a lambda with the wrong number of gens)
       name.ifPresent(n->{ assert n.num() == xs.size(); });
@@ -138,13 +138,13 @@ public sealed interface E extends HasPos {
       return new Meth(Optional.of(s), name, xs, body, pos);
     }
     public Meth withName(MethName name) {
-      return new Meth(sig, Optional.of(name), xs, body, pos);
+      return new Meth(sigs, Optional.of(name), xs, body, pos);
     }
     public Meth withBody(Optional<E> body) {
-      return new Meth(sig, name, xs, body, pos);
+      return new Meth(sigs, name, xs, body, pos);
     }
     @Override public String toString() {
-      return String.format("%s(%s): %s -> %s", name.map(Object::toString).orElse("[-]"), xs, sig.map(Object::toString).orElse("[-]"), body.map(Object::toString).orElse("[-]"));
+      return String.format("%s(%s): %s -> %s", name.map(Object::toString).orElse("[-]"), xs, sigs.map(Object::toString).orElse("[-]"), body.map(Object::toString).orElse("[-]"));
     }
   }
   record Sig(Mdf mdf, List<Id.GX<T>> gens, Map<Id.GX<astFull.T>, Set<Mdf>> bounds, List<T> ts, T ret, Optional<Pos> pos) {

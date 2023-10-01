@@ -6,11 +6,8 @@ import ast.T;
 import failure.CompileError;
 import failure.Fail;
 import id.Id;
-import id.Mdf;
 import magic.Magic;
 import magic.MagicImpls;
-import program.TypeRename;
-import utils.Bug;
 import visitors.ShortCircuitVisitor;
 import visitors.ShortCircuitVisitorWithEnv;
 
@@ -51,7 +48,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
   }
 
   @Override public Optional<CompileError> visitMeth(E.Meth e) {
-    return norecMdfInNonRecMdf(e.sig(), e.name()).map(err->err.pos(e.pos()))
+    return norecMdfInNonRecMdf(e.sigs(), e.name()).map(err->err.pos(e.pos()))
       .or(()->super.visitMeth(e))
       .map(err->err.parentPos(e.pos()));
   }

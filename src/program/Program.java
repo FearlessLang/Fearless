@@ -126,12 +126,12 @@ public interface Program {
         var m2 = ms.get(1);
         var recv = new ast.E.X("this", Optional.empty());
         var xs=Push.of(m1.xs(),"this");
-        List<T> ts=Push.of(m2.sig().ts(),t1);
+        List<T> ts=Push.of(m2.sigs().ts(),t1);
 
-        var gxs = m2.sig().gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
+        var gxs = m2.sigs().gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
         var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
         // TODO: compute XBs
-        return isType(xs, ts, XBs.empty(), e, m2.sig().ret());
+        return isType(xs, ts, XBs.empty(), e, m2.sigs().ret());
       });
   }
 
@@ -158,7 +158,7 @@ public interface Program {
     if (mdf.isIso() || mdf.isMut() || mdf.isRecMdf()) {
       return Push.of(cm, filterByMdf(mdf, cms));
     }
-    var sig = cm.sig();
+    var sig = cm.sigs();
     if (mdf.isLent() && !sig.mdf().isIso()) { return Push.of(cm, filterByMdf(mdf, cms)); }
     var baseMdfReadLike = mdf.isImm() || mdf.isRead() || mdf.isReadOnly();
     var methMdfImmOrRead = sig.mdf().isImm() || sig.mdf().isReadOnly() || sig.mdf().isRead() || sig.mdf().isRecMdf();
@@ -193,7 +193,7 @@ public interface Program {
     assert myM_.size()==1;
 
     var cm = myM_.get(0);
-    var sig = cm.sig().toAstFullSig();
+    var sig = cm.sigs().toAstFullSig();
     var freshGXsSet = IntStream.range(0, nFresh.get()).mapToObj(n->new Id.GX<T>("FearTmp"+n+"$")).collect(Collectors.toSet());
     var restoredArgs = sig.ts().stream().map(t->RefineTypes.regenerateInfers(this, freshGXsSet, t)).toList();
     var restoredRt = RefineTypes.regenerateInfers(this, freshGXsSet, sig.ret());
@@ -287,24 +287,24 @@ public interface Program {
     norm(C[Ts].m[Par1 Xs](xTs):T->e) = C[Ts].m[Par1 Xs](xTs):T->e
      */
     //standardNames(n)->List.of(Par1..Parn)
-    var gx=cm.sig().gens();
+    var gx=cm.sigs().gens();
     List<Id.GX<ast.T>> names = new Refresher<ast.T>(0).freshNames(gx.size());
     Map<Id.GX<T>,Id.GX<T>> subst=IntStream.range(0,gx.size()).boxed()
       .collect(Collectors.toMap(gx::get, names::get));
-    var newSig=new RenameGens(subst).visitSig(cm.sig());
-    return cm.withSig(newSig);
+    var newSig=new RenameGens(subst).visitSig(cm.sigs());
+    return cm.withSigs(newSig);
   }
 
   /**
    * Normalised CMs are required for 5a, but the rest of the type system needs fresh names.
    */
   default CM freshenMethGens(CM cm, int depth) {
-    var gxs=cm.sig().gens();
+    var gxs=cm.sigs().gens();
     var names = new Refresher<T>(depth).freshNames(gxs.size());
     Map<Id.GX<T>,Id.GX<T>> subst=IntStream.range(0,gxs.size()).boxed()
       .collect(Collectors.toMap(gxs::get, names::get));
-    var newSig=new RenameGens(subst).visitSig(cm.sig());
-    return cm.withSig(newSig);
+    var newSig=new RenameGens(subst).visitSig(cm.sigs());
+    return cm.withSigs(newSig);
   }
 
   default List<CM> prune(List<CM> cms, Optional<Pos> lambdaPos) {
@@ -382,8 +382,8 @@ public interface Program {
     var ta = new T(Mdf.mut, a.c());
     var tb = new T(Mdf.mut, b.c());
     if(tryIsSubType(tb, ta)){ return false; }
-    var ok=a.sig().gens().equals(b.sig().gens())
-      && a.sig().ts().equals(b.sig().ts())
+    var ok=a.sigs().gens().equals(b.sigs().gens())
+      && a.sigs().ts().equals(b.sigs().ts())
       && a.mdf()==b.mdf();
     if(!ok){ return false; }
 

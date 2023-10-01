@@ -4,12 +4,9 @@ import astFull.E;
 import astFull.T;
 import files.HasPos;
 import id.Id;
-import id.Mdf;
-import magic.Magic;
 import failure.CompileError;
 import failure.Fail;
 import astFull.Program;
-import utils.Box;
 import visitors.FullShortCircuitVisitor;
 import visitors.FullShortCircuitVisitorWithEnv;
 
@@ -97,13 +94,13 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
       .or(()->noExplicitThis(e.xs()))
       .or(()->noShadowingVar(e.xs()))
       .or(()->hasNonDisjointXs(
-        e.sig()
+        e.sigs()
           .map(s->s.gens().stream().map(Id.GX::name).toList())
           .orElse(List.of()),
         e))
-      .or(()->noShadowingGX(e.sig().map(E.Sig::gens).orElse(List.of())))
+      .or(()->noShadowingGX(e.sigs().map(E.Sig::gens).orElse(List.of())))
       .or(()->validMethMdf(e))
-      .or(()->e.sig().flatMap(s->e.name().flatMap(name->noRecMdfInNonRecMdf(s, name))).map(err->err.pos(e.pos())))
+      .or(()->e.sigs().flatMap(s->e.name().flatMap(name->noRecMdfInNonRecMdf(s, name))).map(err->err.pos(e.pos())))
       .or(()->super.visitMeth(e))
       .map(err->err.parentPos(e.pos()));
   }
@@ -201,9 +198,9 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
   }
 
   private Optional<CompileError> validMethMdf(E.Meth e) {
-    return e.sig().flatMap(m->{
+    return e.sigs().flatMap(m->{
       if (!m.mdf().isMdf()) { return Optional.empty(); }
-      return Optional.of(Fail.invalidMethMdf(e.sig().get(), e.name().orElseThrow()));
+      return Optional.of(Fail.invalidMethMdf(e.sigs().get(), e.name().orElseThrow()));
     });
   }
 

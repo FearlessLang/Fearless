@@ -37,21 +37,21 @@ public record InferBodies(ast.Program p) {
   ast.E.Meth inferMethBody(ast.T.Dec dec, E e, ast.E.Meth coreMeth) {
     var refiner = new RefineTypes(p);
     var iV = new InjectionVisitor();
-    var type = refiner.fixType(e,coreMeth.sig().toAstFullSig().ret());
+    var type = refiner.fixType(e,coreMeth.sigs().toAstFullSig().ret());
     var newBody = fixInferStep(iGOf(dec, coreMeth), type, 0).accept(iV);
     return coreMeth.withBody(Optional.of(newBody));
   }
 
   private Map<String, astFull.T> iGOf(ast.T.Dec dec, ast.E.Meth m) {
     assert dec.lambda().selfName() != null;
-    var t = new astFull.T(m.sig().mdf(), dec.toIT().toFullAstIT(ast.T::toAstFullT));
+    var t = new astFull.T(m.sigs().mdf(), dec.toIT().toFullAstIT(ast.T::toAstFullT));
     return iGOf(dec.lambda().selfName(), t, m);
   }
 
   private Map<String, astFull.T> iGOf(String selfName, astFull.T lambdaT, ast.E.Meth m) {
     Map<String, astFull.T> gamma = new HashMap<>();
     gamma.put(selfName, lambdaT);
-    var sig = m.sig();
+    var sig = m.sigs();
 //    var sig = p.fullSig(lambdaT.itOrThrow(), cm->cm.name().equals(m.name())).orElseThrow();
     Streams.zip(m.xs(), sig.ts()).forEach((k,t)->gamma.put(k, t.toAstFullT()));
     return Collections.unmodifiableMap(gamma);
@@ -76,7 +76,7 @@ public record InferBodies(ast.Program p) {
 
   // propagation
   Optional<E> refineLambda(E.Lambda e, E.Lambda baseLambda, int depth){
-    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sig().isEmpty());
+    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sigs().isEmpty());
     if(anyNoSig){ return Optional.of(baseLambda); }
     return Optional.of(new RefineTypes(p).fixLambda(baseLambda, depth));
   }
@@ -102,11 +102,11 @@ public record InferBodies(ast.Program p) {
     return res;
   }
   Optional<E.Meth> bPropWithSig(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
-    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sig().isEmpty());
+    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sigs().isEmpty());
     if(anyNoSig){ return Optional.empty(); }
     if(m.body().isEmpty()){ return Optional.empty(); }
-    if(m.sig().isEmpty()){ return Optional.empty(); }
-    var sig = m.sig().orElseThrow();
+    if(m.sigs().isEmpty()){ return Optional.empty(); }
+    var sig = m.sigs().orElseThrow();
     Map<String, T> richGamma = new HashMap<>(gamma);
     richGamma.put(e.selfName(),new T(sig.mdf(), e.it().orElseThrow()));
     Streams.zip(m.xs(), sig.ts()).forEach(richGamma::put);
@@ -125,7 +125,7 @@ public record InferBodies(ast.Program p) {
   }
   Optional<E.Meth> bPropGetSigM(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     assert !e.it().isEmpty();
-    if(m.sig().isPresent()){ return Optional.empty(); }
+    if(m.sigs().isPresent()){ return Optional.empty(); }
     if(m.name().isPresent()){ return Optional.empty(); }
     // TODO: make sure the number of params matches the returned method before calling withName
     var res = onlyAbs(e, depth).map(fullSig->m.withName(fullSig.name()).withSigs(fullSig.sig()));
@@ -135,7 +135,7 @@ public record InferBodies(ast.Program p) {
 
   Optional<E.Meth> bPropGetSig(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     assert !e.it().isEmpty();
-    if(m.sig().isPresent()){ return Optional.empty(); }
+    if(m.sigs().isPresent()){ return Optional.empty(); }
     if(m.name().isEmpty()){ return Optional.empty(); }
     var sig = onlyMName(e, m.name().get(), depth);
     if(sig.isEmpty()){ return Optional.empty(); }

@@ -5,7 +5,6 @@ import ast.Program;
 import ast.T;
 import id.Id;
 import org.apache.commons.text.StringEscapeUtils;
-import program.CM;
 import utils.Streams;
 
 import java.net.URLEncoder;
@@ -69,9 +68,9 @@ public class MarkdownDocgen {
   }
 
   public String visitMeth(String pkg, Id.DecId d, E.Meth m) {
-    var typeParams = m.sig().gens().stream().map(x->"- `"+x+"`").collect(Collectors.joining("\n"));
+    var typeParams = m.sigs().gens().stream().map(x->"- `"+x+"`").collect(Collectors.joining("\n"));
     if (!typeParams.isEmpty()) { typeParams = "**Type parameters**:\n" + typeParams; }
-    var args = Streams.zip(m.xs(), m.sig().ts())
+    var args = Streams.zip(m.xs(), m.sigs().ts())
       .map((x, t)->t.match(
         gx->"- `%s: %s`".formatted(x, gx),
         it->"- [`%s: %s`](%s)".formatted(x, it, toURLPath(it.name().pkg(), fragment(it.name())))
@@ -84,7 +83,7 @@ public class MarkdownDocgen {
     var url = toURLPath(pkg, fragment);
     var header = (m.isAbs() ? "<h3 id=\"%s\"><a href=\"#%s\"><em><code>%s</code></em></a></h3>\n\n*Abstract*\n" : "<h3 id=\"#%s\"><a href=\"#%s\"><code>%s</code></a></h3>")
       .formatted(url, fragment, name);
-    var ret = m.sig().ret().match(gx->"`"+gx+"`", it->"[`"+it+"`]("+toURLPath(it.name().pkg(), fragment(it.name()))+")");
+    var ret = m.sigs().ret().match(gx->"`"+gx+"`", it->"[`"+it+"`]("+toURLPath(it.name().pkg(), fragment(it.name()))+")");
     return """
       %s
       
