@@ -3,7 +3,6 @@ package program.inference;
 import ast.Program;
 import astFull.E;
 import astFull.T;
-import failure.CompileError;
 import files.Pos;
 import id.Id;
 import id.Mdf;
@@ -70,7 +69,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
     var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
     oldS = oldS.withRet(retT).withTs(fixedTs);
-    return m.withSig(oldS);
+    return m.withSigs(oldS);
   }
   RefinedSig tSigOf(E.Meth m){
     var sig = m.sig().orElseThrow();

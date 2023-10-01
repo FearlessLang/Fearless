@@ -115,10 +115,10 @@ public record InferBodies(ast.Program p) {
     var e1 = m.body().get();
     var e2 = refiner.fixType(e1,sig.ret());
     var optBody = inferStep(richGamma,e2,depth);
-    var res = optBody.map(b->m.withBody(Optional.of(b)).withSig(refiner.fixSig(sig, b.t())));
+    var res = optBody.map(b->m.withBody(Optional.of(b)).withSigs(refiner.fixSig(sig, b.t())));
     var finalRes = res.or(()->e1==e2
       ? Optional.empty()
-      : Optional.of(m.withBody(Optional.of(e2)).withSig(refiner.fixSig(sig, e2.t()))));
+      : Optional.of(m.withBody(Optional.of(e2)).withSigs(refiner.fixSig(sig, e2.t()))));
     return finalRes.map(m1->!m.equals(m1)).orElse(true) ? finalRes : Optional.empty();
 //    assert finalRes.map(m1->!m.equals(m1)).orElse(true);
 //    return finalRes;
@@ -128,7 +128,7 @@ public record InferBodies(ast.Program p) {
     if(m.sig().isPresent()){ return Optional.empty(); }
     if(m.name().isPresent()){ return Optional.empty(); }
     // TODO: make sure the number of params matches the returned method before calling withName
-    var res = onlyAbs(e, depth).map(fullSig->m.withName(fullSig.name()).withSig(fullSig.sig()));
+    var res = onlyAbs(e, depth).map(fullSig->m.withName(fullSig.name()).withSigs(fullSig.sig()));
     assert res.map(m1->!m.equals(m1)).orElse(true);
     return res;
   }
@@ -139,7 +139,7 @@ public record InferBodies(ast.Program p) {
     if(m.name().isEmpty()){ return Optional.empty(); }
     var sig = onlyMName(e, m.name().get(), depth);
     if(sig.isEmpty()){ return Optional.empty(); }
-    var res = sig.map(s->m.withSig(s.sig()));
+    var res = sig.map(s->m.withSigs(s.sig()));
     assert res.map(m1->!m.equals(m1)).orElse(true);
     return res;
   }

@@ -218,7 +218,7 @@ public class Program implements program.Program{
         assert name.num()==namedMeth.xs().size();
         var inferred = p.meths(Mdf.recMdf, dec.toAstT(), name, 0)
           .orElseThrow(()->Fail.cannotInferSig(dec.name(), name));
-        return namedMeth.withSig(inferred.sig().toAstFullSig());
+        return namedMeth.withSigs(inferred.sig().toAstFullSig());
       } catch (CompileError e) {
         throw e.pos(m.pos());
       }

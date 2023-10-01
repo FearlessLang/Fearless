@@ -1,6 +1,5 @@
 package astFull;
 
-import failure.Fail;
 import files.HasPos;
 import files.Pos;
 import id.Id;
@@ -129,13 +128,13 @@ public sealed interface E extends HasPos {
     @Override public <R> R accept(FullVisitor<R> v){return v.visitX(this);}
     @Override public String toString(){ return name+":"+t; }
   }
-  record Meth(Optional<Sig> sig,Optional<MethName> name, List<String>xs, Optional<E> body, Optional<Pos> pos) implements HasPos {
+  record Meth(Optional<List<Sig>> sig,Optional<MethName> name, List<String>xs, Optional<E> body, Optional<Pos> pos) implements HasPos {
     public Meth {
       // TODO: throw a Fail error (can be caused by implementing a method of a lambda with the wrong number of gens)
       name.ifPresent(n->{ assert n.num() == xs.size(); });
     }
     public boolean isAbs(){ return body().isEmpty(); }
-    public Meth withSig(Sig s) {
+    public Meth withSigs(List<Sig> s) {
       return new Meth(Optional.of(s), name, xs, body, pos);
     }
     public Meth withName(MethName name) {
