@@ -79,7 +79,7 @@ bblock : | SelfX? singleM  | SelfX? (meth (Comma meth)*)? Comma?;
 
 t      : mdf fullCN mGen; //we recognize if fullCN is an X after parsing
 singleM: (x (Comma x)*)? Arrow e | e;
-meth   : sig | sig Arrow e | m OR (x (Comma x)*)? CR Arrow e | m (x (Comma x)*)? Arrow e;
+meth   : sig+ | sig+ Arrow e | m OR (x (Comma x)*)? CR Arrow e | m (x (Comma x)*)? Arrow e;
 sig    : mdf m mGen (OR gamma CR)? Colon t | mdf m mGen gamma Colon t;
 gamma  : (x Colon t (Comma x Colon t)*)?;
 topDec : fullCN mGen Colon block;
