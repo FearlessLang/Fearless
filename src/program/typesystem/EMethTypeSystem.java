@@ -120,7 +120,7 @@ public interface EMethTypeSystem extends ETypeSystem {
       }
       return Collections.unmodifiableList(candidates);
     });
-    return sigs.map(tsts->tsts.stream().map(this::allMeth).flatMap(List::stream).toList());
+    return sigs.map(tsts->tsts.stream().map(this::allMeth).flatMap(List::stream).distinct().toList());
   }
 
   default List<TsT> allMeth(TsT tst) {

@@ -6,16 +6,12 @@ Bool:Sealed,Stringable{
   .or(b: Bool): Bool,
   ||(b: Bool): Bool -> this.or(b),
   .not: Bool,
-  ?[R](f: mut ThenElse[mdf R]): mdf R
-  ?[R](f: read ThenElse[mdf R]): mdf R,
+  ?[R](f: mut ThenElse[mdf R]): mdf R,
   }
 True:Bool{ .and(b) -> b, .or(b) -> this, .not -> False, ?(f) -> f.then(), .str -> "True" }
 False:Bool{ .and(b) -> this, .or(b) -> b, .not -> True, ?(f) -> f.else(), .str -> "False" }
 ThenElse[R]:{
-  mut .then: mdf R
-  read .then: mdf R,
-
+  mut .then: mdf R,
   mut .else: mdf R
-  read .else: mdf R,
   }
 
