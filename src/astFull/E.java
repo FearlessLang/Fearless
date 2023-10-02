@@ -146,7 +146,7 @@ public sealed interface E extends HasPos {
         return new Meth(Optional.of(List.of(s)), name, xs, body, pos);
       }
       var oldSigs = this.sigs.get();
-      var sigs = Push.of(oldSigs.subList(1, oldSigs.size()), s);
+      var sigs = Push.of(oldSigs.subList(0, oldSigs.size()-1), s);
       return new Meth(Optional.of(sigs), name, xs, body, pos);
     }
     public Meth withName(MethName name) {

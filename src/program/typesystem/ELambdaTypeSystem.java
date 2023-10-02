@@ -125,7 +125,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
 
     var args = sig.ts();
     var ret = sig.ret();
-    // todo: assert empty gamma for MDF mdf
+    assert !selfT.mdf().isMdf() || g().dom().isEmpty();
     var g0  = g().captureSelf(xbs(), selfName, selfT, mMdf);
     Mdf selfTMdf = g0.get(selfName).mdf();
     var gg  = Streams.zip(m.xs(), args).fold(Gamma::add, g0);
