@@ -81,7 +81,7 @@ public class Program implements program.Program{
     Function<Id.GX<ast.T>, ast.T> f = TypeRename.core(this).renameFun(t.ts(), gxs);
     var bounds = XBs.empty().addBounds(gxs, Mapper.of(xbs->d.bounds().forEach((gx,bs)->xbs.put(new Id.GX<>(gx.name()), bs))));
     return d.lambda().meths().stream()
-      .filter(mi->mi.sig().isPresent())
+      .filter(mi->mi.sigs().isPresent())
       .map(mi->cm(recvMdf, t, mi, bounds, f))
       .toList();
   }
@@ -216,7 +216,7 @@ public class Program implements program.Program{
     }
     E.Meth inferSignature(T.Dec dec, E.Meth m) {
       try {
-        if(m.sig().isPresent()){ return m; }
+        if(m.sigs().isPresent()){ return m; }
         var name=m.name().orElseGet(() -> onlyAbs(dec));
         if (m.xs().size() != name.num()) { throw Fail.cannotInferSig(dec.name(), name); }
         var namedMeth = m.withName(name);

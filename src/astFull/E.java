@@ -8,6 +8,7 @@ import id.Id.MethName;
 import id.Mdf;
 import main.Main;
 import utils.Bug;
+import utils.Push;
 import visitors.FullCloneVisitor;
 import visitors.FullVisitor;
 import visitors.InjectionVisitor;
@@ -133,11 +134,20 @@ public sealed interface E extends HasPos {
     public Meth {
       // TODO: throw a Fail error (can be caused by implementing a method of a lambda with the wrong number of gens)
       name.ifPresent(n->{ assert n.num() == xs.size(); });
+      assert sigs.isEmpty() || !sigs.get().isEmpty();
     }
     public boolean isAbs(){ return body().isEmpty(); }
-    public Optional<Sig> sig() { return sigs.map(s->s.get(s.size() - 1)); }
+    public Optional<Sig> preferredSig() { return sigs.map(s->s.get(s.size() - 1)); }
     public Meth withSigs(List<Sig> s) {
       return new Meth(Optional.of(s), name, xs, body, pos);
+    }
+    public Meth withInferredSig(Sig s) {
+      if (this.sigs.isEmpty() || this.sigs.get().isEmpty()) {
+        return new Meth(Optional.of(List.of(s)), name, xs, body, pos);
+      }
+      var oldSigs = this.sigs.get();
+      var sigs = Push.of(oldSigs.subList(1, oldSigs.size()), s);
+      return new Meth(Optional.of(sigs), name, xs, body, pos);
     }
     public Meth withName(MethName name) {
       return new Meth(sigs, Optional.of(name), xs, body, pos);

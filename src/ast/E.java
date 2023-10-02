@@ -75,8 +75,9 @@ public interface E extends HasPos {
   }
   record Meth(List<Sig> sigs, MethName name, List<String> xs, Optional<E> body, Optional<Pos> pos) implements HasPos{
     public Meth{ //noinspection OptionalAssigsnedToNull
-      assert sigs!= null && name.num()==xs.size() && body!=null; }
+      assert sigs != null && !sigs.isEmpty() && name.num()==xs.size() && body!=null; }
     public boolean isAbs(){ return body().isEmpty(); }
+    public Sig prioritySig() { return sigs.get(sigs().size() - 1); }
     public ast.E.Meth withBody(Optional<ast.E> body) {
       return new ast.E.Meth(sigs, name, xs, body, pos);
     }

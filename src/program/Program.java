@@ -133,10 +133,10 @@ public interface Program {
         return Streams.zip(m1.sig(), m2.sig()).allMatch((s1,s2)->{
           List<T> ts=Push.of(s2.ts(),t1);
 
+          if (s1.gens() != s2.gens() || s1.bounds() != s2.bounds()) { return false; }
           var gxs = s2.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
           var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
-          // TODO: compute XBs
-          return isType(xs, ts, XBs.empty(), e, s2.ret());
+          return isType(xs, ts, XBs.empty().addBounds(s2.gens(), s2.bounds()), e, s2.ret());
         });
       });
   }
@@ -163,11 +163,6 @@ public interface Program {
       if (mdf.isLent() && !mMdf_.isIso()) { return true; }
       return mdf.is(Mdf.imm, Mdf.read, Mdf.readOnly) && mMdf_.is(Mdf.imm, Mdf.read, Mdf.readOnly, Mdf.recMdf);
     });
-  }
-
-  record MWisePair(E.Meth a, E.Meth b){}
-  default List<MWisePair> mWisePairs(){
-    throw Bug.todo();
   }
 
   record FullMethSig(Id.MethName name, List<E.Sig> sig){}
@@ -338,6 +333,11 @@ public interface Program {
     assert !cms.isEmpty();
     var first=cms.get(0);
     if (cms.size() == 1) { return first; }
+    var validGroup = cms.stream().allMatch(cm->first.sig().size() == cm.sig().size());
+    if (!validGroup) {
+      throw Fail.uncomposableMethods(cms.stream().map(cm->Fail.conflict(cm.pos(), cm.toStringSimplified())).toList());
+    }
+
     var nextCms=cms.stream().skip(1)
       .filter(cmi->!firstIsMoreSpecific(first, cmi) && !firstIsMoreSpecific(plainCM(first), plainCM(cmi)))
       .toList();
@@ -379,27 +379,29 @@ public interface Program {
            - e?j is empty and Ti = Tj//only not derm on syntactically eq
            - e?j is empty, Ds|- Ti<=Tj and not Ds|- Tj<=Ti
        */
-    assert a.name().equals(b.name());
-    var ta = new T(Mdf.mut, a.c());
-    var tb = new T(Mdf.mut, b.c());
-    if(tryIsSubType(tb, ta)){ return false; }
-    var ok=a.sig().gens().equals(b.sig().gens())
-      && a.sig().ts().equals(b.sig().ts())
-      && a.mdf()==b.mdf();
-    if(!ok){ return false; }
+    return Streams.zip(a.sig(), b.sig()).allMatch((aSig,bSig)->{
+      assert a.name().equals(b.name());
+      var ta = new T(Mdf.mut, a.c());
+      var tb = new T(Mdf.mut, b.c());
+      if(tryIsSubType(tb, ta)){ return false; }
+      var ok=aSig.gens().equals(bSig.gens())
+        && aSig.ts().equals(bSig.ts())
+        && aSig.mdf()==bSig.mdf();
+      if(!ok){ return false; }
 
-    var isSubType = tryIsSubType(ta, tb) && tryIsSubType(a.ret(), b.ret());
-    if(isSubType){ return true; }
+      var isSubType = tryIsSubType(ta, tb) && tryIsSubType(aSig.ret(), bSig.ret());
+      if(isSubType){ return true; }
 
-    var is1AbsAndRetEq = b.isAbs() && a.ret().equals(b.ret());
-    if(is1AbsAndRetEq){ return true; }
+      var is1AbsAndRetEq = b.isAbs() && aSig.ret().equals(bSig.ret());
+      if(is1AbsAndRetEq){ return true; }
 
-    var is1AbsAndRetSubtype = b.isAbs()
-      && tryIsSubType(a.ret(), b.ret())
-      && !tryIsSubType(b.ret(), a.ret());
-    if(is1AbsAndRetSubtype){ return true; }
+      var is1AbsAndRetSubtype = b.isAbs()
+        && tryIsSubType(aSig.ret(), bSig.ret())
+        && !tryIsSubType(bSig.ret(), aSig.ret());
+      if(is1AbsAndRetSubtype){ return true; }
 
-    return false;
+      return false;
+    });
   }
 
   default boolean isTransitiveSubType(T t1, T t3) {

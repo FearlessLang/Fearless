@@ -26,7 +26,7 @@ public interface FullCollectorVisitor<C extends Collection<?>> extends FullVisit
   }
   default Void visitMeth(E.Meth m) {
     m.name().ifPresent(this::visitMethName);
-    m.sig().ifPresent(this::visitSig);
+    m.sigs().ifPresent(sigs->sigs.forEach(this::visitSig));
     m.body().ifPresent(e->e.accept(this));
     return null;
   }

@@ -281,17 +281,18 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
       var _xs = opt(ctx.x(), xs1->xs1.stream().map(this::visitX).toList());
       return _xs==null?List.of():_xs;
     });
-    Box<MethName> name = new Box<>(new MethName(ctx.m().getText(),xs.get().size()));
-    var sigs = Optional.ofNullable(ctx.sig()).map(sigs_->sigs_.stream()
+    Box<Optional<MethName>> name = new Box<>(Optional.ofNullable(ctx.m())
+      .map(nameCtx->new MethName(nameCtx.getText(),xs.get().size())));
+    var sigs = Optional.ofNullable(ctx.sig()).filter(sigs_->!sigs_.isEmpty()).map(sigs_->sigs_.stream()
       .map(this::visitSig)
       .map(mh->{
         xs.set(mh.xs);
-        name.set(mh.name);
+        name.set(Optional.of(mh.name));
         return new E.Sig(mh.mdf(), mh.gens(), mh.bounds(), mh.xs.stream().map(E.X::t).toList(), mh.ret(), Optional.of(pos(ctx)));
       })
       .toList());
 
-    return new E.Meth(sigs, Optional.of(name.get()), xs.get().stream().map(E.X::name).toList(), body, Optional.of(pos(ctx)));
+    return new E.Meth(sigs, name.get(), xs.get().stream().map(E.X::name).toList(), body, Optional.of(pos(ctx)));
   }
   public record MethHeader(Mdf mdf, MethName name, List<Id.GX<T>> gens, Map<Id.GX<astFull.T>, Set<Mdf>> bounds, List<E.X> xs, T ret){}
   @Override

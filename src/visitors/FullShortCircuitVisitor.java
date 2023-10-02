@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 public interface FullShortCircuitVisitor<R> extends FullVisitor<Optional<R>> {
   default Optional<R> visitMeth(E.Meth e){
-    return e.sig().flatMap(this::visitSig)
+    return e.sigs().flatMap(sigs->visitAll(sigs, this::visitSig))
       .or(()->e.name().flatMap(this::visitMethName))
       .or(()->e.body().flatMap(b->b.accept(this)));
   }

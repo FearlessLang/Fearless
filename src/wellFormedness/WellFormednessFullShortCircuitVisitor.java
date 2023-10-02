@@ -97,13 +97,13 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
       .or(()->noExplicitThis(e.xs()))
       .or(()->noShadowingVar(e.xs()))
       .or(()->hasNonDisjointXs(
-        e.sig()
+        e.preferredSig()
           .map(s->s.gens().stream().map(Id.GX::name).toList())
           .orElse(List.of()),
         e))
-      .or(()->noShadowingGX(e.sig().map(E.Sig::gens).orElse(List.of())))
+      .or(()->noShadowingGX(e.preferredSig().map(E.Sig::gens).orElse(List.of())))
       .or(()->validMethMdf(e))
-      .or(()->e.sig().flatMap(s->e.name().flatMap(name->noRecMdfInNonRecMdf(s, name))).map(err->err.pos(e.pos())))
+      .or(()->e.preferredSig().flatMap(s->e.name().flatMap(name->noRecMdfInNonRecMdf(s, name))).map(err->err.pos(e.pos())))
       .or(()->super.visitMeth(e))
       .map(err->err.parentPos(e.pos()));
   }
@@ -201,10 +201,10 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
   }
 
   private Optional<CompileError> validMethMdf(E.Meth e) {
-    return e.sig().flatMap(m->{
-      if (!m.mdf().isMdf()) { return Optional.empty(); }
-      return Optional.of(Fail.invalidMethMdf(e.sig().get(), e.name().orElseThrow()));
-    });
+    return e.sigs().map(sigs->sigs.stream()
+      .filter(sig->sig.mdf().isMdf()).map(sig->Fail.invalidMethMdf(sig, e.name().orElseThrow()))
+      .findFirst()
+    ).flatMap(x->x);
   }
 
   private Optional<CompileError> noRecMdfInNonRecMdf(E.Sig s, Id.MethName name) {

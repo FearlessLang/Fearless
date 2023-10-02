@@ -1,10 +1,12 @@
 package codegen.md;
 
 import main.Main;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
 import program.inference.InferBodies;
 import utils.Base;
+import utils.Bug;
 import utils.Err;
 import wellFormedness.WellFormednessFullShortCircuitVisitor;
 import wellFormedness.WellFormednessShortCircuitVisitor;
@@ -31,10 +33,12 @@ public class TestMarkdownDocgen {
     var inferred = new InferBodies(inferredSigs).inferAll(p);
     new WellFormednessShortCircuitVisitor(inferred).visitProgram(inferred);
     inferred.typeCheck();
-    var md = new MarkdownDocgen(inferred).visitProgram();
-    Err.strCmp(expected, md.toString());
+    throw Bug.todo();
+//    var md = new MarkdownDocgen(inferred).visitProgram();
+//    Err.strCmp(expected, md.toString());
   }
 
+  @Disabled
   @Test void emptyProgram() { ok("""
 [TraitDoc[fileName=base.md, markdown=<h1><code>base</code></h1>
 

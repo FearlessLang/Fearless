@@ -37,21 +37,21 @@ public record InferBodies(ast.Program p) {
   ast.E.Meth inferMethBody(ast.T.Dec dec, E e, ast.E.Meth coreMeth) {
     var refiner = new RefineTypes(p);
     var iV = new InjectionVisitor();
-    var type = refiner.fixType(e,coreMeth.sig().toAstFullSig().ret());
+    var type = refiner.fixType(e,coreMeth.prioritySig().toAstFullSig().ret());
     var newBody = fixInferStep(iGOf(dec, coreMeth), type, 0).accept(iV);
     return coreMeth.withBody(Optional.of(newBody));
   }
 
   private Map<String, astFull.T> iGOf(ast.T.Dec dec, ast.E.Meth m) {
     assert dec.lambda().selfName() != null;
-    var t = new astFull.T(m.sig().mdf(), dec.toIT().toFullAstIT(ast.T::toAstFullT));
+    var t = new astFull.T(m.prioritySig().mdf(), dec.toIT().toFullAstIT(ast.T::toAstFullT));
     return iGOf(dec.lambda().selfName(), t, m);
   }
 
   private Map<String, astFull.T> iGOf(String selfName, astFull.T lambdaT, ast.E.Meth m) {
     Map<String, astFull.T> gamma = new HashMap<>();
     gamma.put(selfName, lambdaT);
-    var sig = m.sig();
+    var sig = m.prioritySig();
 //    var sig = p.fullSig(lambdaT.itOrThrow(), cm->cm.name().equals(m.name())).orElseThrow();
     Streams.zip(m.xs(), sig.ts()).forEach((k,t)->gamma.put(k, t.toAstFullT()));
     return Collections.unmodifiableMap(gamma);
@@ -76,7 +76,7 @@ public record InferBodies(ast.Program p) {
 
   // propagation
   Optional<E> refineLambda(E.Lambda e, E.Lambda baseLambda, int depth){
-    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sig().isEmpty());
+    var anyNoSig = e.meths().stream().anyMatch(mi->mi.preferredSig().isEmpty());
     if(anyNoSig){ return Optional.of(baseLambda); }
     return Optional.of(new RefineTypes(p).fixLambda(baseLambda, depth));
   }
@@ -102,11 +102,11 @@ public record InferBodies(ast.Program p) {
     return res;
   }
   Optional<E.Meth> bPropWithSigs(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
-    var anyNoSig = e.meths().stream().anyMatch(mi->mi.sig().isEmpty());
+    var anyNoSig = e.meths().stream().anyMatch(mi->mi.preferredSig().isEmpty());
     if(anyNoSig){ return Optional.empty(); }
     if(m.body().isEmpty()){ return Optional.empty(); }
-    if(m.sig().isEmpty()){ return Optional.empty(); }
-    var sig = m.sig().orElseThrow();
+    if(m.preferredSig().isEmpty()){ return Optional.empty(); }
+    var sig = m.preferredSig().orElseThrow();
     Map<String, T> richGamma = new HashMap<>(gamma);
     richGamma.put(e.selfName(),new T(sig.mdf(), e.it().orElseThrow()));
     Streams.zip(m.xs(), sig.ts()).forEach(richGamma::put);
@@ -115,31 +115,31 @@ public record InferBodies(ast.Program p) {
     var e1 = m.body().get();
     var e2 = refiner.fixType(e1,sig.ret());
     var optBody = inferStep(richGamma,e2,depth);
-    var res = optBody.map(b->m.withBody(Optional.of(b)).withSig(refiner.fixSig(sig, b.t())));
+    var res = optBody.map(b->m.withBody(Optional.of(b)).withInferredSig(refiner.fixSig(sig, b.t())));
     var finalRes = res.or(()->e1==e2
       ? Optional.empty()
-      : Optional.of(m.withBody(Optional.of(e2)).withSig(refiner.fixSig(sig, e2.t()))));
+      : Optional.of(m.withBody(Optional.of(e2)).withInferredSig(refiner.fixSig(sig, e2.t()))));
     return finalRes.map(m1->!m.equals(m1)).orElse(true) ? finalRes : Optional.empty();
 //    assert finalRes.map(m1->!m.equals(m1)).orElse(true);
 //    return finalRes;
   }
   Optional<E.Meth> bPropGetSigsM(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     assert !e.it().isEmpty();
-    if(m.sig().isPresent()){ return Optional.empty(); }
+    if(m.preferredSig().isPresent()){ return Optional.empty(); }
     if(m.name().isPresent()){ return Optional.empty(); }
     // TODO: make sure the number of params matches the returned method before calling withName
-    var res = onlyAbs(e, depth).map(fullSig->m.withName(fullSig.name()).withSig(fullSig.sig()));
+    var res = onlyAbs(e, depth).map(fullSig->m.withName(fullSig.name()).withSigs(fullSig.sig()));
     assert res.map(m1->!m.equals(m1)).orElse(true);
     return res;
   }
 
   Optional<E.Meth> bPropGetSig(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     assert !e.it().isEmpty();
-    if(m.sig().isPresent()){ return Optional.empty(); }
+    if(m.preferredSig().isPresent()){ return Optional.empty(); }
     if(m.name().isEmpty()){ return Optional.empty(); }
     var sig = onlyMName(e, m.name().get(), depth);
     if(sig.isEmpty()){ return Optional.empty(); }
-    var res = sig.map(s->m.withSig(s.sig()));
+    var res = sig.map(s->m.withSigs(s.sig()));
     assert res.map(m1->!m.equals(m1)).orElse(true);
     return res;
   }
@@ -237,7 +237,7 @@ public record InferBodies(ast.Program p) {
     catch (CompileError err) { throw err.parentPos(e.pos()); }
     if (cm.isEmpty()) { throw Fail.undefinedMethod(e.name(), recv).pos(e.pos()); }
     var sig = cm.get().sig();
-    var k = sig.gens().size();
+    var k = sig.get(0).gens().size();
     var infers = Collections.nCopies(k, T.infer);
     return Optional.of(e.withTs(Optional.of(infers)));
   }
@@ -261,7 +261,7 @@ public record InferBodies(ast.Program p) {
 }
 
 /*
-1 Currerent Ds -->For all classes in Ds, for all methods with a body, infer the body
+1 Current Ds -->For all classes in Ds, for all methods with a body, infer the body
 -->new Ds (core) with a core program
 by running fixInferStep and finally injectionToCore
 

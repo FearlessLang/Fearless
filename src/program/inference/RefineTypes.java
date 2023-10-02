@@ -24,7 +24,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
   }
 
   E.Lambda fixLambda(E.Lambda lambda, int depth) {
-    if (lambda.meths().stream().anyMatch(m->m.sig().isEmpty())) {
+    if (lambda.meths().stream().anyMatch(m->m.preferredSig().isEmpty())) {
       return lambda;
     }
 
@@ -62,18 +62,18 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
         with replaceOnlyInfer(iTi,iT'i)=iT"i
       assert iTs1==Xs
      */
-    assert m.sigs().isPresent();
-    throw Bug.todo();
-//    var oldS=m.sigs().get();
-//    var refinedSig = refined.toSig(m.sig().flatMap(E.Sig::pos));
-//    assert oldS.gens().equals(refinedSig.gens());
-//    var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
-//    var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
-//    oldS = oldS.withRet(retT).withTs(fixedTs);
-//    return m.withSig(oldS);
+    var sig = m.preferredSig();
+    assert sig.isPresent();
+    var oldS=sig.get();
+    var refinedSig = refined.toSig(sig.flatMap(E.Sig::pos));
+    assert oldS.gens().equals(refinedSig.gens());
+    var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
+    var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
+    oldS = oldS.withRet(retT).withTs(fixedTs);
+    return m.withInferredSig(oldS);
   }
   RefinedSig tSigOf(E.Meth m){
-    var sig = m.sig().orElseThrow();
+    var sig = m.preferredSig().orElseThrow();
     var name = m.name().orElseThrow();
     var gens = sig.gens().stream().map(g->new T(Mdf.mdf,g)).toList();
     return new RefinedSig(sig.mdf(), name, gens, sig.bounds(), sig.ts(),sig.ret());
@@ -170,7 +170,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
   }
 
   RefinedSig freshXs(Optional<CM> cm, Id.MethName name, List<Id.GX<ast.T>> gxs) {
-    var sig = cm.map(cmi->cmi.sig().toAstFullSig()).orElseThrow();
+    var sig = cm.map(cmi->cmi.prioritySig().toAstFullSig()).orElseThrow();
     assert sig.gens().size() == gxs.size();
     var tgxs = gxs.stream().map(gx->new T(Mdf.mdf, gx.toFullAstGX())).toList();
     var f = renamer.renameFun(tgxs,sig.gens());
