@@ -585,6 +585,14 @@ public class TestMeths {
     List[X]:{ recMdf .get(): recMdf X }
     Family:List[imm Person]{}
     """); }
+  @Test void adaptRecMdfReadOnly() { ok("""
+    [test.List[readOnly test.Person[]],recMdf.get/0()[][]:readOnly test.Person[]abs]
+    """, "test.Family", """
+    package test
+    Person:{}
+    List[X]:{ recMdf .get(): recMdf X }
+    Family:List[readOnly Person]{}
+    """); }
   @Test void adaptRecMdfRead() { ok("""
     [test.List[read test.Person[]],recMdf.get/0()[][]:read test.Person[]abs]
     """, "test.Family", """

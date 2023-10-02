@@ -133,7 +133,7 @@ public interface Program {
         return Streams.zip(m1.sig(), m2.sig()).allMatch((s1,s2)->{
           List<T> ts=Push.of(s2.ts(),t1);
 
-          if (s1.gens() != s2.gens() || s1.bounds() != s2.bounds()) { return false; }
+          if (!s1.gens().equals(s2.gens()) || !s1.bounds().equals(s2.bounds())) { return false; }
           var gxs = s2.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
           var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
           return isType(xs, ts, XBs.empty().addBounds(s2.gens(), s2.bounds()), e, s2.ret());
