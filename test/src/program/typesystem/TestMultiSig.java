@@ -47,4 +47,20 @@ public class TestMultiSig {
       mut .get(m: mut MutyThing): mut MutyThing -> m.foo,
       }
     """); }
+  @Test void multiSigExpectMut() { ok("""
+    package test
+    A:{
+      mut .get: mut A
+      lent .get: readOnly A -> this,
+      }
+    Test:{ .m1: mut A -> mut A.get }
+    """); }
+  @Test void multiSigExpectMut2() { ok("""
+    package test
+    A:{
+      lent .get: readOnly A
+      mut .get: mut A -> this,
+      }
+    Test:{ .m1: mut A -> mut A.get }
+    """); }
 }

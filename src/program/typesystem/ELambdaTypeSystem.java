@@ -130,12 +130,12 @@ interface ELambdaTypeSystem extends ETypeSystem{
     Mdf selfTMdf = g0.get(selfName).mdf();
     var gg  = Streams.zip(m.xs(), args).fold(Gamma::add, g0);
 
-    var baseCase = isoAwareJudgment(gg, m, e, ret);
+    var baseCase = topLevelIso(gg, m, e, ret);
     var baseDestiny = baseCase.isEmpty() || ret.mdf().is(Mdf.mut, Mdf.read);
     if (baseDestiny) { return baseCase; }
     //res is iso or imm, thus is promotable
 
-    var criticalFailure = isoAwareJudgment(gg, m, e, ret.withMdf(Mdf.readOnly));
+    var criticalFailure = topLevelIso(gg, m, e, ret.withMdf(Mdf.readOnly));
     if (criticalFailure.isPresent()) { return baseCase; }
 
     var readPromotion = mOkReadPromotion(selfName, selfT, m, sig);
@@ -162,7 +162,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
       m.xs(),
      sig.ts().stream().map(t->t.mdf().isReadOnly() ? t.withMdf(Mdf.read) : t).toList()
     ).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), sig.ret());
+    return topLevelIso(gg, m, m.body().orElseThrow(), sig.ret());
   }
 
   default Optional<CompileError> mOkIsoPromotion(String selfName, T selfT, E.Meth m, E.Sig sig) {
@@ -183,7 +183,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
       m.xs(),
       sig.ts().stream().map(mdfTransform).toList()
     ).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), sig.ret().withMdf(Mdf.mut));
+    return topLevelIso(gg, m, m.body().orElseThrow(), sig.ret().withMdf(Mdf.mut));
   }
 
   default Optional<CompileError> mOkImmPromotion(String selfName, T selfT, E.Meth m, E.Sig sig, Mdf selfTMdf) {
@@ -199,7 +199,31 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var mMdf = sig.mdf();
     var g0 = selfTMdf.isLikeMut() || selfTMdf.isRecMdf() ? Gamma.empty() : noMutyG.captureSelf(xbs(), selfName, selfT, mMdf);
     var gg = Streams.zip(m.xs(), sig.ts()).filter((x,t)->!t.mdf().isLikeMut() && !t.mdf().isRecMdf()).fold(Gamma::add, g0);
-    return isoAwareJudgment(gg, m, m.body().orElseThrow(), sig.ret().withMdf(Mdf.readOnly));
+    return topLevelIso(gg, m, m.body().orElseThrow(), sig.ret().withMdf(Mdf.readOnly));
+  }
+
+  /**
+   * G1,x:iso ITX,G2;XBs |= e : T               (TopLevel-iso)
+   *   where
+   *   G1,x:mut ITX,G2;XBs |= e : T
+   */
+  default Optional<CompileError> topLevelIso(Gamma g, E.Meth m, E e, T expected) {
+    var res = isoAwareJudgment(g, m, e, expected);
+    if (res.isEmpty()) { return res; }
+    var isoNames = g.dom().stream().filter(x->{
+      try {
+        return g.get(x).mdf().isIso();
+      } catch (CompileError err) {
+        // we cannot capture something it's not in our domain, so skip it
+        return false;
+      }
+    }).toList();
+
+    for (var name : isoNames) {
+      var g_ = g.add(name, g.get(name).withMdf(Mdf.mut));
+      if (isoAwareJudgment(g_, m, e, expected).isEmpty()) { return Optional.empty(); }
+    }
+    return res;
   }
 
   /** G;XBs |= e : T */

@@ -2160,4 +2160,12 @@ were valid:
     BoxClone[T:imm,mut]:{ mut .task(x: mdf T): mut Box[mdf T] -> mut Box#x }
 //    Break:{ #(foo: readOnly Foo): mut Box[readOnly Foo] -> (readOnly Box#foo).clone(mut BoxClone[mut Foo]) }
     """); }
+
+  @Test void isoAsMut() { ok("""
+    package test
+    Box:{ mut .m1: mut A }
+    A:{
+      #(a: iso A): mut Box -> { a }
+      }
+    """); }
 }
