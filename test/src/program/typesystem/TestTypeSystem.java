@@ -291,14 +291,14 @@ were valid:
     Void:{}
     """); }
   @Test void noCallMutFromRecMdfImm() { fail("""
-In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:4:31
+In position [###]/Dummy0.fear:4:31
 [E33 callTypeError]
 Type error: None of the following candidates (returning the expected type "?") for this method call:
 this .b/0[]([]) .foo/0[]([])
 were valid:
 (readOnly test.B[]) <: (mut test.B[]): mut test.B[]
   The following errors were found when checking this sub-typing:
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:4:29
+    In position [###]/Dummy0.fear:4:29
     [E32 noCandidateMeths]
     When attempting to type check the method call: this .b/0[]([]), no candidates for .b/0 returned the expected type mut test.B[]. The candidates were:
     (readOnly test.A[]): readOnly test.B[]
@@ -307,7 +307,7 @@ were valid:
 
 (readOnly test.B[]) <: (iso test.B[]): iso test.B[]
   The following errors were found when checking this sub-typing:
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:4:29
+    In position [###]/Dummy0.fear:4:29
     [E32 noCandidateMeths]
     When attempting to type check the method call: this .b/0[]([]), no candidates for .b/0 returned the expected type iso test.B[]. The candidates were:
     (readOnly test.A[]): readOnly test.B[]
@@ -316,7 +316,7 @@ were valid:
 
 (readOnly test.B[]) <: (iso test.B[]): lent test.B[]
   The following errors were found when checking this sub-typing:
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:4:29
+    In position [###]/Dummy0.fear:4:29
     [E32 noCandidateMeths]
     When attempting to type check the method call: this .b/0[]([]), no candidates for .b/0 returned the expected type iso test.B[]. The candidates were:
     (readOnly test.A[]): readOnly test.B[]
@@ -325,7 +325,7 @@ were valid:
 
 (readOnly test.B[]) <: (lent test.B[]): lent test.B[]
   The following errors were found when checking this sub-typing:
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:4:29
+    In position [###]/Dummy0.fear:4:29
     [E32 noCandidateMeths]
     When attempting to type check the method call: this .b/0[]([]), no candidates for .b/0 returned the expected type lent test.B[]. The candidates were:
     (readOnly test.A[]): readOnly test.B[]
@@ -1044,7 +1044,7 @@ were valid:
       }
     """); }
   @Test void recMdfCannotBeSubtypeOfMdf2() { fail("""
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:2:7
+    In position [###]/Dummy0.fear:2:7
     [E30 badCapture]
     'mut test.M[]' cannot be captured by an imm method in an imm lambda.
     """, """
@@ -2117,7 +2117,7 @@ were valid:
     Break:{ #(foo: readOnly Foo): readOnly Box[readOnly Foo] -> readOnly Box#foo }
     """); }
   @Test void unsoundHygRecMdfCapture() { fail("""
-    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:3:10
+    In position [###]/Dummy0.fear:3:10
     [E30 badCapture]
     'readOnly test.Foo[]' cannot be captured by a mut method in a mut lambda.
     """, """

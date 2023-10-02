@@ -287,6 +287,9 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
       .map(this::visitSig)
       .map(mh->{
         xs.set(mh.xs);
+        if (name.get().isPresent() && !mh.name.equals(name.get().get())) {
+          throw Fail.inconsistentMultiSigNames().pos(pos(ctx));
+        }
         name.set(Optional.of(mh.name));
         return new E.Sig(mh.mdf(), mh.gens(), mh.bounds(), mh.xs.stream().map(E.X::t).toList(), mh.ret(), Optional.of(pos(ctx)));
       })

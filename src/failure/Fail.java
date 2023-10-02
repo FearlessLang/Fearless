@@ -221,6 +221,10 @@ public class Fail{
     return of("Trait declarations may not have a self-name other than \"this\".");
   }
 
+  public static CompileError inconsistentMultiSigNames() {
+    return of("All signatures for a method must have the same name.");
+  }
+
   private static String aVsAn(Mdf mdf) {
     if (mdf.isImm()) { return "an "+mdf; }
     return "a "+mdf;
@@ -278,6 +282,7 @@ enum ErrorCode {
   privateMethCall,
   privateTraitImplementation,
   mustProvideImplsIfMdfProvided,
-  namedTopLevelLambda;
+  namedTopLevelLambda,
+  inconsistentMultiSigNames;
   int code() {return this.ordinal() + 1;}
 }

@@ -470,4 +470,49 @@ class TestFullParser {
     A3[B: imm,mut, C]:{}
     A4[B: imm,mut, C, D: readOnly,lent]:{}
     """); }
+
+  @Test void multiSigsAbs() { ok("""
+    {test.A/0=Dec[name=test.A/0,gxs=[],lambda=[-infer-][]{
+      .m1/2([a,b]):Sig[mdf=read,gens=[],ts=[readtest.A[],mutB],ret=isoB],Sig[mdf=mut,gens=[],ts=[muttest.A[],mutB],ret=mutB]->
+        [-]}]}
+    """, """
+    package test
+    A:{
+      read .m1(a: read A, b: mut B): iso B
+      mut .m1(a: mut A, b: mut B): mut B,
+      }
+    """); }
+  @Test void multiSigsImpl() { ok("""
+    {test.A/0=Dec[name=test.A/0,gxs=[],lambda=[-infer-][]{
+      .m1/2([a,b]):Sig[mdf=read,gens=[],ts=[readtest.A[],mutB],ret=isoB],Sig[mdf=mut,gens=[],ts=[muttest.A[],mutB],ret=mutB]->
+        b:infer}]}
+    """, """
+    package test
+    A:{
+      read .m1(a: read A, b: mut B): iso B
+      mut .m1(a: mut A, b: mut B): mut B -> b,
+      }
+    """); }
+  @Test void multiSigsGen() { ok("""
+    {test.A/0=Dec[name=test.A/0,gxs=[],lambda=[-infer-][]{
+      .m1/2([a,b]):Sig[mdf=read,gens=[X],ts=[readtest.A[],mutB],ret=isoB],Sig[mdf=mut,gens=[X],ts=[muttest.A[],mutB],ret=mutB]->
+        [-]}]}
+    """, """
+    package test
+    A:{
+      read .m1[X](a: read A, b: mut B): iso B
+      mut .m1[X](a: mut A, b: mut B): mut B,
+      }
+    """); }
+  @Test void multiSigsGenBadName() { fail("""
+    In position [###]/Dummy0.fear:3:2
+    [E51 inconsistentMultiSigNames]
+    All signatures for a method must have the same name.
+    """, """
+    package test
+    A:{
+      read .bad[X](a: read A, b: mut B): iso B
+      mut .m1[X](a: mut A, b: mut B): mut B,
+      }
+    """); }
 }
