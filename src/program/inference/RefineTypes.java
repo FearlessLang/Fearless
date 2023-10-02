@@ -3,7 +3,6 @@ package program.inference;
 import ast.Program;
 import astFull.E;
 import astFull.T;
-import failure.CompileError;
 import files.Pos;
 import id.Id;
 import id.Mdf;
@@ -63,14 +62,15 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
         with replaceOnlyInfer(iTi,iT'i)=iT"i
       assert iTs1==Xs
      */
-    assert m.sig().isPresent();
-    var oldS=m.sig().get();
-    var refinedSig = refined.toSig(m.sig().flatMap(E.Sig::pos));
-    assert oldS.gens().equals(refinedSig.gens());
-    var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
-    var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
-    oldS = oldS.withRet(retT).withTs(fixedTs);
-    return m.withSig(oldS);
+    assert m.sigs().isPresent();
+    throw Bug.todo();
+//    var oldS=m.sigs().get();
+//    var refinedSig = refined.toSig(m.sig().flatMap(E.Sig::pos));
+//    assert oldS.gens().equals(refinedSig.gens());
+//    var fixedTs=replaceOnlyInfers(oldS.ts(), refinedSig.ts());
+//    var retT=replaceOnlyInfers(oldS.ret(),refinedSig.ret());
+//    oldS = oldS.withRet(retT).withTs(fixedTs);
+//    return m.withSig(oldS);
   }
   RefinedSig tSigOf(E.Meth m){
     var sig = m.sig().orElseThrow();

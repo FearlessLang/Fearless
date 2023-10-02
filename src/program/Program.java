@@ -113,8 +113,12 @@ public interface Program {
     var it1 = t1.itOrThrow();
     var it2 = t2.itOrThrow();
     assert it1.name().equals(it2.name());
-    List<CM> cms1 = filterByMdf(mdf, meths(mdf, it1, 0));
-    List<CM> cms2 = filterByMdf(mdf, meths(mdf, it2, 0));
+    List<CM> cms1 = meths(mdf, it1, 0).stream()
+      .filter(cm->filterByMdf(mdf, cm.sig().stream().map(ast.E.Sig::mdf)))
+      .toList();
+    List<CM> cms2 = meths(mdf, it2, 0).stream()
+      .filter(cm->filterByMdf(mdf, cm.sig().stream().map(ast.E.Sig::mdf)))
+      .toList();
 
     var methsByName = Stream.concat(cms1.stream(), cms2.stream())
       .collect(Collectors.groupingBy(CM::name))
@@ -149,23 +153,14 @@ public interface Program {
     return res.resMatch(t->isSubType(t,expected),err->false);
   }
 
-  default List<CM> filterByMdf(Mdf mdf, List<CM> cms) {
-    // Keep in sync with filterByMdf in typesystem.ELambdaTypeSystem
+  static boolean filterByMdf(Mdf mdf, Stream<Mdf> mMdfs) {
+    // Keep in sync with filterByMdf in program.Program
     assert !mdf.isMdf();
-    if (cms.isEmpty()) { return List.of(); }
-    var cm = cms.get(0);
-    cms = Pop.left(cms);
-    if (mdf.isIso() || mdf.isMut() || mdf.isRecMdf()) {
-      return Push.of(cm, filterByMdf(mdf, cms));
-    }
-    var sig = cm.sig();
-    if (mdf.isLent() && !sig.mdf().isIso()) { return Push.of(cm, filterByMdf(mdf, cms)); }
-    var baseMdfReadLike = mdf.isImm() || mdf.isRead() || mdf.isReadOnly();
-    var methMdfImmOrRead = sig.mdf().isImm() || sig.mdf().isReadOnly() || sig.mdf().isRead() || sig.mdf().isRecMdf();
-    if (baseMdfReadLike && methMdfImmOrRead) {
-      return Push.of(cm, filterByMdf(mdf, cms));
-    }
-    return filterByMdf(mdf, cms);
+    return mMdfs.anyMatch(mMdf_->{
+      if (mdf.is(Mdf.iso, Mdf.mut, Mdf.recMdf)) { return true; }
+      if (mdf.isLent() && !mMdf_.isIso()) { return true; }
+      return mdf.is(Mdf.imm, Mdf.read, Mdf.readOnly) && mMdf_.is(Mdf.imm, Mdf.read, Mdf.readOnly, Mdf.recMdf);
+    });
   }
 
   record MWisePair(E.Meth a, E.Meth b){}
@@ -173,7 +168,7 @@ public interface Program {
     throw Bug.todo();
   }
 
-  record FullMethSig(Id.MethName name, E.Sig sig){}
+  record FullMethSig(Id.MethName name, List<E.Sig> sig){}
   default Optional<FullMethSig> fullSig(Mdf recvMdf, List<Id.IT<astFull.T>> its, int depth, Predicate<CM> pred) {
     var nFresh = new Box<>(0);
     var coreIts = its.stream().map(it->it.toAstIT(t->t.toAstTFreshenInfers(nFresh))).distinct().toList();

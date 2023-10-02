@@ -95,13 +95,13 @@ public record InferBodies(ast.Program p) {
     return res.flatMap(e1->!e1.equals(e) ? res : Optional.empty());
   }
   Optional<E.Meth> bProp(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
-    var res = bPropWithSig(gamma,m,e,depth)
-      .or(()->bPropGetSigM(gamma,m,e,depth))
+    var res = bPropWithSigs(gamma,m,e,depth)
+      .or(()->bPropGetSigsM(gamma,m,e,depth))
       .or(()->bPropGetSig(gamma,m,e,depth));
     assert res.map(m1->!m.equals(m1)).orElse(true);
     return res;
   }
-  Optional<E.Meth> bPropWithSig(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
+  Optional<E.Meth> bPropWithSigs(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     var anyNoSig = e.meths().stream().anyMatch(mi->mi.sig().isEmpty());
     if(anyNoSig){ return Optional.empty(); }
     if(m.body().isEmpty()){ return Optional.empty(); }
@@ -123,7 +123,7 @@ public record InferBodies(ast.Program p) {
 //    assert finalRes.map(m1->!m.equals(m1)).orElse(true);
 //    return finalRes;
   }
-  Optional<E.Meth> bPropGetSigM(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
+  Optional<E.Meth> bPropGetSigsM(Map<String, T> gamma, E.Meth m, E.Lambda e, int depth) {
     assert !e.it().isEmpty();
     if(m.sig().isPresent()){ return Optional.empty(); }
     if(m.name().isPresent()){ return Optional.empty(); }

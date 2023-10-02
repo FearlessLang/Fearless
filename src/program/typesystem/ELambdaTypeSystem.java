@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static program.Program.filterByMdf;
+
 interface ELambdaTypeSystem extends ETypeSystem{
   default Res visitLambda(E.Lambda b){
     Mdf mdf=b.mdf();
@@ -27,7 +29,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     Program p0=p().withDec(d);
 
     var validMethods = b.meths().stream()
-      .filter(m->filterByMdf(mdf,m.sig().mdf()))
+      .filter(m->filterByMdf(mdf,Stream.of(m.sig().mdf()))) // todo: multi sigs
       .toList();
     if (validMethods.size() != b.meths().size()) {
       throw Fail.uncallableMeths(
@@ -37,7 +39,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     }
 
     var filtered=p0.meths(Mdf.recMdf, d.toIT(), depth()+1).stream()
-      .filter(cmi->filterByMdf(mdf,cmi.mdf()))
+      .filter(cmi->filterByMdf(mdf,cmi.sig().stream().map(E.Sig::mdf)))
       .toList();
     var sadlyAbs=filtered.stream()
       .filter(CM::isAbs)
@@ -239,13 +241,5 @@ interface ELambdaTypeSystem extends ETypeSystem{
     } catch (CompileError err) {
       return Optional.of(err.parentPos(e.pos()));
     }
-  }
-
-  default boolean filterByMdf(Mdf mdf, Mdf mMdf) {
-    // Keep in sync with filterByMdf in program.Program
-    assert !mdf.isMdf();
-    if (mdf.is(Mdf.iso, Mdf.mut, Mdf.recMdf)) { return true; }
-    if (mdf.isLent() && !mMdf.isIso()) { return true; }
-    return mdf.is(Mdf.imm, Mdf.read, Mdf.readOnly) && mMdf.is(Mdf.imm, Mdf.read, Mdf.readOnly, Mdf.recMdf);
   }
 }
