@@ -1,9 +1,12 @@
 package utils;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Box<T> {
   private T inner;
+
+  public static <T> Box<T> of(Supplier<T> f) { return new Box<>(f.get()); }
 
   public Box(T inner) { this.inner = inner; }
 

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public interface FullCloneVisitor {
   default E.Meth visitMeth(E.Meth e){ return new E.Meth(
-    e.sig().map(this::visitSig),
+    e.sigs().map(sigs->sigs.stream().map(this::visitSig).toList()),
     e.name().map(this::visitMethName),
     e.xs(),
     e.body().map(b->b.accept(this)),
