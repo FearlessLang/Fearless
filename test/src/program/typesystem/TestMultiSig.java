@@ -23,6 +23,16 @@ public class TestMultiSig {
       #[X](x: mdf X): mut A[mdf X] -> { x }
       }
     """); }
+  @Test void immPromotion() { ok("""
+    package test
+    A[X]:{
+      read .get: read X
+      mut .get: mdf X,
+      }
+    Test[X]:{
+      .m1(a: A[mut X]): imm X -> a.get,
+      }
+    """); }
   @Test void shouldFailWithImpossibleSig() { fail("""
     In position [###]/Dummy0.fear:5:48
     [E33 callTypeError]

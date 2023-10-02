@@ -1,11 +1,11 @@
 package base
 
 Str:Sealed{
-  readOnly .len: UInt,
+  .len: UInt,
   // Str is not Stringable due to limitations of the Java codegen target
-  readOnly .str: Str,
-  readOnly +(other: readOnly Str): Str,
-  readOnly ==(other: readOnly Str): Bool,
+  .str: Str,
+  +(other: Str): Str,
+  ==(other: Str): Bool,
   }
 Stringable:{
   readOnly .str: Str,

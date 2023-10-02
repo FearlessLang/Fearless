@@ -1,56 +1,56 @@
 package base
 
 Int:Sealed,MathOps[Int],IntOps[Int]{
-  readOnly .uint: UInt,
-  readOnly .float: Float,
+  .uint: UInt,
+  .float: Float,
   // not Stringable due to limitations of the Java codegen target
-  readOnly .str: Str,
+  .str: Str,
   }
 UInt:Sealed,MathOps[UInt],IntOps[UInt]{
-  readOnly .int: Int,
-  readOnly .float: Float,
+  .int: Int,
+  .float: Float,
   // not Stringable due to limitations of the Java codegen target
-  readOnly .str: Str,
+  .str: Str,
   }
 Float:Sealed,MathOps[Float]{
-  readOnly .int: Int,
-  readOnly .uint: UInt,
-  readOnly .round: Int,
-  readOnly .ceil: Int,
-  readOnly .floor: Int,
-  readOnly **(n: readOnly Float): Float, // pow
-  readOnly .isNaN: Bool,
-  readOnly .isInfinite: Bool,
-  readOnly .isPosInfinity: Bool,
-  readOnly .isNegInfinity: Bool,
+  .int: Int,
+  .uint: UInt,
+  .round: Int,
+  .ceil: Int,
+  .floor: Int,
+  **(n: Float): Float, // pow
+  .isNaN: Bool,
+  .isInfinite: Bool,
+  .isPosInfinity: Bool,
+  .isNegInfinity: Bool,
   // not Stringable due to limitations of the Java codegen target
-  readOnly .str: Str,
+  .str: Str,
   }
 
 MathOps[T]:Sealed{
-  readOnly +(n: readOnly T): T,
-  readOnly -(n: readOnly T): T,
-  readOnly *(n: readOnly T): T,
-  readOnly /(n: readOnly T): T,
-  readOnly %(n: readOnly T): T,
-  readOnly .abs: T,
+  +(n: T): T,
+  -(n: T): T,
+  *(n: T): T,
+  /(n: T): T,
+  %(n: T): T,
+  .abs: T,
 
   // Comparisons
-  readOnly >(n: readOnly T): Bool,
-  readOnly <(n: readOnly T): Bool,
-  readOnly >=(n: readOnly T): Bool,
-  readOnly <=(n: readOnly T): Bool,
-  readOnly ==(n: readOnly T): Bool,
+  >(n: T): Bool,
+  <(n: T): Bool,
+  >=(n: T): Bool,
+  <=(n: T): Bool,
+  ==(n: T): Bool,
   }
 IntOps[T]:Sealed{
   // bitwise
-  readOnly >>(n: readOnly T): T,
-  readOnly <<(n: readOnly T): T,
-  readOnly ^(n: readOnly T): T,
-  readOnly &(n: readOnly T): T,
-  readOnly |(n: readOnly T): T,
+  >>(n: T): T,
+  <<(n: T): T,
+  ^(n: T): T,
+  &(n: T): T,
+  |(n: T): T,
 
-  readOnly **(n: readOnly UInt): T, // pow
+  **(n: UInt): T, // pow
   }
 
 // Fake concrete type for all numbers. The real implementation is generated at code-gen.
