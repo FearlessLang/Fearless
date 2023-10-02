@@ -109,12 +109,12 @@ public interface EMethTypeSystem extends ETypeSystem {
         var xbs = xbs().addBounds(sig.gens(), sig.bounds());
 
         var params = Push.of(
-          fancyRename(rec.rt().toString(), rec.withMdf(cm.mdf()), mdf, xsTsMap, TypeRename.RenameKind.Arg, xbs),
+          fancyRename(rec.rt().toString(), rec.withMdf(sig.mdf()), mdf, xsTsMap, TypeRename.RenameKind.Arg, xbs),
           Streams.zip(cm.xs(), sig.ts())
             .map((xi, ti)->fancyRename(xi+": "+ti.rt().toString(), ti, mdf, xsTsMap, TypeRename.RenameKind.Arg, xbs))
             .toList()
         );
-        var t = fancyRename(cm.ret().rt().toString(), cm.ret(), mdf, xsTsMap, TypeRename.RenameKind.Return, xbs);
+        var t = fancyRename(sig.ret().rt().toString(), sig.ret(), mdf, xsTsMap, TypeRename.RenameKind.Return, xbs);
 
         candidates.add(new TsT(params, t));
       }

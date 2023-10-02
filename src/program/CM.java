@@ -15,7 +15,7 @@ public interface CM {
   Id.MethName name();
   List<String> xs();
   boolean isAbs();
-  CM withSig(ast.E.Sig sig);
+  CM withSig(List<ast.E.Sig> sig);
   Pos pos();
   Id.IT<T> c();
   List<ast.E.Sig> sig();
@@ -37,7 +37,7 @@ public interface CM {
     public Id.MethName name(){ return m.name(); }
     public List<String> xs(){ return m.xs(); }
     public boolean isAbs(){ return m.isAbs(); }
-    public CM withSig(ast.E.Sig sig){ return new CoreCM(c, m, sig); }
+    public CM withSig(List<ast.E.Sig> sig){ return new CoreCM(c, m, sig); }
     public Pos pos() { return this.m.posOrUnknown(); }
     @Override public Map<Id.GX<T>, Set<Mdf>> bounds() {
       return prioritySig().bounds();
@@ -58,7 +58,7 @@ public interface CM {
     @Override public Map<Id.GX<T>, Set<Mdf>> bounds() {
       return prioritySig().bounds();
     }
-    public CM withSig(ast.E.Sig sig){ return new FullCM(c, m, sig); }
+    public CM withSig(List<ast.E.Sig> sig){ return new FullCM(c, m, sig); }
     public Pos pos() { return this.m.posOrUnknown(); }
 
     @Override

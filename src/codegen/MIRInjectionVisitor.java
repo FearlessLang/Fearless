@@ -43,7 +43,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
           .filter(mi->mi.name().equals(cm.name()))
           .findAny()
           .orElseThrow();
-        return visitMeth(pkg, m, Map.of(dec.lambda().selfName(), new T(cm.mdf(), dec.toIT())));
+        return visitMeth(pkg, m, Map.of(dec.lambda().selfName(), new T(cm.prioritySig().mdf(), dec.toIT())));
       })
       .toList();
     var impls = simplifyImpls(dec.lambda().its().stream().filter(it->!it.name().equals(dec.name())).toList());
@@ -63,7 +63,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     if (recvMdf.isMdf()) { recvMdf = Mdf.recMdf; }
     var meth = p.meths(recvMdf, recv.t().itOrThrow(), e.name(), 0).orElseThrow();
     var renamer = TypeRename.core(p);
-    var cm = renamer.renameSigOnMCall(meth.sig(), XBs.empty(), renamer.renameFun(e.ts(), meth.sig().gens()));
+    var cm = renamer.renameSigOnMCall(meth.prioritySig(), XBs.empty(), renamer.renameFun(e.ts(), meth.prioritySig().gens()));
     return new MIR.MCall(
       recv,
       e.name(),
@@ -147,19 +147,21 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
 
   public MIR.Meth visitMeth(String pkg, E.Meth m, Map<String, T> gamma) {
     var g = new HashMap<>(gamma);
-    List<MIR.X> xs = Streams.zip(m.xs(), m.sig().ts())
+    // TODO: see the TODO below
+    List<MIR.X> xs = Streams.zip(m.xs(), m.sigs().get(m.sigs().size() - 1).ts())
       .map((x,t)->{
         g.put(x, t);
         return new MIR.X(x, t);
       })
       .toList();
 
+    // TODO: do we want to handle multi sigs here? Probably.
     return new MIR.Meth(
       m.name(),
-      m.sig().mdf(),
-      m.sig().gens(),
+      m.sigs().get(m.sigs().size() - 1).mdf(),
+      m.sigs().get(m.sigs().size() - 1).gens(),
       xs,
-      m.sig().ret(),
+      m.sigs().get(m.sigs().size() - 1).ret(),
       m.body().map(e->e.accept(this, pkg, g))
     );
   }

@@ -76,12 +76,13 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
     if (files == null) { files = new String[0]; }
     var p = compile(files);
     var docgen = new MarkdownDocgen(p);
-    var docs = docgen.visitProgram();
-    Path root = Path.of("docs");
-    try { Files.createDirectory(root); } catch (FileAlreadyExistsException ignored) {}
-    for (var doc : docs) {
-      Files.writeString(root.resolve(doc.fileName()), doc.markdown());
-    }
+    throw Bug.todo();
+//    var docs = docgen.visitProgram();
+//    Path root = Path.of("docs");
+//    try { Files.createDirectory(root); } catch (FileAlreadyExistsException ignored) {}
+//    for (var doc : docs) {
+//      Files.writeString(root.resolve(doc.fileName()), doc.markdown());
+//    }
   }
 
   void run(String entryPoint, String[] files, List<String> cliArgs) {

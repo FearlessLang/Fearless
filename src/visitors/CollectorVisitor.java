@@ -25,7 +25,7 @@ public interface CollectorVisitor<C extends Collection<?>> extends Visitor<Void>
   }
   default Void visitMeth(E.Meth m) {
     visitMethName(m.name());
-    visitSig(m.sig());
+    m.sigs().forEach(this::visitSig);
     m.body().ifPresent(e->e.accept(this));
     return null;
   }

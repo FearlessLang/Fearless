@@ -103,14 +103,19 @@ public class Program implements program.Program{
 
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, astFull.E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var sig=mi.sig().orElseThrow();
-    var cm = CM.of(t, mi, TypeRename.coreRec(this, recvMdf).renameSig(new InjectionVisitor().visitSig(sig), xbs, f));
+//    var sig=mi.sig().orElseThrow();
+    var injectionVisitor = new InjectionVisitor();
+    var renamer = TypeRename.coreRec(this, recvMdf);
+    var sigs = mi.sigs().orElseThrow().stream().map(injectionVisitor::visitSig).map(sig->renamer.renameSig(sig, xbs, f)).toList();
+    var cm = CM.of(t, mi, sigs);
     return norm(cm);
   }
   private CM cmCore(Id.IT<ast.T> t, astFull.E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var sig=mi.sig().orElseThrow();
-    var cm = CM.of(t, mi, TypeRename.core(this).renameSig(new InjectionVisitor().visitSig(sig), xbs, f));
+    var injectionVisitor = new InjectionVisitor();
+    var renamer = TypeRename.core(this);
+    var sigs = mi.sigs().orElseThrow().stream().map(injectionVisitor::visitSig).map(sig->renamer.renameSig(sig, xbs, f)).toList();
+    var cm = CM.of(t, mi, sigs);
     return norm(cm);
   }
   public Map<Id.DecId, T.Dec> ds() { return this.ds; }
@@ -218,7 +223,7 @@ public class Program implements program.Program{
         assert name.num()==namedMeth.xs().size();
         var inferred = p.meths(Mdf.recMdf, dec.toAstT(), name, 0)
           .orElseThrow(()->Fail.cannotInferSig(dec.name(), name));
-        return namedMeth.withSigs(inferred.sigs().toAstFullSig());
+        return namedMeth.withSigs(inferred.sig().stream().map(ast.E.Sig::toAstFullSig).toList());
       } catch (CompileError e) {
         throw e.pos(m.pos());
       }

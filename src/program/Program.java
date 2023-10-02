@@ -130,12 +130,14 @@ public interface Program {
         var m2 = ms.get(1);
         var recv = new ast.E.X("this", Optional.empty());
         var xs=Push.of(m1.xs(),"this");
-        List<T> ts=Push.of(m2.sig().ts(),t1);
+        return Streams.zip(m1.sig(), m2.sig()).allMatch((s1,s2)->{
+          List<T> ts=Push.of(s2.ts(),t1);
 
-        var gxs = m2.sig().gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
-        var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
-        // TODO: compute XBs
-        return isType(xs, ts, XBs.empty(), e, m2.sig().ret());
+          var gxs = s2.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
+          var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
+          // TODO: compute XBs
+          return isType(xs, ts, XBs.empty(), e, s2.ret());
+        });
       });
   }
 
@@ -188,12 +190,14 @@ public interface Program {
     assert myM_.size()==1;
 
     var cm = myM_.get(0);
-    var sig = cm.sig().toAstFullSig();
-    var freshGXsSet = IntStream.range(0, nFresh.get()).mapToObj(n->new Id.GX<T>("FearTmp"+n+"$")).collect(Collectors.toSet());
-    var restoredArgs = sig.ts().stream().map(t->RefineTypes.regenerateInfers(this, freshGXsSet, t)).toList();
-    var restoredRt = RefineTypes.regenerateInfers(this, freshGXsSet, sig.ret());
-    var restoredSig = new E.Sig(sig.mdf(), sig.gens(), sig.bounds(), restoredArgs, restoredRt, sig.pos());
-    return Optional.of(new FullMethSig(cm.name(), restoredSig));
+    var fullSigs = cm.sig().stream().map(s->{
+      var sig = s.toAstFullSig();
+      var freshGXsSet = IntStream.range(0, nFresh.get()).mapToObj(n->new Id.GX<T>("FearTmp"+n+"$")).collect(Collectors.toSet());
+      var restoredArgs = sig.ts().stream().map(t->RefineTypes.regenerateInfers(this, freshGXsSet, t)).toList();
+      var restoredRt = RefineTypes.regenerateInfers(this, freshGXsSet, sig.ret());
+      return new E.Sig(sig.mdf(), sig.gens(), sig.bounds(), restoredArgs, restoredRt, sig.pos());
+    }).toList();
+    return Optional.of(new FullMethSig(cm.name(), fullSigs));
   }
 
   default Optional<CM> meths(Mdf recvMdf, Id.IT<T> it, Id.MethName name, int depth){
@@ -282,24 +286,26 @@ public interface Program {
     norm(C[Ts].m[Par1 Xs](xTs):T->e) = C[Ts].m[Par1 Xs](xTs):T->e
      */
     //standardNames(n)->List.of(Par1..Parn)
-    var gx=cm.sig().gens();
+    var gx=cm.prioritySig().gens();
     List<Id.GX<ast.T>> names = new Refresher<ast.T>(0).freshNames(gx.size());
     Map<Id.GX<T>,Id.GX<T>> subst=IntStream.range(0,gx.size()).boxed()
       .collect(Collectors.toMap(gx::get, names::get));
-    var newSig=new RenameGens(subst).visitSig(cm.sig());
-    return cm.withSig(newSig);
+    var renamer = new RenameGens(subst);
+    var newSigs=cm.sig().stream().map(renamer::visitSig).toList();
+    return cm.withSig(newSigs);
   }
 
   /**
    * Normalised CMs are required for 5a, but the rest of the type system needs fresh names.
    */
   default CM freshenMethGens(CM cm, int depth) {
-    var gxs=cm.sig().gens();
+    var gxs=cm.prioritySig().gens();
     var names = new Refresher<T>(depth).freshNames(gxs.size());
     Map<Id.GX<T>,Id.GX<T>> subst=IntStream.range(0,gxs.size()).boxed()
       .collect(Collectors.toMap(gxs::get, names::get));
-    var newSig=new RenameGens(subst).visitSig(cm.sig());
-    return cm.withSig(newSig);
+    var renamer = new RenameGens(subst);
+    var newSigs=cm.sig().stream().map(renamer::visitSig).toList();
+    return cm.withSig(newSigs);
   }
 
   default List<CM> prune(List<CM> cms, Optional<Pos> lambdaPos) {

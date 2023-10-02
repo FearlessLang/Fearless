@@ -73,17 +73,18 @@ public interface E extends HasPos {
     @Override public <R> R accept(GammaVisitor<R> v, String pkg, Map<String, T> gamma) {return v.visitX(this, gamma);}
     @Override public String toString(){ return name; }
   }
-  record Meth(Sig sig, MethName name, List<String> xs, Optional<E> body, Optional<Pos> pos) implements HasPos{
-    public Meth{ //noinspection OptionalAssignedToNull
-      assert sig!= null && name.num()==xs.size() && body!=null; }
+  record Meth(List<Sig> sigs, MethName name, List<String> xs, Optional<E> body, Optional<Pos> pos) implements HasPos{
+    public Meth{ //noinspection OptionalAssigsnedToNull
+      assert sigs!= null && name.num()==xs.size() && body!=null; }
     public boolean isAbs(){ return body().isEmpty(); }
     public ast.E.Meth withBody(Optional<ast.E> body) {
-      return new ast.E.Meth(sig, name, xs, body, pos);
+      return new ast.E.Meth(sigs, name, xs, body, pos);
     }
-    public ast.E.Meth withSig(Sig sig) {
-      return new ast.E.Meth(sig, name, xs, body, pos);
+    public ast.E.Meth withSig(List<Sig> sigs) {
+      return new ast.E.Meth(sigs, name, xs, body, pos);
     }
     @Override public String toString() {
+      var sig = sigs.stream().map(ast.E.Sig::toString).collect(Collectors.joining(","));
       return String.format("%s(%s): %s -> %s", name, xs, sig, body.map(Object::toString).orElse("[-]"));
     }
   }

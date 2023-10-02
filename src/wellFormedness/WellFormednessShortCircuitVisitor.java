@@ -51,7 +51,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
   }
 
   @Override public Optional<CompileError> visitMeth(E.Meth e) {
-    return norecMdfInNonRecMdf(e.sig(), e.name()).map(err->err.pos(e.pos()))
+    return ShortCircuitVisitor.visitAll(e.sigs(), sig->norecMdfInNonRecMdf(sig, e.name()).map(err->err.pos(e.pos())))
       .or(()->super.visitMeth(e))
       .map(err->err.parentPos(e.pos()));
   }

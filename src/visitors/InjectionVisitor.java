@@ -90,7 +90,7 @@ public class InjectionVisitor implements FullVisitor<ast.E>{
   public ast.E.Meth visitMeth(E.Meth m){
     // TODO: throw CompileError (i.e. no single abstract method)
     return new ast.E.Meth(
-      visitSig(m.sig().orElseThrow()),
+      m.sigs().orElseThrow().stream().map(this::visitSig).toList(),
       m.name().orElseThrow(),
       m.xs(),
       m.body().map(b->b.accept(this)),

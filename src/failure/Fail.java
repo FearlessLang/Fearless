@@ -179,7 +179,7 @@ public class Fail{
   }
 
   public static CompileError uncallableMeths(Mdf lambdaMdf, List<ast.E.Meth> ms) {
-    var meths = ms.stream().map(m->m.sig().mdf()+" "+m.name()).toList();
+    var meths = ms.stream().map(m->m.sigs().stream().map(s->s.mdf().toString()).collect(Collectors.joining("/"))+" "+m.name()).toList();
     return of("Methods that cannot be called must not be defined. The following methods are impossible to call on an "+lambdaMdf+" lambda:\n"+String.join(", ", meths));
   }
 

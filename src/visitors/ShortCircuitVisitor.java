@@ -14,7 +14,7 @@ import java.util.function.Function;
 
 public interface ShortCircuitVisitor<R> extends Visitor<Optional<R>> {
   default Optional<R> visitMeth(E.Meth e){
-    return visitSig(e.sig())
+    return visitAll(e.sigs(), this::visitSig)
       .or(()->visitMethName(e.name()))
       .or(()->e.body().flatMap(b->b.accept(this)));
   }

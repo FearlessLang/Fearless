@@ -108,14 +108,16 @@ public class Program implements program.Program  {
 
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var cm = norm(CM.of(t, mi, mi.sig()));
-    var normedMeth = new E.Meth(cm.sig(), cm.name(), cm.xs(), mi.body(), mi.pos());
-    return CM.of(cm.c(), normedMeth, TypeRename.coreRec(this, recvMdf).renameSig(cm.sig(), xbs, f));
+    var renamer = TypeRename.coreRec(this, recvMdf);
+    var sigs = mi.sigs().stream().map(sig->renamer.renameSig(sig, xbs, f)).toList();
+    var cm = CM.of(t, mi, sigs);
+    return norm(cm);
   }
-  private CM cmCore(Id.IT<ast.T> t, E.Meth mi, Function<Id.GX<ast.T>, ast.T> f){
+  private CM cmCore(Id.IT<ast.T> t, E.Meth mi, Function<Id.GX<ast.T>, ast.T> f) {
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
-    var cm = norm(CM.of(t, mi, mi.sig()));
-    var normedMeth = new E.Meth(cm.sig(), cm.name(), cm.xs(), mi.body(), mi.pos());
-    return CM.of(cm.c(), normedMeth, TypeRename.core(this).renameSig(cm.sig(), XBs.empty(), f));
+    var renamer = TypeRename.core(this);
+    var sigs = mi.sigs().stream().map(sig->renamer.renameSig(sig, XBs.empty(), f)).toList();
+    var cm = CM.of(t, mi, sigs);
+    return norm(cm);
   }
 }
