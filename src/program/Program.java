@@ -141,13 +141,6 @@ public interface Program {
       });
   }
 
-  // TODO: delete if unused
-//  default failure.Res typeOf(List<String>xs,List<ast.T>ts, ast.E e) {
-//    var g = Streams.zip(xs,ts).fold(Gamma::add, Gamma.empty());
-//    var v = ETypeSystem.of(this, g Optional.empty(),0);
-//    return e.accept(v);
-//  }
-
   default boolean isType(List<String>xs, List<ast.T>ts, XBs xbs, ast.E e, ast.T expected) {
     var g = Streams.zip(xs,ts).fold(Gamma::add, Gamma.empty());
     var v = ETypeSystem.of(this, g, xbs, Optional.of(expected),0);
