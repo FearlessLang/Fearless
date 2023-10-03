@@ -4,14 +4,31 @@ LList:{
   #[E]: mut LList[mdf E] -> {},
   #[E](head: mdf E): mut LList[mdf E] -> this#(head, {}),
 
-  #[E](head: mdf E, tail: read LList[mdf E]): mut LList[mdf E]
-  #[E](head: mdf E, tail: mut LList[mdf E]): mut LList[mdf E] -> {
-    .match(m) -> m.elem(head, tail),
+  #[E](head: read E, tail: read LList[mdf E]): mut LList[mdf E]
+  #[E](head: mdf E, tail: mut LList[mdf E]): mut LList[mdf E] -> Let#{
+    .var -> tail.len,
+    .in(len) -> {
+      .match(m) -> m.elem(head, tail),
+//      .head -> Opt#head,
+//      .tail -> tail,
+      .len -> len + 1u,
+      .isEmpty -> False,
+      ++(l1) -> this#(head, tail ++ l1),
+      }
     },
   }
 LList[E]:{
-  read .match[R](m: mut LListMatch[read E, mdf R]): mdf R
+  read .match[R](m: mut LListMatch[mdf E, mdf R]): mdf R
   mut  .match[R](m: mut LListMatch[mdf E, mdf R]): mdf R -> m.empty,
+
+  read .head: mut Opt[read E]
+  mut .head: mut Opt[mdf E] -> {},
+
+//  read .tail: read LList[mdf E]
+//  mut .tail: mut LList[mdf E] -> this,
+
+  read .len: UInt -> 0u,
+  read .isEmpty: Bool -> True,
 
   // I think this is where my multi-sig ordering significance point matters,
   // both are valid but one will have a read tail and one will have a mut tail
@@ -21,8 +38,8 @@ LList[E]:{
   read ++(e: read LList[mdf E]): read LList[mdf E]
   mut  ++(l1: mut LList[mdf E]): mut LList[mdf E] -> l1,
 
-  read .pushFront(e: mdf E): read LList[mdf E]
-  mut  .pushFront(e: mdf E): mut LList[mdf E] -> LList#(e, this),
+//  read .pushFront(e: mdf E): read LList[mdf E]
+//  mut  .pushFront(e: mdf E): mut LList[mdf E] -> LList#(e, this),
   }
 LListMatch[E,R]:{
   mut .elem(head: read E, tail: read LList[mdf E]): mdf R

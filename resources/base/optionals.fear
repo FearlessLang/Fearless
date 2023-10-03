@@ -1,0 +1,8 @@
+package base
+
+Opt:{ #[T](x: mdf T): mut Opt[mdf T] -> { .match(m) -> m.some(x) } }
+Opt[T]:{
+  read .match[R](m: mut OptMatch[read T, mdf R]): mdf R
+  mut  .match[R](m: mut OptMatch[mdf T, mdf R]): mdf R -> m.none,
+  }
+OptMatch[T,R]:{ mut .some(x: mdf T): mdf R, mut .none: mdf R }
