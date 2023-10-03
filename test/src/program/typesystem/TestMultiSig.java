@@ -74,6 +74,45 @@ public class TestMultiSig {
     Test:{ .m1: mut A -> mut A.get }
     """); }
 
+  @Test void multiSigBoxed() { ok("""
+    package test
+    A[X]:{
+      read .get: read Box[read X]
+      mut .get: mut Box[mdf X],
+      }
+    A:{
+      #[X](x: read Box[read X]): read A[read X]
+      #[X](x: mut Box[mdf X]): mut A[mdf X] -> { x }
+      }
+      
+    Box[X]:{
+      read .get: read X
+      mut .get: mdf X,
+      }
+    Box:{
+      #[X](x: mdf X): mut Box[mdf X] -> { x }
+      }
+    """); }
+  @Test void multiSigBoxedInline() { ok("""
+    package test
+    A[X]:{
+      read .get: read Box[read X]
+      mut .get: mut Box[mdf X],
+      }
+    A:{
+      #[X](x: read X): read A[read X]
+      #[X](x: mdf X): mut A[mdf X] -> { Box#x }
+      }
+      
+    Box[X]:{
+      read .get: read X
+      mut .get: mdf X,
+      }
+    Box:{
+      #[X](x: mdf X): mut Box[mdf X] -> { x }
+      }
+    """); }
+
   @Test void simpleList() { ok("""
     package test
 
