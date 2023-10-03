@@ -2,7 +2,7 @@
   <configuration default="false" name="Run Empty Program" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="main.Main" />
     <module name="fearless" />
-    <option name="PROGRAM_PARAMETERS" value="--show-internal-stack-traces -e simple.Nothing --run examples/mutBase/simple.fear" />
+    <option name="PROGRAM_PARAMETERS" value="--show-internal-stack-traces --show-full-progress -e simple.Nothing --run examples/mutBase/simple.fear" />
     <option name="VM_PARAMETERS" value="-ea" />
     <extension name="coverage">
       <pattern>

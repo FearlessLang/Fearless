@@ -5,6 +5,7 @@ import main.Main;
 import net.jqwik.api.Example;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import utils.Bug;
 import utils.Err;
 
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ class TestFullParser {
       var res = Parser.parseAll(ps);
       Assertions.fail("Parsing did not fail. Got: "+res);
     }
-    catch (CompileError e) {
+    catch (CompileError | Bug e) {
       Err.strCmp(expectedErr, e.toString());
     }
   }
@@ -513,6 +514,22 @@ class TestFullParser {
     A:{
       read .bad[X](a: read A, b: mut B): iso B
       mut .m1[X](a: mut A, b: mut B): mut B,
+      }
+    """); }
+  @Test void multiSigsIncomplete() { fail("""
+    utils.Bug: file:///Users/nick/Programming/PhD/fearless/Dummy0.fear:8:2 mismatched input '.m1' expecting '->'
+    file:///Users/nick/Programming/PhD/fearless/Dummy0.fear:8:9 mismatched input 'b' expecting '}'
+    file:///Users/nick/Programming/PhD/fearless/Dummy0.fear:8:20 missing ':' at '{'
+    file:///Users/nick/Programming/PhD/fearless/Dummy0.fear:8:22 extraneous input ',' expecting {<EOF>, FullCN}
+    """, """
+    package test
+    A:{
+      read .m1[X](a: read A, b: mut B): iso B
+      mut .m1[X](a: mut A, b: mut B): mut B,
+      }
+    B:A{
+      .m1(a, b)
+      .m1(a, b) -> iso B{},
       }
     """); }
 }

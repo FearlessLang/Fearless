@@ -73,4 +73,39 @@ public class TestMultiSig {
       }
     Test:{ .m1: mut A -> mut A.get }
     """); }
+
+  @Test void simpleList() { ok("""
+    package test
+
+    LList:{
+      #[E]: mut LList[mdf E] -> {},
+      #[E](head: mdf E): mut LList[mdf E] -> this#(head, {}),
+        
+      #[E](head: mdf E, tail: read LList[mdf E]): mut LList[mdf E]
+      #[E](head: mdf E, tail: mut LList[mdf E]): mut LList[mdf E] -> {
+        .match(m) -> m.elem(head, tail),
+        },
+      }
+    LList[E]:{
+      read .match[R](m: mut LListMatch[read E, mdf R]): mdf R
+      mut  .match[R](m: mut LListMatch[mdf E, mdf R]): mdf R -> m.empty,
+        
+      // I think this is where my multi-sig ordering significance point matters,
+      // both are valid but one will have a read tail and one will have a mut tail
+//      read +(e: mdf E): mut LList[mdf E]
+      mut  +(e: mdf E): mut LList[mdf E] -> this ++ (LList#e),
+        
+//      read ++(e: read LList[mdf E]): read LList[mdf E]
+      mut  ++(l1: mut LList[mdf E]): mut LList[mdf E] -> l1,
+        
+//      read .pushFront(e: mdf E): read LList[mdf E]
+      mut  .pushFront(e: mdf E): mut LList[mdf E] -> LList#(e, this),
+      }
+    LListMatch[E,R]:{
+//      mut .elem(head: read E, tail: read LList[mdf E]): mdf R
+      mut .elem(head: mdf E, tail: read LList[mdf E]): mdf R,
+        
+      mut .empty: mdf R
+      }
+    """); }
 }
