@@ -12,6 +12,8 @@ import program.typesystem.XBs;
 import utils.Err;
 import utils.FromContent;
 
+import static program.typesystem.RunTypeSystem.ok;
+
 public class TestSubTyping {
   void ok(String t1, String t2, boolean res, String ...code){
     var ty1 = new Parser(Parser.dummy, t1).parseFullT();
@@ -132,4 +134,11 @@ public class TestSubTyping {
   @Test void sortedListOfTExtendsListTOfNot32() { ok("a.SortedList[X]","a.List[a.List[a.Int]]",false,pointEx2); }
   @Test void sortedListMixedGens2() { ok("a.SortedList[a.ColouredPoint]","a.SortedList[a.Point]",true,pointEx2); }
   @Test void inverseSortedListMixedGens2() { ok("a.SortedList[a.Point]","a.SortedList[a.ColouredPoint]",false,pointEx2); }
+
+  @Test void identityMethAdapt() { ok("read a.A[mut X]", "read a.A[read X]", true, """
+    package a
+    A[X]:{
+      read .self: read A[mdf X] -> this
+      }
+    """); }
 }

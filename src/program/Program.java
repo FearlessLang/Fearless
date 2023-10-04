@@ -62,7 +62,6 @@ public interface Program {
     }
   }
   default boolean isSubType(XBs xbs, T t1, T t2) {
-//    System.out.println(t1+" < "+t2);
     var q = new SubTypeQuery(xbs, t1, t2);
     var subTypeCache = this.subTypeCache();
     if (subTypeCache.containsKey(q)) {
