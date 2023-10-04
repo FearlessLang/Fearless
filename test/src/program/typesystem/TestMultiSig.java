@@ -138,15 +138,16 @@ public class TestMultiSig {
   @Test void createBox() { ok("""
     package test
     A[X]:{
-      read .get: read Box[read X]
+      read .get: mut Box[mdf X]
       mut .get: mut Box[mdf X],
       }
     A:{
-      #[X](x: mdf X): mut A[mdf X] -> { Box#x },
-      .works[X](x: mdf X): read Box[read X] -> Box#x,
+      #[X](x: mdf X): mut A[mdf X] -> { mut Box[read X]{ x } },
+//      #[X](x: mdf X): mut A[mdf X] -> { Box#[mdf X]x },
+//      .works[X](x: mdf X): read Box[read X] -> Box#x,
       }
     Box[X]:{
-      read .get: read X
+      read .get: read X,
       mut .get: mdf X,
       }
     Box:{

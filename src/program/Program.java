@@ -88,7 +88,7 @@ public interface Program {
     if (t2.isMdfX()) {
       var bounds = xbs.get(t2.gxOrThrow());
       var mdf = t1.mdf();
-      return bounds.stream().anyMatch(mdfi->isSubType(mdf, mdfi));
+      return bounds.stream().allMatch(mdfi->isSubType(mdf, mdfi));
     }
     if(!isSubType(t1.mdf(), t2.mdf())){ return false; }
     t1 = t1.withMdf(t1.mdf()); t2 = t2.withMdf(t1.mdf());
