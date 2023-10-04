@@ -6,6 +6,7 @@ import codegen.MIR;
 import codegen.MIRInjectionVisitor;
 import id.Id;
 import id.Mdf;
+import program.typesystem.XBs;
 import utils.Bug;
 import visitors.MIRVisitor;
 
@@ -44,7 +45,7 @@ public interface MagicImpls<R> {
     if (!name.startsWith("base.") && Character.isJavaIdentifierStart(name.charAt(0))) {
       return false;
     }
-    return p().isSubType(new T(l.mdf(), new Id.IT<>(l.freshName(), List.of())), new T(l.mdf(), new Id.IT<>(magicDec, List.of())));
+    return p().isSubType(XBs.empty(), new T(l.mdf(), new Id.IT<>(l.freshName(), List.of())), new T(l.mdf(), new Id.IT<>(magicDec, List.of())));
   }
   default boolean isMagic(Id.DecId magicDec, Id.DecId freshName) {
     var name = freshName.name();
@@ -52,7 +53,7 @@ public interface MagicImpls<R> {
     if (!name.startsWith("base.") && Character.isJavaIdentifierStart(name.charAt(0))) {
       return false;
     }
-    return p().isSubType(new T(Mdf.mdf, new Id.IT<>(freshName, List.of())), new T(Mdf.mdf, new Id.IT<>(magicDec, List.of())));
+    return p().isSubType(XBs.empty(), new T(Mdf.mdf, new Id.IT<>(freshName, List.of())), new T(Mdf.mdf, new Id.IT<>(magicDec, List.of())));
   }
 
   MagicTrait<R> int_(MIR.Lambda l, MIR e);

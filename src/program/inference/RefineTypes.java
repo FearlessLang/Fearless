@@ -8,6 +8,7 @@ import id.Id;
 import id.Mdf;
 import program.CM;
 import program.TypeRename;
+import program.typesystem.XBs;
 import utils.*;
 import visitors.FullShortCircuitVisitor;
 
@@ -33,7 +34,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     List<E.Meth> lambdaOnlyMeths = lambda.meths().stream()
       .filter(m->{
         try {
-          return m.name().isPresent() && p().meths(lambda.mdf().orElse(Mdf.imm), c.toAstIT(T::toAstT), m.name().get(), depth).isEmpty();
+          return m.name().isPresent() && p().meths(XBs.empty(), lambda.mdf().orElse(Mdf.imm), c.toAstIT(T::toAstT), m.name().get(), depth).isEmpty();
         } catch (T.MatchOnInfer err) {
           return false;
         }
@@ -119,8 +120,8 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
       ast.T t2C; try { t2C = t2.toAstT(); }
         catch (T.MatchOnInfer e) { return iT1; }
 
-      if (p.isSubType(t1C, t2C)) { return iT1; }
-      if (p.isSubType(t2C, t1C)) { return iT2; }
+      if (p.isSubType(XBs.empty(), t1C, t2C)) { return iT1; }
+      if (p.isSubType(XBs.empty(), t2C, t1C)) { return iT2; }
 
 //      throw Fail.noSubTypingRelationship(c1, c2);
       return iT1;
@@ -218,7 +219,7 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
   }
 
   List<RP> pairUp(Mdf lambdaMdf, List<Id.GX<ast.T>> gxs, Id.IT<ast.T> c, RefinedSig sig, int depth) {
-    var ms = p.meths(lambdaMdf, c, sig.name(), depth);
+    var ms = p.meths(XBs.empty(), lambdaMdf, c, sig.name(), depth);
     var freshSig = freshXs(ms, sig.name(), gxs);
     var freshGens = freshSig.gens();
     return Streams.of(

@@ -32,7 +32,7 @@ public interface GenericBounds {
       .map(Optional::get)
       .findAny();
     if (gensValid.isPresent()) { return gensValid; }
-    CM cm = p.meths(recvMdf, recvIT, name, depth).orElseThrow();
+    CM cm = p.meths(xbs, recvMdf, recvIT, name, depth).orElseThrow();
     // TODO: throw error if type args.len != cm.sig.len (user code is wrong)
     return Streams.zip(typeArgs, cm.prioritySig().gens())
       .map((t, gx)->{

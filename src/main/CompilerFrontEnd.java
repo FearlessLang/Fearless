@@ -14,6 +14,7 @@ import id.Mdf;
 import magic.Magic;
 import parser.Parser;
 import program.inference.InferBodies;
+import program.typesystem.XBs;
 import utils.Box;
 import utils.Bug;
 import wellFormedness.WellFormednessFullShortCircuitVisitor;
@@ -90,7 +91,7 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
     var p = compile(files);
 
     var main = p.of(Magic.Main).toIT();
-    var isEntryValid = p.isSubType(new ast.T(Mdf.mdf, p.of(entry).toIT()), new ast.T(Mdf.mdf, main));
+    var isEntryValid = p.isSubType(XBs.empty(), new ast.T(Mdf.mdf, p.of(entry).toIT()), new ast.T(Mdf.mdf, main));
     if (!isEntryValid) { throw Fail.invalidEntryPoint(entry, main); }
 
     v.progress.printTask("Running code generation \uD83C\uDFED");

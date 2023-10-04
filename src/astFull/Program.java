@@ -209,19 +209,24 @@ public class Program implements program.Program{
       var ms = l.meths().stream().map(m->inferSignature(dec,m)).toList();
       return l.withMeths(ms);
     }
-    Id.MethName onlyAbs(T.Dec dec){
+    Id.MethName onlyAbs(XBs xbs, T.Dec dec){
+
       // depth doesn't matter here because we just extract the name
-      var m = OneOr.of(()->Fail.cannotInferAbsSig(dec.name()), p.meths(Mdf.recMdf, dec.toAstT(), -1).stream().filter(CM::isAbs));
+      var m = OneOr.of(()->Fail.cannotInferAbsSig(dec.name()), p.meths(xbs, Mdf.recMdf, dec.toAstT(), -1).stream().filter(CM::isAbs));
       return m.name();
     }
     E.Meth inferSignature(T.Dec dec, E.Meth m) {
       try {
         if(m.sigs().isPresent()){ return m; }
-        var name=m.name().orElseGet(() -> onlyAbs(dec));
+        var xbs = XBs.empty().addBounds(
+          dec.gxs().stream().map(gx->new Id.GX<ast.T>(gx.name())).toList(),
+          Mapper.of(xbs_->dec.bounds().forEach((gx,bs)->xbs_.put(new Id.GX<>(gx.name()), bs)))
+        );
+        var name=m.name().orElseGet(()->onlyAbs(xbs, dec));
         if (m.xs().size() != name.num()) { throw Fail.cannotInferSig(dec.name(), name); }
         var namedMeth = m.withName(name);
         assert name.num()==namedMeth.xs().size();
-        var inferred = p.meths(Mdf.recMdf, dec.toAstT(), name, 0)
+        var inferred = p.meths(xbs, Mdf.recMdf, dec.toAstT(), name, 0)
           .orElseThrow(()->Fail.cannotInferSig(dec.name(), name));
         return namedMeth.withSigs(inferred.sig().stream().map(ast.E.Sig::toAstFullSig).toList());
       } catch (CompileError e) {

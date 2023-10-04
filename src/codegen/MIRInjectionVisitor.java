@@ -34,7 +34,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     return new MIR.Program(ds);
   }
   public MIR.Trait visitDec(String pkg, T.Dec dec) {
-    var ms = p.meths(Mdf.recMdf, dec.toIT(), 0).stream()
+    var ms = p.meths(XBs.empty(), Mdf.recMdf, dec.toIT(), 0).stream()
       .map(cm->{
         var m = p.ds().get(cm.c().name())
           .lambda()
@@ -47,7 +47,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       })
       .toList();
     var impls = simplifyImpls(dec.lambda().its().stream().filter(it->!it.name().equals(dec.name())).toList());
-    var canSingleton = p.meths(Mdf.recMdf, dec.toIT(), 0).stream().noneMatch(CM::isAbs);
+    var canSingleton = p.meths(XBs.empty().addBounds(dec.gxs(), dec.bounds()), Mdf.recMdf, dec.toIT(), 0).stream().noneMatch(CM::isAbs);
     return new MIR.Trait(
       dec.name(),
       dec.gxs(),
@@ -61,7 +61,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     var recv = e.receiver().accept(this, pkg, gamma);
     var recvMdf = recv.t().mdf();
     if (recvMdf.isMdf()) { recvMdf = Mdf.recMdf; }
-    var meth = p.meths(recvMdf, recv.t().itOrThrow(), e.name(), 0).orElseThrow();
+    var meth = p.meths(XBs.empty(), recvMdf, recv.t().itOrThrow(), e.name(), 0).orElseThrow();
     var renamer = TypeRename.core(p);
     var cm = renamer.renameSigOnMCall(meth.prioritySig(), XBs.empty(), renamer.renameFun(e.ts(), meth.prioritySig().gens()));
     return new MIR.MCall(
@@ -100,7 +100,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     ), e.pos());
     var nonSelfImpls = impls.stream().filter(it->!it.name().equals(freshName)).toList();
     var recvMdf = e.mdf().isMdf() ? Mdf.recMdf : e.mdf();
-    var declaredMeths = this.p.withDec(freshDecImplsOnly).meths(recvMdf, freshDec.toIT(), 0).stream()
+    var declaredMeths = this.p.withDec(freshDecImplsOnly).meths(XBs.empty(), recvMdf, freshDec.toIT(), 0).stream()
       .map(CM::name)
       .collect(Collectors.toSet());
     var noExtraMeths = e.meths().stream().allMatch(m->declaredMeths.contains(m.name()));
@@ -110,7 +110,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       var g = new HashMap<>(gamma);
       g.put(e.selfName(), new T(e.mdf(), it));
       List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(pkg, m, g)).toList();
-      var canSingleton = ms.isEmpty() && p.meths(recvMdf, it, 0).stream().noneMatch(CM::isAbs);
+      var canSingleton = ms.isEmpty() && p.meths(XBs.empty(), recvMdf, it, 0).stream().noneMatch(CM::isAbs);
       return new MIR.Lambda(
         e.mdf(),
         it.name(),
@@ -123,7 +123,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     }
 
     this.p = p.withDec(freshDec);
-    var noAbsMeths = this.p.meths(recvMdf, freshDec.toIT(), 0).stream().noneMatch(CM::isAbs);
+    var noAbsMeths = this.p.meths(XBs.empty(), recvMdf, freshDec.toIT(), 0).stream().noneMatch(CM::isAbs);
     var canSingletonTrait = noAbsMeths && noExtraMeths;
 
     var g = new HashMap<>(gamma);
@@ -148,7 +148,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
   public MIR.Meth visitMeth(String pkg, E.Meth m, Map<String, T> gamma) {
     var g = new HashMap<>(gamma);
     // TODO: see the TODO below
-    List<MIR.X> xs = Streams.zip(m.xs(), m.sigs().get(m.sigs().size() - 1).ts())
+    List<MIR.X> xs = Streams.zip(m.xs(), m.prioritySig().ts())
       .map((x,t)->{
         g.put(x, t);
         return new MIR.X(x, t);
@@ -158,10 +158,10 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     // TODO: do we want to handle multi sigs here? Probably.
     return new MIR.Meth(
       m.name(),
-      m.sigs().get(m.sigs().size() - 1).mdf(),
-      m.sigs().get(m.sigs().size() - 1).gens(),
+      m.prioritySig().mdf(),
+      m.prioritySig().gens(),
       xs,
-      m.sigs().get(m.sigs().size() - 1).ret(),
+      m.prioritySig().ret(),
       m.body().map(e->e.accept(this, pkg, g))
     );
   }
@@ -169,8 +169,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
   /** Removes any redundant ITs from the list of impls for a lambda. */
   private List<Id.IT<T>> simplifyImpls(List<Id.IT<T>> its) {
     return its.stream()
-      .filter(it->its.stream()
-        .noneMatch(it1->it != it1 && p.isSubType(new T(Mdf.mdf, it1), new T(Mdf.mdf, it))))
+      .filter(it->its.stream().noneMatch(it1->it != it1 && p.isSubType(XBs.empty(), new T(Mdf.mdf, it1), new T(Mdf.mdf, it))))
       .toList();
   }
 

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
 import program.Program;
+import program.typesystem.XBs;
 import utils.Err;
 import utils.FromContent;
 
@@ -17,13 +18,13 @@ public class TestAdaptRecMdf {
   void ok(String expected, String type, Mdf lambdaMdf, String ...code){
     var it = new Parser(Parser.dummy, type).parseFullT();
     Program p= FromContent.of(code);
-    Err.strCmpFormat(expected, p.meths(lambdaMdf, it.toAstT().itOrThrow(), 0).toString());
+    Err.strCmpFormat(expected, p.meths(XBs.empty(), lambdaMdf, it.toAstT().itOrThrow(), 0).toString());
   }
   void fail(String expected, String type, Mdf lambdaMdf, String ...code) {
     var it = new Parser(Parser.dummy, type).parseFullT();
     Program p = FromContent.of(code);
     try {
-      var res = p.meths(lambdaMdf, it.toAstT().itOrThrow(), 0);
+      var res = p.meths(XBs.empty(), lambdaMdf, it.toAstT().itOrThrow(), 0);
       Assertions.fail("Expected failure, got\n" + res);
     } catch (CompileError e) {
       Err.strCmp(expected, e.toString());

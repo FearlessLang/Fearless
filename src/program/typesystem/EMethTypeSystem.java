@@ -95,12 +95,12 @@ public interface EMethTypeSystem extends ETypeSystem {
       res.err().ifPresent(errors::add);
       return false;
     }
-    return p().tryIsSubType(res.tOrThrow(), t);
+    return p().tryIsSubType(xbs(), res.tOrThrow(), t);
   }
 
   default Optional<List<TsT>> multiMeth(T rec, MethName m, List<T> ts) {
     if (!(rec.rt() instanceof Id.IT<T> recIT)) { return Optional.empty(); }
-    var sigs = p().meths(rec.mdf(), recIT, m, depth()).map(cm -> {
+    var sigs = p().meths(xbs(), rec.mdf(), recIT, m, depth()).map(cm -> {
       var mdf = rec.mdf();
       List<TsT> candidates = new ArrayList<>(cm.sig().size());
       for (int i = cm.sig().size() - 1; i >= 0; --i) {

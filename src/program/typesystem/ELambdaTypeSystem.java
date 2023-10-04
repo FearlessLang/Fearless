@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static program.Program.filterByMdf;
+import static program.Program.filterSig;
 
 interface ELambdaTypeSystem extends ETypeSystem{
   default Res visitLambda(E.Lambda b){
@@ -33,6 +34,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var validMethods = b.meths().stream()
       .filter(m->filterByMdf(mdf,m.sigs().stream().map(E.Sig::mdf)))
       .toList();
+    // todo: check set of meth names are equal instead
     if (validMethods.size() != b.meths().size()) {
       throw Fail.uncallableMeths(
         mdf,
@@ -40,7 +42,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
       ).pos(b.pos());
     }
 
-    var filtered=p0.meths(Mdf.recMdf, d.toIT(), depth()+1).stream()
+    var filtered=p0.meths(xbs(), Mdf.recMdf, d.toIT(), depth()+1).stream()
       .filter(cmi->filterByMdf(mdf,cmi.sig().stream().map(E.Sig::mdf)))
       .toList();
     var sadlyAbs=filtered.stream()
@@ -113,6 +115,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     }
 
     return IntStream.range(0, m.sigs().size()).mapToObj(i->m.sigs().get((m.sigs().size() - 1) - i))
+      .filter(sig->filterSig(selfT.mdf(), sig.mdf()))
       .map(sig->typeSysBounded.mOkEntry(selfName, selfT, m, sig))
       .filter(Optional::isPresent)
       .findFirst()
@@ -275,7 +278,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var res = e.accept(ETypeSystem.of(p(), g, xbs(), Optional.of(expected), depth()+1));
     try {
       var subOk = res.t()
-        .flatMap(ti->p().isSubType(ti, expected)
+        .flatMap(ti->p().isSubType(xbs(), ti, expected)
           ? Optional.empty()
           : Optional.of(Fail.methTypeError(expected, ti, m.name()).pos(m.pos()))
         );

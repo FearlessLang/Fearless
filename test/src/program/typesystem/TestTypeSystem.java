@@ -2168,4 +2168,38 @@ were valid:
       #(a: iso A): mut Box -> { a }
       }
     """); }
+
+  @Test void boundedSubTypingTraitGens() { ok("""
+    package test
+    A[X]:{
+      .m0(x: mdf X): read X -> x,
+      }
+    """); }
+  @Test void boundedSubTypingMethGens() { ok("""
+    package test
+    A:{
+      .m0[X](x: mdf X): read X -> x,
+      .m1[X:imm,mut,iso](x: mdf X): read X -> x,
+      }
+    """); }
+  @Test void boundedSubTypingFailTraitGens() { fail("""
+    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:3:2
+    [E23 methTypeError]
+    Expected the method .m0/1 to return read X, got mdf X.
+    """, """
+    package test
+    A[X:mut,imm,read,readOnly]:{
+      .m0(x: mdf X): read X -> x,
+      }
+    """); }
+  @Test void boundedSubTypingFailMethGens() { fail("""
+    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:3:2
+    [E23 methTypeError]
+    Expected the method .m0/1 to return read X, got mdf X.
+    """, """
+    package test
+    A:{
+      .m0[X:mut,imm,read,lent](x: mdf X): read X -> x,
+      }
+    """); }
 }

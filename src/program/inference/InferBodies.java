@@ -8,6 +8,7 @@ import id.Id;
 import id.Mdf;
 import program.CM;
 import program.Program;
+import program.typesystem.XBs;
 import utils.Push;
 import utils.Streams;
 import visitors.InjectionVisitor;
@@ -146,11 +147,11 @@ public record InferBodies(ast.Program p) {
 
   Optional<Program.FullMethSig> onlyAbs(E.Lambda e, int depth){
     var its = e.it().map(it->Push.of(it, e.its())).orElse(e.its());
-    return p.fullSig(Mdf.recMdf, its, depth, CM::isAbs);
+    return p.fullSig(XBs.empty(), Mdf.recMdf, its, depth, CM::isAbs);
   }
   Optional<Program.FullMethSig> onlyMName(E.Lambda e, Id.MethName name, int depth){
     var its = e.it().map(it->Push.of(it, e.its())).orElse(e.its());
-    return p.fullSig(Mdf.recMdf, its, depth, cm->cm.name().equals(name));
+    return p.fullSig(XBs.empty(), Mdf.recMdf, its, depth, cm->cm.name().equals(name));
   }
 
   Optional<E> methCall(Map<String, T> gamma, E.MCall e, int depth) {
@@ -186,7 +187,7 @@ public record InferBodies(ast.Program p) {
     var iTs = typesOf(e.es());
     if (c.isInfer() || (!(c.rt() instanceof Id.IT<T> recv))) { return Optional.empty(); }
     try {
-      if (p().meths(c.mdf(), recv.toAstIT(T::toAstT), e.name(), depth).isEmpty()) {
+      if (p().meths(XBs.empty(), c.mdf(), recv.toAstIT(T::toAstT), e.name(), depth).isEmpty()) {
         return Optional.empty();
       }
     } catch (T.MatchOnInfer ignored) {}
@@ -233,7 +234,7 @@ public record InferBodies(ast.Program p) {
     var c = e.receiver().t();
     if (c.isInfer() || (!(c.rt() instanceof Id.IT<T> recv))) { return Optional.empty(); }
 
-    Optional<Program.FullMethSig> cm; try { cm = p.fullSig(c.mdf(), List.of(recv), depth, cm1->cm1.name().equals(e.name())); }
+    Optional<Program.FullMethSig> cm; try { cm = p.fullSig(XBs.empty(), c.mdf(), List.of(recv), depth, cm1->cm1.name().equals(e.name())); }
     catch (CompileError err) { throw err.parentPos(e.pos()); }
     if (cm.isEmpty()) { throw Fail.undefinedMethod(e.name(), recv).pos(e.pos()); }
     var sig = cm.get().sig();
