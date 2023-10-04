@@ -133,6 +133,14 @@ public interface Program {
     var methsByName = Stream.concat(cms1.stream(), cms2.stream())
       .collect(Collectors.groupingBy(CM::name))
       .values();
+    var adaptorType = new Id.IT<>(Id.GX.fresh().name(), it1.ts());
+//    var scopedP = withDec(new T.Dec(adaptorType, ))
+    var renamer = new CloneVisitor(){
+//      @Override public Id.IT<T> visitIT(Id.IT<T> t) {
+//        if (t.name().equals(it2.name())) { t = new Id.IT<>(adaptorType.name(), t.ts()); }
+//        return CloneVisitor.super.visitIT(t);
+//      }
+    };
     return methsByName.stream()
       .allMatch(ms->{
         assert ms.size() == 2;
@@ -140,7 +148,9 @@ public interface Program {
         var m2 = ms.get(1);
         var recv = new ast.E.X("this", Optional.empty());
         var xs=Push.of(m1.xs(),"this");
-        return Streams.zip(m1.sig(), m2.sig()).allMatch((s1,s2)->{
+        return Streams.zip(m1.sig(), m2.sig()).allMatch((s1_,s2_)->{
+          var s1 = renamer.visitSig(s1_);
+          var s2 = renamer.visitSig(s2_);
           List<T> ts=Push.of(s2.ts(),t1);
 
           if (!s1.gens().equals(s2.gens()) || !s1.bounds().equals(s2.bounds())) { return false; }
