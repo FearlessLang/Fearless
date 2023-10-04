@@ -146,4 +146,30 @@ public class TestSubTyping {
       read .self: read A[mdf X] -> this.inner.self,
       }
     """); }
+  // ok("read a.A[mut X]", "read a.A[read X]", true, """
+  @Test void identityMethAdapt2() { ok("read a.A[mut X]", "read a.A[read X]", true, """
+    package a
+    A[X]:{
+      read .self: read A[mdf X] -> this,
+      }
+    AdaptedA[X]:A[read X]{
+      read .inner: read A[mut X] -> this.inner,
+      read .self: read A[mdf X] -> this.inner.self,
+      }
+    """); }
+  // ok("read B", "read a.A[read X]", true, """
+  @Test void identityMethAdaptDiffIT() { ok("read a.AdaptedB", "read a.A[read X]", true, """
+    package a
+    A[X]:{
+      read .self: read A[mdf X] -> this,
+      }
+    B:A[mut B]{
+      read .someOtherFn: B -> B,
+      }
+    AdaptedB:B{
+      read .inner: read B -> this.inner,
+      .self -> this.inner.self,
+      .someOtherFn -> this.inner.someOtherFn,
+      }
+    """); }
 }

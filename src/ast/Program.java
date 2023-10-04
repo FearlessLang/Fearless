@@ -10,6 +10,7 @@ import program.CM;
 import program.TypeRename;
 import program.typesystem.TraitTypeSystem;
 import program.typesystem.XBs;
+import utils.Mapper;
 
 import java.util.*;
 import java.util.function.Function;
@@ -61,6 +62,14 @@ public class Program implements program.Program  {
   private final HashMap<MethsCacheKey, List<CM>> methsCache = new HashMap<>();
   @Override public HashMap<MethsCacheKey, List<CM>> methsCache() {
     return methsCache;
+  }
+
+  @Override public program.Program withAdaptedTrait(T t1, T t2, String name, List<CM> cms) {
+    var it1 = t1.itOrThrow();
+    var t1Dec = of(it1.name());
+    var adaptorType = new Id.IT<>(name, it1.ts());
+    var adaptorLambda = new ast.E.Lambda(t1.mdf(), List.of(adaptorType, it1), "$", List.of(), Optional.empty());
+    return withDec(new T.Dec(adaptorType.name(), t1Dec.gxs(), t1Dec.bounds(), adaptorLambda, Optional.empty()));
   }
 
   public T.Dec of(Id.DecId d) {

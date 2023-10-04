@@ -33,6 +33,7 @@ public interface Program {
   Optional<Pos> posOf(Id.IT<ast.T> t);
   /** Produce a clone of Program without any cached data */
   Program shallowClone();
+  Program withAdaptedTrait(T t1, T t2, String name, List<CM> cms);
 
   default void reset() {
     this.methsCache().clear();
@@ -160,6 +161,51 @@ public interface Program {
         });
       });
   }
+
+  /*
+    default boolean isAdaptSubType(XBs xbs, T t1, T t2) {
+    assert t1.mdf() == t2.mdf();
+  var mdf = t1.mdf();
+    if (mdf.isMdf()) { return true; }
+  var it1 = t1.itOrThrow();
+  var it2 = t2.itOrThrow();
+    assert it1.name().equals(it2.name());
+  List<CM> cms1 = meths(xbs, mdf, it1, 0).stream()
+    .filter(cm->filterByMdf(mdf, cm.sig().stream().map(ast.E.Sig::mdf)))
+    .toList();
+//    List<CM> cms2 = meths(xbs, mdf, it2, 0).stream()
+//      .filter(cm->filterByMdf(mdf, cm.sig().stream().map(ast.E.Sig::mdf)))
+//      .toList();
+
+  //    var methsByName = Stream.concat(cms1.stream(), cms2.stream())
+//      .collect(Collectors.groupingBy(CM::name))
+//      .values();
+  var name = Id.GX.fresh().name();
+  var scopedP = withAdaptedTrait(t1, t2, name, cms1);
+  var adaptorType = new Id.IT<>(name, it1.ts());
+    scopedP.meths(xbs, t1.mdf(), adaptorType, 0);
+    return scopedP.isSubType(xbs, new T(t1.mdf(), adaptorType), t2);
+//    return methsByName.stream()
+//      .allMatch(ms->{
+//        assert ms.size() == 2;
+//        var m1 = ms.get(0);
+//        var m2 = ms.get(1);
+//        var recv = new ast.E.X("inner$", Optional.empty());
+//        var xs=Push.of(m1.xs(),"inner$");
+//        return Streams.zip(m1.sig(), m2.sig()).allMatch((s1,s2)->{
+//          List<T> ts=Push.of(s2.ts(),new T(t1.mdf(), it1));
+//
+//          if (!s1.gens().equals(s2.gens()) || !s1.bounds().equals(s2.bounds())) { return false; }
+////          var gxs = s2.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
+//          var gxs = s1.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList();
+//          var e = new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
+////          var e=new ast.E.MCall(recv, m1.name(), gxs, m1.xs().stream().<ast.E>map(x->new ast.E.X(x, Optional.empty())).toList(), Optional.empty());
+//          return scopedP.isType(xs, ts, xbs.addBounds(s1.gens(), s1.bounds()), e, s2.ret());
+////          return false;
+//        });
+//      });
+}
+   */
 
   default boolean isType(List<String>xs, List<ast.T>ts, XBs xbs, ast.E e, ast.T expected) {
     var g = Streams.zip(xs,ts).fold(Gamma::add, Gamma.empty());

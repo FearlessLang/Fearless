@@ -101,6 +101,34 @@ public class Program implements program.Program{
     return of(t).gxs().stream().map(Id.GX::toAstGX).collect(Collectors.toSet());
   }
 
+  @Override public program.Program withAdaptedTrait(ast.T t1, ast.T t2, String name, List<CM> cms) {
+    var t1Full = t1.toAstFullT();
+    var t2Full = t2.toAstFullT();
+    var it1 = t1Full.itOrThrow();
+    var it2 = t2Full.itOrThrow();
+
+    var t1Dec = of(it1.name());
+    var adaptorType = new Id.IT<>(name, it1.ts());
+    var ms = cms.stream()
+      .map(cm->{
+        var m = ((CM.FullCM)cm).m();
+        return new E.Meth(m.sigs(), m.name(), m.xs(), Optional.of(new E.MCall(
+          new E.X("inner$", t1Full, Optional.empty()),
+          m.name().orElseThrow(),
+          Optional.of(m.preferredSig().orElseThrow().gens().stream().map(gx->new T(Mdf.mdf, gx)).toList()),
+          m.xs().stream().<E>map(x->new E.X(x, T.infer, Optional.empty())).toList(),
+          T.infer,
+          Optional.empty()
+        )), Optional.empty());
+      })
+      .toList();
+    var adaptorLambda = new E.Lambda(Optional.of(t1.mdf()), List.of(it2), "$", ms, Optional.of(adaptorType), Optional.empty());
+    var adapted = new T.Dec(adaptorType.name(), t1Dec.gxs(), t1Dec.bounds(), adaptorLambda, Optional.empty());
+    var ds = new HashMap<>(ds());
+    ds.put(adapted.name(), adapted);
+    return new Program(Collections.unmodifiableMap(ds));
+  }
+
   private CM cm(Mdf recvMdf, Id.IT<ast.T> t, astFull.E.Meth mi, XBs xbs, Function<Id.GX<ast.T>, ast.T> f){
     // This is doing C[Ts]<<Ms[Xs=Ts] (hopefully)
 //    var sig=mi.sig().orElseThrow();
