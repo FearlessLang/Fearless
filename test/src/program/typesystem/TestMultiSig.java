@@ -74,6 +74,7 @@ public class TestMultiSig {
     Test:{ .m1: mut A -> mut A.get }
     """); }
 
+  // TODO: This fails because the read case of A# has to produce a valid result for the mut case of .get
   @Test void multiSigBoxed() { ok("""
     package test
     A[X]:{
@@ -113,18 +114,36 @@ public class TestMultiSig {
       }
     """); }
 
-  @Test void simpleBoxes() { ok("""
+  @Test void captureBox() { ok("""
     package test
     A[X]:{
       read .get: read Box[read X]
-      mut .get: mut Box[read X],
+      mut .get: mut Box[mdf X],
       }
     A:{
-      .m0[X](x: mdf X): read X -> x,
-//      #[X](x: mdf X): read A[mdf X] -> this##[mdf X]x,
-//      ##[X](x: mdf X): mut A[read X] -> mut A[read X]{ Box#[read X]x },
-//      .m1[X](b: mut Box[mdf X]): mut A[mdf X] -> { b },
-//      .m2[X](b: read Box[read X]): read A[read X] -> { b },
+//      #[X](x: mdf X): mut A[mdf X] -> { Box#x },
+      .m1[X](b: mut Box[mdf X]): mut A[mdf X] -> { b },
+      .m2[X](b: read Box[read X]): read A[read X] -> { b },
+      .m3[X](b: read Box[mdf X]): read A[read X] -> { b },
+      .m4[X](b: read Box[mdf X]): read A[mdf X] -> { b },
+      }
+    Box[X]:{
+      read .get: read X
+      mut .get: mdf X,
+      }
+    Box:{
+      #[X](x: mdf X): mut Box[mdf X] -> { x }
+      }
+    """); }
+  @Test void createBox() { ok("""
+    package test
+    A[X]:{
+      read .get: read Box[read X]
+      mut .get: mut Box[mdf X],
+      }
+    A:{
+      #[X](x: mdf X): mut A[mdf X] -> { Box#x },
+      .works[X](x: mdf X): read Box[read X] -> Box#x,
       }
     Box[X]:{
       read .get: read X

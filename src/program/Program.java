@@ -43,7 +43,7 @@ public interface Program {
     if(m1 == m2){ return true; }
     if (m2.is(Mdf.readOnly)) { return true; }
     return switch(m1){
-      case mut -> m2.isLikeMut() || m2.isRead();
+      case mut -> m2.isLikeMut();
       case imm -> m2.is(Mdf.read);
       case iso -> true;
       case readOnly, mdf, recMdf, read, lent -> false;
@@ -84,6 +84,11 @@ public interface Program {
       var bounds = xbs.get(t1.gxOrThrow());
       var mdf = t2.mdf();
       return bounds.stream().allMatch(mdfi->isSubType(mdfi, mdf));
+    }
+    if (t2.isMdfX()) {
+      var bounds = xbs.get(t2.gxOrThrow());
+      var mdf = t1.mdf();
+      return bounds.stream().anyMatch(mdfi->isSubType(mdf, mdfi));
     }
     if(!isSubType(t1.mdf(), t2.mdf())){ return false; }
     t1 = t1.withMdf(t1.mdf()); t2 = t2.withMdf(t1.mdf());
