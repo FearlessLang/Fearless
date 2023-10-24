@@ -34,6 +34,7 @@ public interface Program {
   Optional<Pos> posOf(Id.IT<ast.T> t);
   /** Produce a clone of Program without any cached data */
   Program shallowClone();
+  Map<String, CompilationCache> compilationCaches();
 
   default void reset() {
     this.methsCache().clear();

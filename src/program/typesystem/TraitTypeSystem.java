@@ -8,6 +8,7 @@ import failure.CompileError;
 import id.Id;
 import id.Id.IT;
 import id.Mdf;
+import program.CompilationCache;
 import utils.Mapper;
 
 import java.util.*;
@@ -15,10 +16,13 @@ import java.util.function.Supplier;
 
 public interface TraitTypeSystem {
   Program p();
-  static List<CompileError> dsOk(Collection<Dec> ds, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls){
+  static List<CompileError> dsOk(Collection<Dec> ds, Map<String, CompilationCache> compilationCaches, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls){
     Map<Id.DecId, Dec> pDs = Mapper.of(c->ds.forEach(e->c.put(e.name(),e)));
-    TraitTypeSystem ttt = ()->new Program(pDs);
-    return ds.stream().flatMap(di->ttt.dOk(di, resolvedCalls).stream()).toList();
+    TraitTypeSystem ttt = ()->new Program(pDs, compilationCaches);
+    return ds.stream()
+      .filter(di->!compilationCaches.containsKey(di.name().pkg()))
+      .flatMap(di->ttt.dOk(di, resolvedCalls).stream())
+      .toList();
   }
   default Optional<CompileError> dOk(Dec d, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls){
     var c=d.name();

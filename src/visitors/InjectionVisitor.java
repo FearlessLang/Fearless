@@ -117,7 +117,7 @@ public class InjectionVisitor implements FullVisitor<ast.E>{
   public ast.Program visitProgram(astFull.Program p){
     Map<Id.DecId, T.Dec> coreDs = p.ds().entrySet().stream()
       .collect(Collectors.toMap(Map.Entry::getKey, kv->visitDec(kv.getValue())));
-    return new ast.Program(coreDs);
+    return new ast.Program(coreDs, p.compilationCaches());
   }
 
   private Id.GX<ast.T> visitGX(Id.GX<? extends Id.Ty> gx){

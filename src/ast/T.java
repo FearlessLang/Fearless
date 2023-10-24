@@ -8,12 +8,15 @@ import id.Id.DecId;
 import id.Mdf;
 import utils.Bug;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public record T(Mdf mdf, Id.RT<T> rt) implements failure.Res, Id.Ty {
+public record T(Mdf mdf, Id.RT<T> rt) implements failure.Res, Id.Ty, Serializable {
+  @Serial private static final long serialVersionUID = 1L;
   public <R> R resMatch(Function<T,R> ok, Function<CompileError,R> err){ return ok.apply(this); }
   @Override public String toString(){ return ""+mdf+" "+rt; }
   public T{

@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public interface Base {
@@ -12,7 +13,8 @@ public interface Base {
     return new ast.Program(
       p.ds().entrySet().stream()
         .filter(kv->!kv.getKey().name().startsWith("base."))
-        .collect(Collectors.toMap(kv->kv.getKey(), kv->kv.getValue()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+      p.compilationCaches()
     );
   }
 

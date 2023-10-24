@@ -24,6 +24,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
 
   @Override public Optional<CompileError> visitDec(T.Dec d) {
     pkg = Optional.of(d.name().pkg());
+    if (p.compilationCaches().containsKey(pkg.get())) { return Optional.empty(); }
     return ShortCircuitVisitor.visitAll(
         d.lambda().its(),
         it->noRecMdfInImpls(it).map(err->err.pos(d.lambda().pos()))

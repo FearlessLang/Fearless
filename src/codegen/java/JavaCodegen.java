@@ -9,19 +9,17 @@ import id.Id;
 import id.Mdf;
 import magic.Magic;
 import program.typesystem.EMethTypeSystem;
+import utils.Mapper;
 import visitors.MIRVisitor;
 
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JavaCodegen implements MIRVisitor<String> {
   private final MagicImpls magic;
-  private Program p;
+  private Map<Id.DecId, Set<Id.IT<T>>> superTypes;
   public JavaCodegen(Program p, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls) {
     this.magic = new MagicImpls(this, p, resolvedCalls);
-
   }
 
   static String argsToLList(Mdf addMdf) {
@@ -33,6 +31,9 @@ public class JavaCodegen implements MIRVisitor<String> {
 
   public String visitProgram(Map<String, List<MIR.Trait>> pkgs, Id.DecId entry) {
     assert pkgs.containsKey("base");
+    this.superTypes = Mapper.of(res->pkgs.values().stream()
+      .flatMap(Collection::stream)
+      .forEach(trait->res.put(trait.name(), Set.of())));
     var entryName = getName(entry);
     var init = "\nstatic void main(String[] args){ "+argsToLList(Mdf.mut)+" base.Main_0 entry = new "+entryName+"(){}; entry.$35$imm$(new base$46caps.$95System_0(){}); }\n";
 
@@ -92,8 +93,8 @@ public class JavaCodegen implements MIRVisitor<String> {
     var visibility = concrete ? "public " : "default ";
     if (meth.isAbs()) { visibility = ""; }
     var start = visibility+getRetName(meth.rt())+" "+name(getName(meth.mdf(), meth.name()))+"("+args+")";
-    if (meth.body().isEmpty()) { return start + ";"; }
-    return start + "{\n"+selfVar+"return (("+getName(meth.rt())+")("+meth.body().get().accept(this)+"));\n}";
+    if (meth.isAbs()) { return start + ";"; }
+    return start + "{\n"+selfVar+"return (("+getName(meth.rt())+")("+meth.body().accept(this)+"));\n}";
   }
 
   public String visitX(MIR.X x, boolean checkMagic) {
@@ -103,7 +104,7 @@ public class JavaCodegen implements MIRVisitor<String> {
   public String visitMCall(MIR.MCall mCall, boolean checkMagic) {
     var magicImpl = magic.get(mCall.recv());
     if (checkMagic && magicImpl.isPresent()) {
-      var impl = magicImpl.get().call(mCall.name(), mCall.args(), Map.of());
+      var impl = magicImpl.get().call(new Id.MethName(mCall.name()), mCall.args(), Map.of());
       if (impl.isPresent()) { return impl.get(); }
     }
 
@@ -188,7 +189,7 @@ public class JavaCodegen implements MIRVisitor<String> {
     var pkg = getPkgName(d.pkg());
     return pkg+"."+getBase(d.shortName())+"_"+d.gen();
   }
-  private static String getName(Mdf mdf, Id.MethName m) { return getBase(m.name())+"$"+mdf; }
+  private static String getName(Mdf mdf, MIR.MethName m) { return getBase(m.name())+"$"+mdf; }
   private static String getBase(String name) {
     if (name.startsWith(".")) { name = name.substring(1); }
     return name.chars().mapToObj(c->{

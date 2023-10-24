@@ -8,22 +8,31 @@ import id.Id;
 import id.Mdf;
 import visitors.MIRVisitor;
 
-import java.util.*;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "op")
 @JsonSerialize
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-public interface MIR {
+public sealed interface MIR extends Serializable {
   <R> R accept(MIRVisitor<R> v);
   <R> R accept(MIRVisitor<R> v, boolean checkMagic);
   T t();
 
   record Program(Map<String, List<Trait>> pkgs) {}
-  record Trait(Id.DecId name, List<Id.GX<T>> gens, List<Id.IT<T>> its, List<Meth> meths, boolean canSingleton) {}
-  record Meth(Id.MethName name, Mdf mdf, List<Id.GX<T>> gens, List<X> xs, T rt, Optional<MIR> body) {
-    public boolean isAbs() { return body.isEmpty(); }
+  record Trait(Id.DecId name, List<Id.GX<T>> gens, List<Id.IT<T>> its, List<Meth> meths, boolean canSingleton) implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+  }
+  record Meth(MethName name, Mdf mdf, List<Id.GX<T>> gens, List<X> xs, T rt, MIR body) implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    public boolean isAbs() { return body == null; }
   }
   record X(String name, T t) implements MIR  {
+    @Serial private static final long serialVersionUID = 1L;
     public <R> R accept(MIRVisitor<R> v) {
       return this.accept(v, true);
     }
@@ -31,7 +40,8 @@ public interface MIR {
       return v.visitX(this, checkMagic);
     }
   }
-  record MCall(MIR recv, Id.MethName name, List<MIR> args, T t, Mdf mdf) implements MIR {
+  record MCall(MIR recv, MethName name, List<MIR> args, T t, Mdf mdf) implements MIR {
+    @Serial private static final long serialVersionUID = 1L;
     public <R> R accept(MIRVisitor<R> v) {
       return this.accept(v, true);
     }
@@ -40,6 +50,7 @@ public interface MIR {
     }
   }
   record Lambda(Mdf mdf, Id.DecId freshName, String selfName, List<Id.IT<T>> its, Set<X> captures, List<Meth> meths, boolean canSingleton) implements MIR {
+    @Serial private static final long serialVersionUID = 1L;
     public <R> R accept(MIRVisitor<R> v) {
       return this.accept(v, true);
     }
@@ -51,6 +62,13 @@ public interface MIR {
     }
     public Lambda withITs(List<Id.IT<T>> its) {
       return new Lambda(mdf, freshName, selfName, its, captures, meths, canSingleton);
+    }
+  }
+
+  record MethName(Mdf mdf, String name, int num) implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    public MethName(Id.MethName name) {
+      this(name.mdf().orElseThrow(), name.name(), name.num());
     }
   }
 //  record Share(MIR e) implements MIR {

@@ -31,12 +31,19 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
   }
 
   public MIR.Program visitProgram() {
-    var traits = p.ds().values().stream().map(d->visitDec(d.name().pkg(), d)).toList();
-    Map<String, List<MIR.Trait>> ds = Stream.concat(
+    Map<String, List<MIR.Trait>> ds = new HashMap<>(p.compilationCaches().size());
+    p.compilationCaches().values().forEach(cache->ds.put(cache.pkg(), cache.compiled()));
+    var traits = p.ds().values().stream()
+      .filter(d->!ds.containsKey(d.name().pkg()))
+      .map(d->visitDec(d.name().pkg(), d))
+      .toList();
+
+    Map<String, List<MIR.Trait>> ds_ = Stream.concat(
         traits.stream(),
         freshTraits.stream()
       ).collect(Collectors.groupingBy(t->t.name().pkg()));
-    return new MIR.Program(ds);
+    ds.putAll(ds_);
+    return new MIR.Program(Collections.unmodifiableMap(ds));
   }
   public MIR.Trait visitDec(String pkg, T.Dec dec) {
     var ms = p.meths(XBs.empty(), Mdf.recMdf, dec.toIT(), 0).stream()
@@ -67,7 +74,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     var tst = this.resolvedCalls.get(e);
     return new MIR.MCall(
       recv,
-      e.name().withMdf(Optional.of(tst.original().mdf())),
+      new MIR.MethName(tst.original().mdf(), e.name().name(), e.name().num()),
       e.es().stream().map(ei->ei.accept(this, pkg, gamma)).toList(),
       tst.t(),
       tst.original().mdf()
@@ -84,7 +91,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     public NotInGammaException(String x) { super(x); }
   }
 
-  public MIR.Lambda visitLambda(String pkg, E.Lambda e, Map<String, T> gamma) {
+  public MIR.Lambda visitLambda(String pkg, E.Lambda e, Map<String, T> gamma, boolean shallow) {
     var captureCollector = new CaptureCollector();
     captureCollector.visitLambda(e);
     Set<MIR.X> captures = captureCollector.res().stream().map(x->visitX(x, gamma)).collect(Collectors.toSet());
@@ -111,7 +118,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       var it = impls.get(0);
       var g = new HashMap<>(gamma);
       g.put(e.selfName(), new T(e.mdf(), it));
-      List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(pkg, m, g)).toList();
+      List<MIR.Meth> ms = !shallow ? e.meths().stream().map(m->visitMeth(pkg, m, g)).toList() : List.of();
       var canSingleton = ms.isEmpty() && p.meths(XBs.empty(), recvMdf, it, 0).stream().noneMatch(CM::isAbs);
       return new MIR.Lambda(
         e.mdf(),
@@ -132,7 +139,7 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
     g.put(e.selfName(), new T(e.mdf(), new Id.IT<>(freshName.name(), List.of())));
 
     List<MIR.Meth> msTrait = e.meths().stream().map(m->visitMeth(pkg, m.withBody(Optional.empty()), g)).toList();
-    List<MIR.Meth> ms = e.meths().stream().map(m->visitMeth(pkg, m, g)).toList();
+    List<MIR.Meth> ms = !shallow ? e.meths().stream().map(m->visitMeth(pkg, m, g)).toList() : List.of();
     MIR.Trait freshTrait = new MIR.Trait(freshName, List.of(), nonSelfImpls, msTrait, canSingletonTrait);
     freshTraits.add(freshTrait);
 
@@ -158,12 +165,12 @@ public class MIRInjectionVisitor implements GammaVisitor<MIR> {
       .toList();
 
     return new MIR.Meth(
-      m.name(),
+      new MIR.MethName(m.name()),
       m.sig().mdf(),
       m.sig().gens(),
       xs,
       m.sig().ret(),
-      m.body().map(e->e.accept(this, pkg, g))
+      m.body().map(e->e.accept(this, pkg, g)).orElse(null)
     );
   }
 

@@ -44,7 +44,6 @@ public interface EMethTypeSystem extends ETypeSystem {
     return error;
   }
   default Optional<CompileError> visitMCall(E.MCall e, Id.IT<T> recvIT) {
-    var guessType = new GuessITX(p(), g(), xbs(), depth());
     var guessFullType = new GuessT(p(), g(), xbs(), depth());
     var recvMdf = e.receiver().accept(guessFullType).stream().map(T::mdf).findFirst().orElse(Mdf.recMdf);
     var optTst=multiMeth(recvIT, recvMdf, e.name(), e.ts());
@@ -61,11 +60,11 @@ public interface EMethTypeSystem extends ETypeSystem {
 
     List<E> es = Push.of(e.receiver(),e.es());
     var nestedErrors = new ArrayDeque<ArrayList<CompileError>>(tsts.size());
-    var methArgCache = IntStream.range(0, es.size()).mapToObj(i_->new HashMap<T, Res>()).toList();
+    var methArgCache = IntStream.range(0, es.size()).mapToObj(i_->new HashMap<Integer, Optional<CompileError>>()).toList();
     for (var tst : tsts) {
       var errors = new ArrayList<CompileError>();
       nestedErrors.add(errors);
-      if (okAll(es, tst.ts(), errors, methArgCache, guessType)) {
+      if (okAll(es, tst.ts(), errors, methArgCache)) {
         var recvT = tst.ts().get(0);
         var invalidBounds = GenericBounds.validGenericMeth(p(), xbs(), recvT.mdf(), recvT.itOrThrow(), depth(), tst.original(), e.ts());
         if (invalidBounds.isPresent()) { return Optional.of(invalidBounds.get().pos(e.pos())); }
@@ -109,29 +108,19 @@ public interface EMethTypeSystem extends ETypeSystem {
     if(expectedT().isEmpty()){ return true; }
     return p().isSubType(xbs(), tst.t(), expectedT().get());
   }
-  default boolean okAll(List<E> es, List<T> ts, ArrayList<CompileError> errors, List<HashMap<T, Res>> caches, GuessITX guessType) {
+  default boolean okAll(List<E> es, List<T> ts, ArrayList<CompileError> errors, List<HashMap<Integer, Optional<CompileError>>> caches) {
     assert es.size() == ts.size() && caches.size() == es.size();
     return IntStream.range(0, es.size())
-      .allMatch(i->ok(es.get(i), ts.get(i), errors, caches.get(i), guessType));
+      .allMatch(i->ok(es.get(i), ts.get(i), errors, caches.get(i)));
   }
-  default boolean ok(E e, T t, ArrayList<CompileError> errors, HashMap<T, Res> cache, GuessITX guessType) {
-//    var res = cache.computeIfAbsent(t, t_->e.accept(this.withT(Optional.of(t_))));
-    // TODO: cache res based on the same visitor hashcode
-    /*
-     v has program (will stay the same)
-     v has the T
-     v has a gamma (should stay the same)
-     v has a XBs (should stay the same)
-     v has a depth (should stay the same)
-     */
-    var res = e.accept(this.withT(Optional.of(t)));
+  default boolean ok(E e, T t, ArrayList<CompileError> errors, HashMap<Integer, Optional<CompileError>> cache) {
+    var typeChecker = this.withT(Optional.of(t));
+    var res = cache.computeIfAbsent(typeChecker.hashCode(), t_->e.accept(typeChecker));
     if (res.isPresent()) {
       errors.add(res.get());
       return false;
     }
     return true;
-//    return e.accept(guessType).stream().anyMatch(exprT->p().tryIsSubType(xbs(), new T(t.mdf(), exprT), t));
-//    return p().tryIsSubType(xbs(), res.tOrThrow(), t);
   }
 
   default List<TsT> multiMeth(Id.IT<T> recIT, Mdf recvMdf, MethName m, List<T> ts) {

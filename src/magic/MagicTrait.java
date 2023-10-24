@@ -10,7 +10,6 @@ import java.util.Optional;
 
 public interface MagicTrait<R> {
   Id.IT<T> name();
-  MIR.Lambda instance();
   R instantiate();
   Optional<R> call(Id.MethName m, List<MIR> args, Map<MIR, T> gamma);
 }

@@ -2,11 +2,14 @@ package id;
 
 import utils.Bug;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Optional;
 
-public enum Mdf{
+public enum Mdf implements Serializable {
   read,mut,lent,readOnly,iso,recMdf,mdf,imm;
+  @Serial private static final long serialVersionUID = 1L;
   public boolean is(Mdf... valid){ return Arrays.stream(valid).anyMatch(v->this==v); }
   public boolean isMut(){return this == mut;}
   public boolean isLent(){return this == lent;}

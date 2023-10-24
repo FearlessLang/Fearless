@@ -81,7 +81,7 @@ public interface MagicImpls<R> {
     public Optional<MIR.Lambda> visitX(MIR.X x, boolean _ignored) {
       var ret = p().of(x.t().itOrThrow().name());
       try {
-        return Optional.of(new MIRInjectionVisitor(p(), resolvedCalls()).visitLambda("base", ret.lambda(), Map.of()));
+        return Optional.of(new MIRInjectionVisitor(p(), resolvedCalls()).visitLambda("base", ret.lambda(), Map.of(), true));
       } catch (MIRInjectionVisitor.NotInGammaException e) {
         return Optional.empty();
       }
@@ -89,7 +89,7 @@ public interface MagicImpls<R> {
     public Optional<MIR.Lambda> visitMCall(MIR.MCall mCall, boolean _ignored) {
       var ret = p().of(mCall.t().itOrThrow().name());
       try {
-        return Optional.of(new MIRInjectionVisitor(p(), resolvedCalls()).visitLambda("base", ret.lambda(), Map.of()));
+        return Optional.of(new MIRInjectionVisitor(p(), resolvedCalls()).visitLambda("base", ret.lambda(), Map.of(), true));
       } catch (MIRInjectionVisitor.NotInGammaException e) {
         return Optional.empty();
       }

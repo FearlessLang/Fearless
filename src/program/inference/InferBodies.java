@@ -25,11 +25,12 @@ public record InferBodies(ast.Program p) {
   public static ast.Program inferAll(astFull.Program fullProgram){
     var inferredSigs = fullProgram.inferSignatures();
     var inferBodies = new InferBodies(new ShallowInjectionVisitor().visitProgram(inferredSigs));
-    return new ast.Program(inferBodies.inferDecs(inferredSigs));
+    return new ast.Program(inferBodies.inferDecs(inferredSigs), fullProgram.compilationCaches());
   }
 
   Map<Id.DecId, ast.T.Dec> inferDecs(astFull.Program fullProgram){
     return fullProgram.ds().values().stream()
+      .filter(dec->!fullProgram.compilationCaches().containsKey(dec.name().pkg()))
       .map(this::inferDec)
       .collect(Collectors.toMap(ast.T.Dec::name, d->d));
   }

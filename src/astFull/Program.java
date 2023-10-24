@@ -7,6 +7,7 @@ import magic.Magic;
 import failure.CompileError;
 import failure.Fail;
 import program.CM;
+import program.CompilationCache;
 import program.TypeRename;
 import program.typesystem.XBs;
 import utils.Bug;
@@ -22,7 +23,11 @@ import java.util.stream.Collectors;
 
 public class Program implements program.Program{
   private final Map<Id.DecId, T.Dec> ds;
-  public Program(Map<Id.DecId, T.Dec> ds) { this.ds = ds; }
+  private final Map<String, CompilationCache> compilationCaches;
+  public Program(Map<Id.DecId, T.Dec> ds, Map<String, CompilationCache> compilationCaches) {
+    this.ds = ds;
+    this.compilationCaches = compilationCaches;
+  }
 
   public List<ast.E.Lambda> lambdas() { throw Bug.unreachable(); }
   public program.Program withDec(ast.T.Dec d) {
@@ -33,10 +38,14 @@ public class Program implements program.Program{
     return of(t).pos();
   }
 
+  @Override public Map<String, CompilationCache> compilationCaches() {
+    return this.compilationCaches;
+  }
+
   @Override public Program shallowClone() {
     var subTypeCache = new HashMap<>(this.subTypeCache);
     var methsCache = new HashMap<>(this.methsCache);
-    return new Program(ds){
+    return new Program(ds, compilationCaches){
       @Override public HashMap<SubTypeQuery, SubTypeResult> subTypeCache() {
         return subTypeCache;
       }
@@ -188,7 +197,7 @@ public class Program implements program.Program{
     }
     private void updateDec(T.Dec d, int i) {
       decs.set(i,d);
-      p=new Program(decs.stream().collect(Collectors.toMap(T.Dec::name, di->di)));
+      p=new Program(decs.stream().collect(Collectors.toMap(T.Dec::name, di->di)), this.p.compilationCaches());
     }
 
     private T.Dec inferSignatures(T.Dec d) {

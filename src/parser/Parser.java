@@ -13,6 +13,7 @@ import generated.FearlessParser.NudeEContext;
 import generated.FearlessParser.NudeProgramContext;
 import id.Id;
 import org.antlr.v4.runtime.*;
+import program.CompilationCache;
 import utils.Bug;
 import visitors.FullEAntlrVisitor;
 
@@ -46,7 +47,8 @@ public record Parser(Path fileName,String content){
     //balanced parenthesis with decent error
   }
 
-  public static Program parseAll(List<Parser>ps) {
+  public record ParseResult(astFull.Program program, List<Package> packages) {}
+  public static ParseResult parseAll(List<Parser>ps) {
     List<Alias> globals=List.of();//TODO: global aliases
     var all=ps.stream()
         .map(p->p.parseFile(Bug::err))
@@ -55,20 +57,24 @@ public record Parser(Path fileName,String content){
         .map(allPi->Package.merge(globals, allPi))
         .toList();
     assert allPs.stream().map(Package::name).distinct().count()==allPs.size();//redundant?
-    return new Program(Collections.unmodifiableMap(allPs.stream().map(Package::parse).reduce(new HashMap<>(),
+    var caches = CompilationCache.getOkPkgs(allPs);
+    var program = new Program(Collections.unmodifiableMap(allPs.stream().map(Package::parse).reduce(new HashMap<>(),
         (acc, val) -> { acc.putAll(val); return acc; },
         (m1, m2) -> { assert m1==m2; return m1;}
-    )));
+    )), caches);
+    return new ParseResult(program, allPs);
   }
-  public static Program parseAll(Map<String, List<Package>> ps) {
+  public static ParseResult parseAll(Map<String, List<Package>> ps) {
     var allPs=ps.values().stream()
       .map(allPi->Package.merge(List.of(), allPi))
       .toList();
     assert allPs.stream().map(Package::name).distinct().count()==allPs.size();//redundant?
-    return new Program(Collections.unmodifiableMap(allPs.stream().map(Package::parse).reduce(new HashMap<>(),
+    var caches = CompilationCache.getOkPkgs(allPs);
+    var program = new Program(Collections.unmodifiableMap(allPs.stream().map(Package::parse).reduce(new HashMap<>(),
       (acc, val) -> { acc.putAll(val); return acc; },
       (m1, m2) -> { assert m1==m2; return m1;}
-    )));
+    )), caches);
+    return new ParseResult(program, allPs);
   }
 
   public E parseFullE(Function<String,E> orElse,Function<String,Optional<Id.IT<T>>> resolve){

@@ -12,10 +12,7 @@ import magic.MagicTrait;
 import program.typesystem.EMethTypeSystem;
 import utils.Bug;
 
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 import static magic.MagicImpls.isLiteral;
@@ -25,7 +22,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
     var name = new Id.IT<T>(l.freshName().name(), List.of());
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return name; }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         var lambdaName = name().name().name();
         try {
@@ -84,7 +80,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
     var name = new Id.IT<T>(l.freshName().name(), List.of());
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return name; }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         var lambdaName = name().name().name();
         if (isLiteral(lambdaName)) {
@@ -146,7 +141,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
     var name = new Id.IT<T>(l.freshName().name(), List.of());
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return name; }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         var lambdaName = name().name().name();
         if (isLiteral(lambdaName)) {
@@ -203,7 +197,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
     var name = new Id.IT<T>(l.freshName().name(), List.of());
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return name; }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         var lambdaName = name().name().name();
         return isLiteral(lambdaName) ? lambdaName : "((String)"+e.accept(gen)+")";
@@ -225,7 +218,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> debug(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -269,7 +261,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> refK(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -293,7 +284,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> isoPodK(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -327,7 +317,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> assert_(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -358,7 +347,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> abort(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -380,7 +368,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> magicAbort(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -402,7 +389,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> errorK(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -423,7 +409,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
   @Override public MagicTrait<String> tryCatch(MIR.Lambda l, MIR e) {
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }
@@ -453,7 +438,6 @@ public record MagicImpls(JavaCodegen gen, Program p, IdentityHashMap<E.MCall, EM
     var _this = this;
     return new MagicTrait<>() {
       @Override public Id.IT<T> name() { return l.t().itOrThrow(); }
-      @Override public MIR.Lambda instance() { return l; }
       @Override public String instantiate() {
         return gen.visitLambda(l, false);
       }

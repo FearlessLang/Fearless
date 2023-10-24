@@ -7,6 +7,7 @@ import id.Mdf;
 import magic.Magic;
 import failure.Fail;
 import program.CM;
+import program.CompilationCache;
 import program.TypeRename;
 import program.typesystem.EMethTypeSystem;
 import program.typesystem.TraitTypeSystem;
@@ -18,14 +19,22 @@ import java.util.stream.Collectors;
 
 public class Program implements program.Program  {
   private final Map<Id.DecId, T.Dec> ds;
-  public Program(Map<Id.DecId, T.Dec> ds) { this.ds = ds; }
+  private final Map<String, CompilationCache> compilationCaches;
+  public Program(Map<Id.DecId, T.Dec> ds, Map<String, CompilationCache> compilationCaches) {
+    this.ds = ds;
+    this.compilationCaches = compilationCaches;
+  }
 
   public Map<Id.DecId, T.Dec> ds() { return this.ds; }
   public List<ast.E.Lambda> lambdas() { return this.ds().values().stream().map(T.Dec::lambda).toList(); }
 
+  @Override public Map<String, CompilationCache> compilationCaches() {
+    return this.compilationCaches;
+  }
+
   public void typeCheck(IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls) {
     var errors = new StringBuilder();
-    TraitTypeSystem.dsOk(this.ds.values(), resolvedCalls)
+    TraitTypeSystem.dsOk(this.ds.values(), this.compilationCaches(), resolvedCalls)
       .forEach(err->errors.append(err.toString()).append("\n\n"));
     if (!errors.isEmpty()) { throw new CompileError(errors.toString()); }
   }
@@ -34,7 +43,7 @@ public class Program implements program.Program  {
     var ds = new HashMap<>(ds());
     assert !ds.containsKey(d.name());
     ds.put(d.name(), d);
-    return new Program(Collections.unmodifiableMap(ds));
+    return new Program(Collections.unmodifiableMap(ds), compilationCaches);
   }
 
   public Optional<Pos> posOf(Id.IT<ast.T> t) {
@@ -44,7 +53,7 @@ public class Program implements program.Program  {
   @Override public Program shallowClone() {
     var subTypeCache = new HashMap<>(this.subTypeCache);
     var methsCache = new HashMap<>(this.methsCache);
-    return new Program(ds){
+    return new Program(ds, compilationCaches){
       @Override public HashMap<SubTypeQuery, SubTypeResult> subTypeCache() {
         return subTypeCache;
       }

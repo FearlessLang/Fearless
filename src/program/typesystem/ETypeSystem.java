@@ -10,10 +10,7 @@ import program.Program;
 import utils.Bug;
 import visitors.Visitor;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public interface ETypeSystem extends Visitor<Optional<CompileError>> {
   Program p();
@@ -22,12 +19,8 @@ public interface ETypeSystem extends Visitor<Optional<CompileError>> {
   IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls();
   Optional<T> expectedT();
   int depth();
+
   default Optional<CompileError> visitX(E.X e){
-//    return g().get(e);
-//    var expected = expectedT().orElseThrow();
-//    var res = g().get(e);
-//    var isOk = p().isSubType(xbs(), res, expected);
-//    if (!isOk) { return Optional.of(Fail.xTypeError(expected, res, e)); }\
     var expected = expectedT().orElseThrow();
     T res; try { res = g().get(e);
     } catch (CompileError err) {

@@ -14,11 +14,13 @@ import id.Id;
 import id.Mdf;
 import magic.Magic;
 import parser.Parser;
+import program.CompilationCache;
 import program.inference.InferBodies;
 import program.typesystem.EMethTypeSystem;
 import program.typesystem.XBs;
 import utils.Box;
 import utils.Bug;
+import utils.Mapper;
 import wellFormedness.WellFormednessFullShortCircuitVisitor;
 import wellFormedness.WellFormednessShortCircuitVisitor;
 
@@ -78,7 +80,7 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
   void generateDocs(String[] files) throws IOException {
     if (files == null) { files = new String[0]; }
     var p = compile(files, new IdentityHashMap<>());
-    var docgen = new MarkdownDocgen(p);
+    var docgen = new MarkdownDocgen(p.program);
     var docs = docgen.visitProgram();
     Path root = Path.of("docs");
     try { Files.createDirectory(root); } catch (FileAlreadyExistsException ignored) {}
@@ -90,14 +92,15 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
   void run(String entryPoint, String[] files, List<String> cliArgs) {
     var entry = new Id.DecId(entryPoint, 0);
     IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls = new IdentityHashMap<>();
-    var p = compile(files, resolvedCalls);
+    var compilationResult = compile(files, resolvedCalls);
+    var p = compilationResult.program;
 
-    var main = p.of(Magic.Main).toIT();
-    var isEntryValid = p.isSubType(XBs.empty(), new ast.T(Mdf.mdf, p.of(entry).toIT()), new ast.T(Mdf.mdf, main));
-    if (!isEntryValid) { throw Fail.invalidEntryPoint(entry, main); }
+//    var main = p.of(Magic.Main).toIT();
+//    var isEntryValid = p.isSubType(XBs.empty(), new ast.T(Mdf.mdf, p.of(entry).toIT()), new ast.T(Mdf.mdf, main));
+//    if (!isEntryValid) { throw Fail.invalidEntryPoint(entry, main); }
 
     v.progress.printTask("Running code generation \uD83C\uDFED");
-    var java = toJava(entry, p, resolvedCalls);
+    var java = toJava(entry, p, resolvedCalls, compilationResult.packages);
     var classFile = java.compile();
     v.progress.printTask("Code generated \uD83E\uDD73");
 
@@ -122,7 +125,8 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
     compile(files, new IdentityHashMap<>());
   }
 
-  Program compile(String[] files, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls) {
+  record CompilationResult(ast.Program program, Map<String, Package> packages) {}
+  CompilationResult compile(String[] files, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls) {
     var base = parseBase();
     Map<String, List<Package>> ps = new HashMap<>(base);
     Arrays.stream(files)
@@ -141,13 +145,13 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
       ));
 
     v.progress.printTask("Parsing \uD83D\uDC40");
-    var p = Parser.parseAll(ps);
+    var parserResult = Parser.parseAll(ps);
     v.progress.printTask("Parsing complete \uD83E\uDD73");
     v.progress.printTask("Checking that the program is well formed \uD83D\uDD0E");
-    new WellFormednessFullShortCircuitVisitor().visitProgram(p).ifPresent(err->{ throw err; });
+    new WellFormednessFullShortCircuitVisitor().visitProgram(parserResult.program()).ifPresent(err->{ throw err; });
     v.progress.printTask("Well formedness checks complete \uD83E\uDD73");
     v.progress.printTask("Inferring types \uD83D\uDD75️");
-    var inferred = InferBodies.inferAll(p);
+    var inferred = InferBodies.inferAll(parserResult.program());
     v.progress.printTask("Types inferred \uD83E\uDD73");
     v.progress.printTask("Checking that the program is still well formed \uD83D\uDD0E");
     new WellFormednessShortCircuitVisitor(inferred).visitProgram(inferred).ifPresent(err->{ throw err; });
@@ -155,11 +159,12 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v) {
     v.progress.printTask("Checking types \uD83E\uDD14");
     inferred.typeCheck(resolvedCalls);
     v.progress.printTask("Types look all good \uD83E\uDD73");
-    return inferred;
+    return new CompilationResult(inferred, Mapper.of(map->parserResult.packages().forEach(pkg->map.put(pkg.name(), pkg))));
   }
-  private JavaProgram toJava(Id.DecId entry, Program p, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls) {
+  private JavaProgram toJava(Id.DecId entry, Program p, IdentityHashMap<E.MCall, EMethTypeSystem.TsT> resolvedCalls, Map<String, Package> packages) {
     var mirVisitor = new MIRInjectionVisitor(p, resolvedCalls);
     var mir = mirVisitor.visitProgram();
+    mir.pkgs().forEach((pkg, traits)->new CompilationCache(packages.get(pkg), traits).save());
     var codegen = switch (bv) {
       case Std -> new JavaCodegen(mirVisitor.getProgram(), resolvedCalls);
       case Imm -> new ImmJavaCodegen(mirVisitor.getProgram(), resolvedCalls);

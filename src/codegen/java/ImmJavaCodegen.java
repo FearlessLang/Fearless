@@ -8,6 +8,7 @@ import id.Mdf;
 import program.typesystem.EMethTypeSystem;
 import utils.Bug;
 
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;

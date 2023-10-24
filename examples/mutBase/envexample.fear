@@ -1,5 +1,5 @@
 package capstesting
-alias base.Do as Do,
+alias base.Block as Block,
 alias base.caps.FEnv as FEnv,
 alias base.caps.FIO as FIO,
 

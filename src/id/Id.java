@@ -1,9 +1,12 @@
 package id;
 
+import codegen.MIR;
 import parser.Parser;
 import utils.Bug;
 import utils.OneOr;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -27,7 +30,8 @@ public class Id {
     if (name.endsWith("$")) { return true; }
     return new parser.Parser(Parser.dummy,name).parseGX();      
   }
-  public record DecId(String name,int gen){
+  public record DecId(String name,int gen) implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
     public DecId{ assert validDecName(name) && gen>=0 : name; }
 
     static Pattern pkgRegex = Pattern.compile("(.+\\.)+([A-Za-z0-9_']+)\\$?$");
@@ -42,9 +46,11 @@ public class Id {
       return String.format("%s/%d", name, gen);
     }
   }
-  public record MethName(Optional<Mdf> mdf, String name, int num){
+  public record MethName(Optional<Mdf> mdf, String name, int num) implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
     public MethName{ assert validM(name) && num>=0; }
     public MethName(String name, int num) { this(Optional.empty(), name, num); }
+    public MethName(MIR.MethName name) { this(Optional.of(name.mdf()), name.name(), name.num()); }
     public MethName withMdf(Optional<Mdf> mdf) { return new MethName(mdf, name, num); }
     @Override public String toString(){
       var base = name+"/"+num;
@@ -72,10 +78,13 @@ public class Id {
     }
   }
 
-  public interface RT<TT extends Ty>{ <R> R match(Function<GX<TT>,R> gx, Function<IT<TT>,R> it); }
+  public interface RT<TT extends Ty> extends Serializable {
+    <R> R match(Function<GX<TT>,R> gx, Function<IT<TT>,R> it);
+  }
   public sealed interface Ty permits ast.T, astFull.T {}
 
   public record GX<TT extends Ty>(String name) implements RT<TT>{
+    @Serial private static final long serialVersionUID = 1L;
     private static final AtomicInteger FRESH_N = new AtomicInteger(0);
     private static HashMap<Integer, List<GX<ast.T>>> freshNames = new HashMap<>();
 
@@ -120,7 +129,8 @@ public class Id {
     public GX<astFull.T> toFullAstGX() { return (GX<astFull.T>) this; }
     public GX<TT> withName(String name) { return new GX<>(name); }
   }
-  public record IT<TT extends Ty>(Id.DecId name, List<TT> ts)implements RT<TT>{
+  public record IT<TT extends Ty>(Id.DecId name, List<TT> ts) implements RT<TT>{
+    @Serial private static final long serialVersionUID = 1L;
     public IT{
       assert ts.size()==name.gen();
     }

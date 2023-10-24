@@ -1,19 +1,18 @@
 package wellFormedness;
 
 import astFull.E;
+import astFull.Program;
 import astFull.T;
-import files.HasPos;
-import id.Id;
-import id.Mdf;
-import magic.Magic;
 import failure.CompileError;
 import failure.Fail;
-import astFull.Program;
-import utils.Box;
+import files.HasPos;
+import id.Id;
 import visitors.FullShortCircuitVisitor;
 import visitors.FullShortCircuitVisitorWithEnv;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -69,7 +68,6 @@ Evil:Main{
  */
 
 public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisitorWithEnv<CompileError> {
-  private Program p;
 
   @Override public Optional<CompileError> visitMCall(E.MCall e) {
     return super.visitMCall(e)
@@ -124,7 +122,6 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
   }
 
   @Override public Optional<CompileError> visitProgram(Program p){
-    this.p = p;
     return noCyclicImplRelations(p)
       .or(()->super.visitProgram(p));
   }

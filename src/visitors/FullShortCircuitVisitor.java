@@ -63,6 +63,7 @@ public interface FullShortCircuitVisitor<R> extends FullVisitor<Optional<R>> {
   default Optional<R> visitAlias(T.Alias a){ return visitIT(a.from()); }
   default Optional<R> visitProgram(Program p){
     for (var d : p.ds().values()) {
+      if (p.compilationCaches().containsKey(d.name().pkg())) { return Optional.empty(); }
       var r = visitDec(d);
       if (r.isPresent()) { return r; }
     }
