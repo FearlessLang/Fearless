@@ -5,6 +5,7 @@ grammar Fearless;
 Mut:'mut';
 Lent:'lent';
 Read:'read';
+ReadImm:'read/imm';
 ReadOnly:'readOnly';
 Iso:'iso';
 RecMdf:'recMdf';
@@ -67,7 +68,7 @@ Whitespace: ('\t' | ' ' | '\n' )-> channel(HIDDEN);
 fullCN:FullCN;
 x: X| Underscore;
 m: SysInM | MName;
-mdf: Mut | ReadOnly | Lent | Read | Iso | RecMdf | Imm | ;
+mdf: Mut | ReadOnly | Lent | ReadImm | Read | Iso | RecMdf | Imm | ;
 
 
 roundE : OR e CR;

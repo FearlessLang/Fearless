@@ -137,7 +137,7 @@ public interface TypeRename<T extends Id.Ty>{
   default T propagateMdf(Mdf mdf, T t){
     assert t!=null;
     if(mdf.isMdf()){ return t; }
-//    if (mdf.isRead() && mdf(t).isImm()) { return withMdf(t, Mdf.imm); }
+    if (mdf.isReadImm() && mdf(t).isImm()) { return withMdf(t, Mdf.imm); }
     return withMdf(t,mdf);
   }
   default T propagateArgMdf(XBs xbs, Mdf mdf, T t){

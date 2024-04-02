@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum Mdf{
-  read,mut,lent,readOnly,iso,recMdf,mdf,imm;
+  read,mut,lent,readOnly,iso,recMdf,mdf,imm,readImm;
   public boolean is(Mdf... valid){ return Arrays.stream(valid).anyMatch(v->this==v); }
   public boolean isMut(){return this == mut;}
   public boolean isLent(){return this == lent;}
@@ -16,11 +16,12 @@ public enum Mdf{
   public boolean isRecMdf(){return this == recMdf;}
   public boolean isMdf(){return this == mdf;}
   public boolean isImm(){return this == imm;}
+  public boolean isReadImm(){return this == readImm;}
   public boolean isHyg(){return isReadOnly() || isLent();}
   public boolean couldBeHyg(){
     return isHyg() || isMdf() || isRecMdf();
   }
-  public boolean isLikeMut(){return isReadOnly() || isLent() || isMut() || isRead();}
+  public boolean isLikeMut(){return isReadOnly() || isLent() || isMut() || isRead() || isReadImm();}
   public boolean isStrong(){return isImm() || isReadOnly();}
   public Mdf adapt(ast.T t) {
     assert !(this.isRecMdf() && t.mdf().isMdf() && !t.isGX());
@@ -38,11 +39,11 @@ public enum Mdf{
     if (this == mut) {
       return other;
     }
-    if (this == read) {
+    if (this == read || this == readImm) {
       if (other == imm) { return imm; }
       if (other == readOnly) { return readOnly; }
       if (other == lent) { return readOnly; }
-      return read;
+      return this;
     }
     if (this == lent) {
       if (other == imm) { return imm; }
@@ -91,6 +92,7 @@ public enum Mdf{
 
   @Override public String toString() {
     if (this == mdf) { return ""; }
+    if (this == readImm) { return "read/imm"; }
     return super.toString();
   }
 }

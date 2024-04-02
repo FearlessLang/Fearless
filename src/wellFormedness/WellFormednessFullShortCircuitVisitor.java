@@ -7,6 +7,7 @@ import id.Id;
 import failure.CompileError;
 import failure.Fail;
 import astFull.Program;
+import id.Mdf;
 import visitors.FullShortCircuitVisitor;
 import visitors.FullShortCircuitVisitorWithEnv;
 
@@ -201,7 +202,7 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
 
   private Optional<CompileError> validMethMdf(E.Meth e) {
     return e.sig().flatMap(m->{
-      if (!m.mdf().isMdf()) { return Optional.empty(); }
+      if (!m.mdf().is(Mdf.mdf, Mdf.readImm)) { return Optional.empty(); }
       return Optional.of(Fail.invalidMethMdf(e.sig().get(), e.name().orElseThrow()));
     });
   }
