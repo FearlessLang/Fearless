@@ -47,8 +47,6 @@ public interface Program {
   default boolean isSubType(Mdf m1, Mdf m2) { //m1<m2
     if(m1 == m2){ return true; }
     if (m2.is(Mdf.readOnly)) { return true; }
-    if (m1.isReadImm()) { m1 = Mdf.read; }
-    if (m2.isReadImm()) { m2 = Mdf.read; }
     return switch(m1){
       case mut -> m2.isLikeMut();
       case imm -> m2.is(Mdf.read, Mdf.readImm);

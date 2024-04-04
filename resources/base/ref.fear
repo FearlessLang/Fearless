@@ -7,15 +7,6 @@ Ref:{
       .get -> inner.get,
       .swap(x') -> inner.swap(x'),
       }},
-  readOnly #[X](x: imm X): mut RefImm[imm X] -> Ref.ofImm x,
-  .ofImm[X](x: imm X): mut RefImm[imm X] -> Let#{
-    .var -> Ref#(Ice[imm X]{x}),
-      .in(ref) -> {
-         mut  .get: imm X -> ref.get.get,
-         read .get: imm X -> ref.get.get,
-         .swap(newX) -> ref.swap(Ice[imm X]{newX}).get,
-         }
-      }
   }
 Ref[X:imm,mut,read]: Sealed{
   mut  .get: X,
@@ -33,14 +24,8 @@ Ref[X:imm,mut,read]: Sealed{
   mut .update(f: mut UpdateRef[X]): X -> this <- f,
   }
 UpdateRef[X]: { mut #(x: X): X }
-RefImm[X:imm]: Ref[X]{
-  read .get: X,
-  read *: X -> this.get,
-  .getImm(f) -> this.get,
-  .getImm -> Opt#(this.get),
-  }
 
-Count[N:imm]: RefImm[imm N]{
+Count[N:imm]: Ref[N]{
   mut ++: N,
   mut --: N,
   mut +=(n: N): N,
@@ -50,7 +35,7 @@ Count[N:imm]: RefImm[imm N]{
 Count:{
   #(n: Int): mut Count[Int] -> this.int(n),
   .int(n: Int): mut Count[Int] -> Let#({
-    .var -> Ref.ofImm n,
+    .var -> Ref#n,
     .in(c) -> {
       .get -> c.get,
       .swap(x) -> c.swap(x),
@@ -62,7 +47,7 @@ Count:{
       }
     }),
   .uint(n: UInt): mut Count[UInt] -> Let#({
-    .var -> Ref.ofImm n,
+    .var -> Ref#n,
     .in(c) -> {
       .get -> c.get,
       .swap(x) -> c.swap(x),

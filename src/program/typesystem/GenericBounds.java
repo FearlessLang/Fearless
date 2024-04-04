@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public interface GenericBounds {
-  static Optional<Supplier<? extends CompileError>> validGenericLambda(Program p, XBs xbs, E.Lambda l) {
+  static Optional<? extends Supplier<? extends CompileError>> validGenericLambda(Program p, XBs xbs, E.Lambda l) {
     return l.its().stream()
       .map(it->validGenericIT(p, xbs, it))
       .filter(Optional::isPresent)
@@ -25,7 +25,7 @@ public interface GenericBounds {
       .findAny();
   }
 
-  static Optional<Supplier<? extends CompileError>> validGenericMeth(Program p, XBs xbs, Mdf recvMdf, Id.IT<T> recvIT, int depth, CM cm, List<T> typeArgs) {
+  static Optional<? extends Supplier<? extends CompileError>> validGenericMeth(Program p, XBs xbs, Mdf recvMdf, Id.IT<T> recvIT, int depth, CM cm, List<T> typeArgs) {
     var gensValid = typeArgs.stream()
       .map(t->validGenericT(p, xbs, t))
       .filter(Optional::isPresent)
@@ -44,7 +44,7 @@ public interface GenericBounds {
       .findAny();
   }
 
-  static Optional<Supplier<? extends CompileError>> validGenericIT(Program p, XBs xbs, Id.IT<T> it) {
+  static Optional<? extends Supplier<? extends CompileError>> validGenericIT(Program p, XBs xbs, Id.IT<T> it) {
     var innerInvalid = it.ts().stream()
       .map(t->validGenericT(p, xbs, t))
       .filter(Optional::isPresent)
@@ -71,7 +71,7 @@ public interface GenericBounds {
       .findAny();
   }
 
-  static Optional<Supplier<? extends CompileError>> validGenericT(Program p, XBs xbs, T t) {
+  static Optional<? extends Supplier<? extends CompileError>> validGenericT(Program p, XBs xbs, T t) {
     return t.match(
       gx->Optional.empty(),
       it->validGenericIT(p, xbs, it)
@@ -80,12 +80,19 @@ public interface GenericBounds {
 
   static Optional<Supplier<? extends CompileError>> validGenericMdf(XBs xbs, Set<Mdf> bounds, T t) {
     Supplier<Optional<Supplier<? extends CompileError>>> errMsg = ()->Optional.of(()->Fail.invalidMdfBound(t, bounds.stream().sorted().toList()));
-    if (!t.mdf().is(Mdf.mdf, Mdf.recMdf)) {
+    if (!t.mdf().is(Mdf.mdf, Mdf.recMdf, Mdf.readImm)) {
       return bounds.contains(t.mdf()) ? Optional.empty() : errMsg.get();
+    }
+
+    if (t.mdf().isReadImm()) {
+      return bounds.containsAll(Set.of(Mdf.read, Mdf.imm)) ? Optional.empty() : errMsg.get();
     }
 
     if (t.mdf().isMdf()) {
       var bs = xbs.get(t.gxOrThrow());
+      if (!bounds.containsAll(bs)) {
+        System.out.println("sgsrg");
+      }
       return bounds.containsAll(bs) ? Optional.empty() : errMsg.get();
     }
 
