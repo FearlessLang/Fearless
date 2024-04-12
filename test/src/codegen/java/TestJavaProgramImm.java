@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import static codegen.java.RunJavaProgramTests.ok;
 import static utils.RunOutput.Res;
 
 public class TestJavaProgramImm {
@@ -47,7 +48,7 @@ public class TestJavaProgramImm {
     inferred.typeCheck(resolvedCalls);
     var mir = new MIRInjectionVisitor(inferred, resolvedCalls).visitProgram();
     var java = new ImmJavaCodegen(mir).visitProgram(new Id.DecId(entry, 0));
-    var verbosity = new CompilerFrontEnd.Verbosity(false, true, CompilerFrontEnd.ProgressVerbosity.None);
+    var verbosity = new CompilerFrontEnd.Verbosity(false, false, CompilerFrontEnd.ProgressVerbosity.None);
     var res = RunOutput.java(ImmJavaProgram.compile(verbosity, new JavaProgram(java)), args).join();
     Assertions.assertEquals(expected, res);
   }
@@ -340,10 +341,45 @@ public class TestJavaProgramImm {
     package test
     alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
     Test:base.Main { _ -> Block#
-     .var n = {5}
+     .let n = {5}
      .do {ForceGen#}
      .return {n .str}
      }
     ForceGen: {#: Void -> {}}
     """);}
+
+  private static final String PEANO = """
+    package test
+    alias base.Int as Int,
+    Num: {
+      .pred: Num,
+      +(b: Num): Num,
+      *(b: Num): Num,
+      .int: Int,
+      .succ: Num -> S{this},
+      }
+    Zero: Num{
+      .pred -> this.pred,
+      +(b) -> b,
+      *(b) -> this,
+      .int -> 0,
+      }
+    S: Num{
+      +(b) -> S{this.pred + b},
+      *(b) -> b + (b * (this.pred)),
+      .int -> this.pred.int + 1,
+      }
+    """;
+  @Test void peanoAdd() { ok(new Res("6", "", 0), """
+    package test
+    Test: base.Main{_ -> (Zero + (Zero.succ) + (Zero + (Zero.succ)) + (Zero.succ) + (Zero.succ.succ.succ) + Zero).int.str}
+    """, PEANO);}
+  @Test void peanoMultZero() { ok(new Res("0", "", 0),"""
+    package test
+    Test: base.Main{_ -> (Zero * (Zero.succ))+(Zero.succ * Zero).int.str}
+    """, PEANO);}
+  @Test void peanoMultTwo() { ok(new Res("8", "", 0),"""
+    package test
+    Test: base.Main{_ -> ((Zero.succ.succ.succ.succ) * (Zero.succ.succ)).int.str}
+    """, PEANO);}
 }

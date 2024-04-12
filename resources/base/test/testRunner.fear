@@ -9,10 +9,10 @@ Main: AppMain{
 
 // TODO: When we have maps support nested test suites
 FTestRunner: F[mut System, mut TestRunner]{sys -> Block#
-  .var[mut List[Test]] tests = {List#}
-  .var[mut List[mut TestSuite]] suites = {List#}
-  .var[mut List[mut ResultReporter]] reporters = {List#}
-  .var[mut CapTry] try = {CapTries#sys}
+  .let[mut List[Test]] tests = {List#}
+  .let[mut List[mut TestSuite]] suites = {List#}
+  .let[mut List[mut ResultReporter]] reporters = {List#}
+  .let[mut CapTry] try = {CapTries#sys}
   .return {{'self
     .suite(title, registerTests) -> Block#
       .do {suites.add({.title -> title, .runner -> registerTests#(FTestRunner#sys)})}
@@ -27,7 +27,7 @@ FTestRunner: F[mut System, mut TestRunner]{sys -> Block#
       .return {self},
 
     .run -> Block#
-      .var[mut List[read TestResults]] results = {List#[read TestResults](FTestResults#("<unnamed>", self.runDirectTests[], self.runSuiteTests[]))}
+      .let[mut List[read TestResults]] results = {List#[read TestResults](FTestResults#("<unnamed>", self.runDirectTests[], self.runSuiteTests[]))}
       .do {reporters.iter.for{reporter -> reporter#results}}
       .return {results},
     mut .runDirectTests: mut List[TestResult] -> tests.iter
@@ -40,7 +40,7 @@ FTestRunner: F[mut System, mut TestRunner]{sys -> Block#
       .list,
     mut .runSuiteTests: mut List[read TestResults] -> suites.flow
       .map[read TestResults]{suite -> Block#
-        .var[read List[read TestResults]] suiteResults = {suite.runner.run}
+        .let[read List[read TestResults]] suiteResults = {suite.runner.run}
         .return {FTestResults#(
           suite.title,
           suiteResults.flow

@@ -116,24 +116,24 @@ public class Ex09FlowsTest {
         .map{n -> n * 10}
         .filter{n -> n > 50}
         .find{n -> True}
-        .match{.some(n) -> n, .empty -> Error.str ".find was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".find was empty"},
       .findAndLimit: Int -> Flow#[Int](5, 10, 15)
         .map{n -> n * 10}
         .filter{n -> n > 50}
         .limit(1u)
         .find{n -> True}
-        .match{.some(n) -> n, .empty -> Error.str ".findAndLimit was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".findAndLimit was empty"},
       .first: Int -> Flow#[Int](5, 10, 15)
         .map{n -> n * 10}
         .filter{n -> n > 50}
         .first
-        .match{.some(n) -> n, .empty -> Error.str ".first was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".first was empty"},
       .firstAndLimit: Int -> Flow#[Int](5, 10, 15)
         .map{n -> n * 10}
         .filter{n -> n > 50}
         .limit(1u)
         .first
-        .match{.some(n) -> n, .empty -> Error.str ".firstAndLimit was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".firstAndLimit was empty"},
       }
     """, Base.mutBaseAliases); }
   @Test void flowGetFirstDifferentApproachesSeq() { ok(new Res("", "", 0), "test.Test", """
@@ -149,24 +149,24 @@ public class Ex09FlowsTest {
         .map{p -> FPerson#(p.age * 10u)}
         .filter{p -> p.age > 50u}
         .find{n -> True}
-        .match{.some(n) -> n, .empty -> Error.str ".find was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".find was empty"},
       .findAndLimit: mut Person -> Flow#[mut Person](FPerson#24u, FPerson#60u, FPerson#75u)
         .map{p -> FPerson#(p.age * 10u)}
         .filter{p -> p.age > 50u}
         .limit(1u)
         .find{n -> True}
-        .match{.some(n) -> n, .empty -> Error.str ".findAndLimit was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".findAndLimit was empty"},
       .first: mut Person -> Flow#[mut Person](FPerson#24u, FPerson#60u, FPerson#75u)
         .map{p -> FPerson#(p.age * 10u)}
         .filter{p -> p.age > 50u}
         .first
-        .match{.some(n) -> n, .empty -> Error.str ".first was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".first was empty"},
       .firstAndLimit: mut Person -> Flow#[mut Person](FPerson#24u, FPerson#60u, FPerson#75u)
         .map{p -> FPerson#(p.age * 10u)}
         .filter{p -> p.age > 50u}
         .limit(1u)
         .first
-        .match{.some(n) -> n, .empty -> Error.str ".firstAndLimit was empty"},
+        .match{.some(n) -> n, .empty -> Error.msg ".firstAndLimit was empty"},
       }
     """, """
     package test
@@ -180,11 +180,11 @@ public class Ex09FlowsTest {
   @Test void optFlow() { ok(new Res(), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var f1 = {(Opt#[Int]5).flow
+      .let f1 = {(Opt#[Int]5).flow
         .map{n -> n * 10}
         .list
         }
-      .var f2 = {mut Opt[Int].flow
+      .let f2 = {mut Opt[Int].flow
         .map{n -> n * 10}
         .list
         }
@@ -270,7 +270,7 @@ public class Ex09FlowsTest {
   @Test void flowFilterPrintSize() { ok(new Res("2", "", 0), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var size = {Flow#[Int](5, 10, 15).filter{n -> n > 5}.size}
+      .let size = {Flow#[Int](5, 10, 15).filter{n -> n > 5}.size}
       .return {FIO#sys.println(size.str)}
       }
     """, Base.mutBaseAliases);}
@@ -317,8 +317,8 @@ public class Ex09FlowsTest {
   @Test void mutExtensionMethod() { ok(new Res("20 30", "", 0), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var[List[Int]] list = {List#[Int](1, 2, 3)}
-      .var[Str] myFlow = {list.flow
+      .let[List[Int]] list = {List#[Int](1, 2, 3)}
+      .let[Str] myFlow = {list.flow
         .filter{n -> n > 1}
         #{f -> f.map{n -> n*10}}
         .map{n -> n.str}
@@ -444,7 +444,7 @@ public class Ex09FlowsTest {
     package test
     FPerson:{
       #(age: UInt): mut Person -> Block#
-        .var[mut Ref[UInt]] age' = {Ref.ofImm(age)}
+        .let[mut Ref[UInt]] age' = {Ref.ofImm(age)}
         .return mut base.ReturnStmt[mut Person]{mut Person: Person{
           read .age: UInt -> age'.getImm!,
           mut .age(n: UInt): Void -> age' := n,
@@ -495,7 +495,7 @@ public class Ex09FlowsTest {
   @Test void flowActorMultiParallel() { ok(new Res(), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var[mut List[Int]] someMutList = {List#[Int](30)}
+      .let[mut List[Int]] someMutList = {List#[Int](30)}
       .return {"500 5 500 10".assertEq(
         Flow#[Int](5, 10)
           .actor[mut Ref[Int],Int](Ref#[Int]1, {next, state, n -> Block#

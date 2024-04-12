@@ -107,4 +107,4 @@ EmptyFlow[E]: Flow[E]{
   .size -> 0u,
   }
 
-TerminalOnInfiniteError: { #: Info -> FInfo.str "Terminal operators cannot be called on infinite flows. Use an operation like .limit(5u) to bound the flow." }
+TerminalOnInfiniteError: { #: Info -> FInfo.msg "Terminal operators cannot be called on infinite flows. Use an operation like .limit(5u) to bound the flow." }

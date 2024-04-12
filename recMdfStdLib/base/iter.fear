@@ -17,8 +17,8 @@ Iter[E:imm,mut]:{
 
   mut .map[R:imm,mut](f: mut IterMapper[mdf E, mdf R]): mut Iter[mdf R] -> { this.next.map(f) },
   mut .flatMap[R:imm,mut](f: mut IterMapper[mdf E, mut Iter[mdf R]]): mut Iter[mdf R] -> Block#
-    .var[mut Iter[mut Iter[mdf R]]] mapIter = { this.map(f) }
-    .var[mut Ref[mut Opt[mut Iter[mdf R]]]] optCurIter = { Ref#(mapIter.next) }
+    .let[mut Iter[mut Iter[mdf R]]] mapIter = { this.map(f) }
+    .let[mut Ref[mut Opt[mut Iter[mdf R]]]] optCurIter = { Ref#(mapIter.next) }
     .return(mut ReturnStmt[mut Iter[mdf R]]{ mut Iter[mdf R]{ 'self
       .next -> optCurIter*.match{
         .some(curIter) -> curIter.next.match{

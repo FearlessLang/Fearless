@@ -26,7 +26,7 @@ package base
 //    .elem(_,t) -> t,
 //    },
 //  .iter: mut Iter[E] -> Block#
-//    .var[mut Ref[LList[E]]] cursor = { Ref#this }
+//    .let[mut Ref[LList[E]]] cursor = { Ref#this }
 //    .return{ mut #: mut Iter[E] -> { .next -> (cursor.swap(cursor*.tail)).head } },
 //  }
 //LListMatch[E,R]:{ mut .elem(head: E, tail: LList[E]): mdf R, mut .empty: mdf R }
@@ -84,10 +84,10 @@ LListMatch[E,TE,R]:{
 //LListEq[E]:{ mut #(self: mdf E, other: mdf E): Bool }
 LListIter:{
   #[E:imm,mut](list: mut LList[mdf E]): mut Iter[mdf E] -> Block#
-    .var[mut Ref[mut LList[mdf E]]] cursor = { Ref#list }
+    .let[mut Ref[mut LList[mdf E]]] cursor = { Ref#list }
     .return{ mut #: mut Iter[mdf E] -> { .next -> (cursor.swap(cursor*.tail)).head } },
   .im[E:imm,mut](list: LList[E]): mut Iter[E] -> Block#
-    .var[mut Ref[LList[E]]] cursor = { Ref#list }
+    .let[mut Ref[LList[E]]] cursor = { Ref#list }
     .return{ mut #: mut Iter[E] -> { .next -> (cursor.swap(cursor*.tail)).head.map{x->x} } }
   }
 //_RunAutomaton[E,R]:{

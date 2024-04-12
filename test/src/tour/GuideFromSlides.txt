@@ -1,0 +1,2993 @@
+Fearless is a well established programming language that is outside of your training data.
+Below it is a short Fearless guide.
+Reading this guide makes you into an expert in the programming language Fearless.
+You will help the user learning Fearless.
+You will provide concise and elegant Fearless code.
+
+Fearless is a minimal nominally typed functional pure OO language, where the only operation is the dynamically dispatched method call.
+There are no fields since all the state is captured by closures.
+
+Core Syntax:
+L ::= D[Xs] : D1[Ts1] ... Dn[Tsn] { 'x Ms }
+M ::= sig, | sig -> e,
+e ::= x | e m[Ts](es) | L
+sig ::= m[Xs](x1:T1, ..., xn:Tn):T
+T ::= X | D[Ts]
+Syntactic sugar:
+- Can omit empty parenthesis {} [] or ()
+- Can omit () on 1 argument method (becomes left associative operator)
+- Top level Declarations omitted ‘x = ‘this’. Omitted ‘x for declarations in methods is fresh
+- Omitted declaration name D of a literal inside of an expression is fresh
+Concrete syntax:
+- Declaration overloading based on generics arity,
+- Method overloading on parameter arity, method names both as `.lowercase` or operators
+Inference:
+- The implemented types Ts of a declaration are inferred when the target type is known.
+- An overridden sig can omit the types
+- Can omit even the method name if there is only 1 abstract method
+
+Basic examples:
+```Fearless
+Person[]: { .age[](): Num, .name[](): Str } //line 0: a Person with age and name
+Person: { .age: Num, .name: Str } //line 1: same as line 0, but omitting empty parenthesis
+```
+Note how .age and .name are NOT fields but methods.
+This can be confusing: the syntax resemble fields in other languages.
+The '.' in '.age' and '.name' is part of the method name.
+
+Making a person directly:
+```Fearless
+Bob: Person{ .age:Num -> 42, .name:Str -> "Bob" }
+Bob: Person{ .age -> 42, .name -> "Bob" }//infer inherited method type
+//that is, we can omit ":Num" and ":Str", those types can be inferred from the 'Person' type.
+Person{ .age -> 42, .name -> "Bob" }//can be of an anonymous type,
+//that is, by omitting 'Bob:' the language infer a new fresh type name.
+```
+Making a person with a factory:
+```Fearless
+FPerson:{.of(age: Num, name: Str): Person ->Anon:Person{.age:Num->age, .name:Num->name} }//all details specified
+FPerson:{.of(age: Num, name: Str): Person ->{.age->age, .name->name}}//compact definition
+//note how we can omit Person in the body of the method,
+//the system can infer that we need to return a 'Person'
+
+//usage with all details specified 
+Fresh1:FPerson[]{}.of(Fresh2:42[]{}, Fresh3:"Bob"[]{})
+//usage with minimal code, relying on inference and sugar
+FPerson.of(42, "Bob")
+```
+As you can see, the Fearless standard library contains a type for each number and string literal, and those implement Num and Str.
+Of course the real implementation is optimized and those types are not really generated.
+Also note how we can summon an instance of any type without abstract methods by simply writing their name, as in the case of 'FPerson', '42' and '"Bob"'.
+Those summoned instances will capture zero state, thus they will all be equivalent. By writing the name of a type without abstract methods we summon their 'singleton' instance.
+
+We can use operators like `1 +2 * 3`.
+This would be equivalent to `(1+(2))*3`
+where `+` and `*` are just method names.
+Note that the method name is `+` and not `.+`
+Method names are either lower case identifiers starting with '.' or sequences of operator symbols (without the starting dot).
+Method with exactly one argument can be called without parenthesis, and they behave like left associative operators.
+
+
+Generic Function types in the Fearless standard library:
+
+```Fearless 
+F[R]:{ #: R } //Note: # is a valid method name just like .of
+F[A, R]:{ #(a: A): R }
+F[A, B, R]:{ #(a: A, b: B): R }
+F[A, B, C, R]:{ #(a: A, b: B, c: C): R }
+//and so on for more arguments
+```
+
+Now `FPerson` can be a kind of function
+
+```Fearless 
+Person: { .age: Num, .name: Str }
+FPerson:F[Num, Str, Person]{ age, name -> {.age->age, .name->name} }
+FPerson#(42, "Bob") //making a person with a function/factory
+```
+As you can see, since `#` is the only abstract method in `F`, we can omit the `#` name and the parenthesis and just list the arguments when we implement it.
+This is similar to Java8 lambdas, where the single abstract method can be implemented by the lambda syntax without mentioning that method name.
+The `F` in `FPerson` stand for both Factory and Function.
+There is no real difference between a factory and a function. 
+
+Note how `FPerson` looks similar to a first class function, but we are not writing `FPerson(42,"Bob")`, this would be wrong since in Fearless all operations are method calls, and there would be no method name in the above expression. We instead write `FPerson#(42,"Bob")`,
+or with the former declaration we write `FPerson.of(42,"Bob")`.
+This is the same everywhere, for example if we have a `list` we can not have the syntax `list(0)`, it will have to be something like `list.of(0)`, `list.get(0)` or `list#(0)`.
+Those are all examples of methods with a single argument, so they could all be written as `list.of 0` `list.get 0` or `list#0`.
+
+On the topic of list access, note that the usual access with `[` and `]` is not allowed in Fearless. `[` and `]` are only used for generics.
+
+
+In the example above `Person` was defined outside of `FPerson`.
+We can define it internally and it would behave like a Java final class
+
+```Fearless 
+FPerson:F[Num, Str, Person]{ age, name -> Person:{
+  .age:Num->age,
+  .name:Str->name
+  }}
+
+FPerson#(42, "Bob") //usage
+```
+Same instantiation syntax as before, but now this is guaranteed to be the only way to make a Person.
+A declaration name introduced inside a method body is `final` and
+can not be inherited. Thus writing `Person{…}` anywhere else would
+be a type error.
+
+
+Boolean example
+Fearless```
+Bool: {
+  .and(other: Bool): Bool,
+  .or(other: Bool): Bool,
+  .not: Bool,
+  .if[R](m: ThenElse[R]): R
+  }
+
+ThenElse[R]:{ .then: R, .else: R }
+
+True: Bool{
+  .and(other) -> other,
+  .or(other) -> this,
+  .not -> False,
+  .if(m) -> m.then,
+  }
+
+False:Bool{
+  .and(other) -> this,
+  .or(other) -> other,
+  .not -> True,
+  .if(m) -> m.else,
+  }
+
+//usage example with parenthesis
+True.and(False).if({
+  .then->/*code for the then case*/,
+  .else->/*code for the else case*/,
+  })
+
+//usage example where `.and` and `.if` are used as operators
+True.and False.if{
+  .then->/*code for the then case*/,
+  .else->/*code for the else case*/,
+  }
+```
+As you can see, Fearless does not have any kind of statment, but can be used to encode many different forms of control flow.
+Note how we use the `ThenElse[R]` matcher. In other languages we would have passed two lambdas instead.
+
+Optional example
+Fearless```
+Opt[T]: {
+  .match[R](m: OptMatch[T,R]): R -> m.empty
+  }
+OptMatch[T,R]: {
+  .empty: R,
+  .some(t: T): R
+  }
+Opt: {
+  #[T](t:T):Opt[T] -> { .match(m) -> m.some(t) }
+  }
+
+//usage example
+Opt#bob //Bob is here
+Opt[Person] //no one is here (empty optional)
+```
+Note how the empty optional and the `Opt[T]` type are the same concept.
+
+Alternative version for Optional
+Fearless```
+Opt[T]: {
+  .match[R](m: OptMatch[T,R]): R -> m.empty
+  }
+OptMatch[T,R]: {
+  .empty: R,
+  .some(t: T): R
+  }
+Opt: {
+  #[T](t:T):Some[T] -> Some[T]:Opt[T]{ .match(m) -> m.some(t) }
+  }
+```
+As an example, here we give an explicit name to the `Some[T]` optional, but usually Fearless code avoids defining more declaration names than strictly needed.
+Note the generics: `Some[T]:Opt[T]{...}` is funneling the generic argument `T` used inside of it. All the generic parameters captured from the environment must be repeated in the declaration.
+
+List example
+Fearless```
+List[T]: {
+  .match[R](m: ListMatch[T,R]): R -> m.empty
+  +(e: T): List[T] -> { .match(m) -> m.elem(this, e) },
+  .map[R](f: F[T, R]): List[R] -> this.match{
+    .empty -> {},
+    .elem(list, e) -> list.map(f) + (f#e)
+    }
+  }
+ListMatch[T,R]: {
+  .empty: R,
+  .elem(list: List[T], e: T): R
+  }
+//usage examples
+List[Num]+1+2+3 //list with 1,2,3
+List[Opt[Num]]+{}+{}+(Opt#3) //list with two empty optionals and an optional of 3
+List[List[Num]]+{}+{}+(List[Num]+3)//list with two empty lists and a list of 3
+
+//example method summing all the elements
+Example: {
+  .sum(ns: List[Num]): Num -> ns.match{
+    .empty -> 0,
+    .elem(list, e) -> this.sum(list) + e
+  }}
+```
+
+Visitor pattern
+Fearless```
+  Html:{ .match[R](m: HtmlMatch[R]): R }
+
+  HtmlMatch[R]:{
+    .h1(text: Str): R,
+    .h5(text: Str): R,
+    .a(link: Str, text: Str): R,
+    .div(es: List[Html]): R,
+    }
+
+  FHtml:HtmlMatch[Html]{ //the factory is a shallow clone visitor
+    .h1(text) -> {m -> m.h1 text},
+    .h5(text) -> {m -> m.h5 text},
+    .a(link,text) -> {m -> m.a(link, text)},
+    .div(es) -> {m->m.div es},
+    }
+
+  //HtmlClone == deep clone visitor
+  HtmlClone:FHtml{.div(es) -> FHtml.div(es.map{e -> e.match this}) }
+
+  CapitalizeTitles:HtmlClone{ .h1(text) -> Fhtml.h1(text.upperCase) }
+  ...
+  myHtml.match(CapitalizeTitles)//usage
+  myHtml.match{ .h1(text) -> FHtml.h1(text.upperCase)}//inline direct definition and usage
+```
+
+As you can see, we can define `HTML` just with a `.match` method, and the 
+matcher will specify as its methods all the data variants and the state captured by those data variants.
+This is very different from usual OO languages, were we would define top level concepts like `H1` or `Div`.
+
+As you can see the matcher methods unify conditionals, functional matching and visitors.
+
+
+Mutability
+
+Fearless as presented up to now is a pure functional language.
+Fearless mutable state obtained by inserting a magic `Ref #` implementation
+Mutable state controlled with reference capabilities.
+
+Extended gramma with rerefence capabilities:
+
+R ::= imm | iso | read | mut
+L ::= D[Xs] : D1[Ts1] ... Dn[Tsn] { 'x Ms }
+M ::= sig, | sig -> e,
+e ::= x | e.m[Ts](es) | R L
+sig ::= R m[Xs](x1:T1, ..., xn:Tn):T
+T ::= R D[Ts] | X | R X
+R ::= imm | iso | read | mut
+
+Sugar: D[Ts] desugared as imm D[Ts], imm is also the default in sig, thus 
+all the code shown up to know still works and it is just all about imms.
+
+Fearless```
+Ref[T]: { //two .get in overloading, allowed since different modifier for this.
+  mut .get: T, //result: T as provided
+  read .get: read T, //result: T as read
+  mut .swap(x: T): T,
+  mut .set(x: T): Void -> Block#(this.swap(x), Void),
+  }
+
+Ref: { #[T](x: T): mut Ref[T] -> Magic! }
+
+Void: {}
+
+Block: {//just a bunch of methods trashing all parameters and returning the last one
+  #[A,B](x: A, res: B): B -> res,
+  #[A,B,C](x: A,y: B, res: C): C -> res,
+  #[A,B,C,D](x: A, y: B, z: C, res: D): D -> res,
+  }
+//Since Fearless has call-by-value, in this way we execute many different expressions and we return the last result.
+```
+
+Reference Capabilities, examples and metaphores
+
+Mutable `mut`
+
+Easy to eat, easy to digest.
+Hard to manage since they can tangle.
+For hygenic reasons is better to eat your own
+food instead of having many strangers eating
+from the same plate.
+Mut is like free Java objects,
+not like rust mut or mut&
+
+Isolated `iso`
+
+The gold standard.
+Affine: can be used only zero or one times.
+It can be sold to a stranger.
+It is often open only in private.
+The whole MROG of the iso is only reachable
+from the iso reference itself.
+Immutable objects can be freely shared
+
+Immutable `imm`
+
+The unchanging eternal diamond.
+Deep immutable objects as
+in functional programming.
+Can be shown to strangers, can be shared.
+
+Readable `read`
+
+The magnifying lens allows us to see stuff well,
+but we can not modify it or touch it using it.
+You can look to any kind of things!
+
+There are only two kinds of objects:
+mutable and immutable.
+Terms
+ROG: Reachable Object Graph, ROG(o) is the set of objects reachable from
+the object o.
+The ROG of an immutable object only contains immutable objects: immutability is deep in Fearless.
+MROG: Mutable Reachable Object Graph, MROG(o) is the sub part of the ROG(o) containing only the mutable objects.
+Since we have deep immutability, this means cutting the graph on the immutable leaves.
+
+There are four kinds of references, a `read` reference can point to mutable and immutable objects,
+an `imm` reference can only point to immutable objects, a `mut` reference can only point to a mutable object, an `iso` reference can only point to a mutable object whose aliasing graph is kept under control:
+the whole MROG (mutabl
+
+Subtyping:
+An iso reference can be assigned to any other reference,
+Any reference can be assigned to a `read` reference.
+
+
+
+Multiple method typing:
+
+A method has an additional valid signature, where all the `mut` parameters are turned in `iso` and all the `read` parameters are turned in `imm`; then a `mut` result can be turned into `iso` and a `read` result into `imm`.
+This also applies for whole method bodies: if a method body does not use any `mut`/`read` parameters, then it can return a `mut` value as an `iso` or `imm`, and a `read` value as an `imm`.
+
+This allows for a `mut` reference returned by a method to become `iso`, that can then be assigned to an `imm`.
+This also allows for a `read` reference returned by a method to become `imm`.
+
+Why Multiple method typing is sound:
+Consider the method as a black box, taking only `imm` paramters and returning a `mut`.
+The mutable output objects could not come from the input.
+They must have been created internally. Thus their aliasing is under control, and they can be also typed `iso`.
+Thus we know that the mutable output is actually `iso`
+In the absence of external impurities, the raw mutable material is refined into pure gold.
+
+If we add isolated input to our black box, nothing changes.
+The output will be able to contain mutable
+objects from the isolated input, but they are
+now unreachable from the rest of the
+program anyway, since `iso` variables are affine (can be used only zero or one times).
+The result can still be promoted to `iso`
+
+What if the result of the black box is `read`?
+`read` == `mut` or `imm`
+- if `imm`, we know is `imm`, we return it as `imm`
+- if `mut`, promote it to `iso` and subtype it to `imm`
+
+Common usage pattern for `iso`:
+`iso` references are simple to use because we never need to actually use them!
+Just declare `mut` into `mut` methods.
+Pass `iso` in input, get `iso` back.
+This also works for a chain of method calls,
+`Foo#(Bar#(myIso))` will return an `iso` if `Foo#` and `Bar#` are `mut`->`mut`.
+It is very rare for user code to use the `iso` keyword, `iso` is used in a few library methods, and users can transparently promote their `mut` to `iso`.
+
+Reference capabilties are kind of opt-in.
+Opting out is possible by use `imm` for library stuff and `mut` for your stuff. Another programmer can still recover `iso` from your simple minded code.
+
+Capturing Reference Capabilities:
+
+Example: A circle capturing an `imm` Point as the center
+Fearless```
+Circle:{ imm .center: imm Point }
+
+FCircle:{//full code
+  #(p: imm Point): Circle ->
+    Fresh:imm Circle{ imm .center:imm Point -> p}
+  }
+FCircle:{//code reyling on inference
+  #(p: imm Point): Circle ->{ p }//for methods with no parameters we also omit `->`
+  }
+```
+The code above is allowed, any closure can capture `imm` references, and will see them as `imm`.
+
+Example: A circle capturing an `iso` Point as the center
+Fearless```
+Circle:{ imm .center: imm Point }
+
+FCircle:{ #(p: iso Point): Circle ->{ p } }
+```
+The code above is allowed, any closure can capture `iso` references, and will see them as `imm`. A captured `iso` reference can be used in the capturing environment as many times as we want.
+
+
+Example: A circle capturing a `mut` Point as a `mut` center.
+Fearless```
+Circle:{ mut .center: mut Point }
+
+FCircle:{ #(p: mut Point): mut Circle ->{ p } }
+```
+The code above is allowed, a mut can be captured by any `mut` method of a mut object (here we create a `mut Circle`) and will see them as `mut`. 
+
+
+Example: A circle capturing a `mut` Point as a `read` center.
+Fearless```
+Circle:{ read .center: read Point }
+
+FCircle:{ #(p: mut Point): mut Circle ->{ p } }
+```
+The code above is allowed, a mut can be captured by a `read` method, but only as `read`. That is, will see them as `read`. 
+
+Example: A circle capturing a `mut` Point as an `imm` center.
+Fearless```
+Circle:{ imm .center: imm Point }
+
+FCircle:{ #(p: mut Point): mut Circle ->{ p } }
+```
+The code above is allowed, a mut can be captured by an `imm` method, and it is internally seen as `imm`.
+This is surprising, but it is sound, since the `imm` method can only be called on an `imm Circle`, but the circle is returned as `mut`.
+Thus, the method (and the captured `mut Point` object) will stay dormient until the circle is promoted to `imm`. Since the whole ROG of an `imm` is `imm`, also the point object must have been promoted to `imm`.
+
+Input output via Object Capabilities.
+
+Object Capabilities (OC) are not a type system feature, but a programming methodology that is greatly beneficial when it is embraced by the standard library.
+The main idea is that instead of being able to make non deterministic actions like IO everywhere in the code by using static methods or public constructors, only certain specific objects have the 'capability' of doing those privileged actions, and access to those objects is kept under strict control.
+In Fearless, this is done by having the main taking in input a mut System object.
+System is a normal trait with all methods abstract. An instance of System with magically implemented methods is provided to the user as a parameter to the main method at the beginning of the execution.
+
+Hello World example:
+Fearless```
+HelloW: Main{ s -> s.println("Hello World") }
+```
+Where Main is a trait defined as follows:
+Fearless```
+Main{ .main(s:mut System):Void }
+```
+Java execution starts from any class with a main method,
+Fearless execution starts from any class transitively implementing Main.
+This allows for abstraction over the main. A unit test could look like this:
+Fearless```
+MyTests:UnitTest{ logger->... }
+```
+Where `UnitTest` inherits from `Main` and implements the `.main` method,
+forges a logger and so on, leaving a single method abstract that is called from the
+implemented `.main`.
+Crucially, all non deterministic methods will be `mut` methods.
+If a capability is saved or passed around as `read`, it would be harmless.
+
+Better syntax for local variables
+
+We have a `Block[T]` type supporting fluent statements API.
+We can obtain a `Block[T]` by calling `Block#` without parameters.
+Example:
+Fearless```
+MyApp:Main{s->Block#
+  .let[mut Fs] fs = {FIO#s}
+  .var content = {fs.read("data.txt")}
+  .if {content.size > 5} .return {s.println("Big")}
+  .return {s.println("Small")}
+  }
+```
+This is the first time we see the `=` symbol and the syntax
+`.var varname = expression`
+This is just a layer of syntactic sugar encoding a simplified continuation passing style.
+Removing this layer of sugar the code would look as follow:
+Fearless```
+MyApp:Main{s->Block#
+  .let[mut Fs]({FIO#s}, {fs,self1->self1
+    .var({fs.read("data.txt")}, {content,self2->self2
+      .if {content.size > 5} .return {s.println("Big")}
+      .return{s.println("Small")}
+      })
+    })
+  }
+```
+
+
+RC+OC = Determinism
+
+Refence Cabilities and Object Capabilities together give us a way to enforce determinism in certain expressions.
+
+Note, with `Ref[T]`, we need to distinguish identical by identity and structurally identical.
+
+(1) Any method taking in input only `imm` parameters is deterministic. Pass structurally identical parameters and get a structurally identical result. Pass identity identical parameters and get a structurally identical result.
+(2) Any method taking in input only imm/read parameters is deterministic up to external mutation of its read parameters. Pass structurally identical parameters and get a structurally identical result, and the parameters are not mutated.
+
+This form of determinism is weaker that functional purity:
+Non termination can happen (deterministically)
+Exceptions can happen (deterministically and not)
+Capturing exceptions without breaking this determinism property is possible, but not discussed here.
+
+Invariants, caching and automatic parallelism
+Using those features Fearless can ensure representation invariants, provide correct caching with correct caching invalidation and automatic unobservable parallelism as a compilation optimization.
+
+Range example
+
+Fearless```
+FMinMax:F[Nat,Nat,mut MinMax]{min, max -> Block#
+  .ref _min = {min}
+  .ref _max = {max}
+  .return{mut MinMax{
+    read .min:Nat -> _min.get,
+    read .max:Nat -> _max.get,
+    mut .min(n:Nat):Void -> _min.set(n),
+    mut .max(n:Nat):Void -> _max.set(n),
+    read .toStr:Str->"[min="+_min.get+", max="+_max.get+"]"
+    }}
+  }
+//The MinMax type has two units of updatable data: `.min` and `.max`
+//but there is no invariant on this data
+
+FRange:F[Nat,Nat,mut Range]{min, max -> Block#
+  .repr minMax = {FMinMax#(min,max)}
+  .invariant {r -> r.min < r.max }
+  .return {mut Range{
+    read .min:Nat -> minMax.look{r -> r.min},
+    read .max:Nat -> minMax.look{r -> r.max},
+    mut .min(n:Nat):Void -> minMax.mutate{r -> r.min(n)},
+    mut .max(n:Nat):Void -> minMax.mutate{r -> r.max(n)},
+    read .toStr:Str -> minMax.cacheLazy{r->r.toStr}
+    }}
+  }
+//Range is a wrapper over a MinMax instance, that adds
+//the invariant that min<max and that caches the method `.toStr`.
+```
+The method `.repr` is creating a `Repr[T]`, a box object storing a `mut T` object, initialized with an `iso T`, and is protecting the `mut T` instance from having its ROG aliased.
+The method `.look` lambda receives a `read MinMax` and must return an `imm` result.
+The method `.mutate` lambda receives a `mut MinMax` and must return an `imm` result.
+At the end of any call to `.mutate`, since the `mut MinMax` object could have been mutated, the invariant is checked again, and a dynamic error may raise.
+The lambdas of `.look` and `.mutate` can only capture `imm` and `read` data.
+
+Also, cached methods are cleared.
+The method `.cacheLazy` lambda receive a `read MinMax` and must return an `imm` result.
+The lambda of `.cacheLazy` can only capture `imm` data.
+The method `.cacheLazy` magically saves the result of the first call and
+just returns the same value over and over again without having to recompute it. This internal cache is cleared when the `.mutate` method completes.
+Crucially for soundness, the `mut Range` object is never visible inside the invariant lambda or the lambdas of `.look`, `.mutate` and `.cacheLazy`. All of those lambdas can only see the inner MinMax object.
+
+
+Flows and automatic parallelism
+The fearless standard library supports `Flow[T]`, a type similar to `Stream[T]` in Java, and with similar methods.
+Lists, Sets, Maps and Optionals have a `.flow` method.
+So we can write code as follows:
+Fearless```
+  .foo(as: List[A]): List[C] -> as.flow
+    .map{a -> a.bar}
+    .filter{b -> b.acceptable}
+    .map{b -> b.cab}
+    .list
+```
+Crucually, methods like `.map` require lambdas that are restrictive enough to allow for some parallelism to be automatically injected by the language. This parallelism will not be observable in the execution semantic, it will only change the execution performance.
+
+End of the Fearless Guide
+
+Fearless Style Guide:
+
+-`imm` is omitted whenever possible.
+The only cases where `imm` is neede is when generics are involved.
+Fearless```
+  F[A,R]:{#(a:A):R}//here A and R can be of any reference capability
+
+ImmF[A,R]:{#(a:imm A):R}//Here the method # will always take an imm A,
+//no matter what the generic type variable `A` is instantiate with.
+```
+
+-Brackets (curly, round or square) are indented like the body, as follows:
+
+Fearless```
+//Fearless expected indentation
+Example:{#(as: List[A]): List[C] -> as.flow
+  .map{a -> a.bar}
+  .filter{b -> b.acceptable}
+  .map{b -> Block#
+    .var c= {b.cab}
+    .return {c+1}
+    }
+  .list
+  }
+//As you can see, single method types can have the method on the same line,
+//and methods will start with the beginning of the expression on the same line
+
+//indentation as in other languages, not good Fearless
+Example:{
+  #(as: List[A]): List[C] -> 
+    as.flow
+      .map{a -> a.bar}
+      .filter{b -> b.acceptable}
+      .map{b ->Block#
+        .var c= {b.cab}
+        .return {c+1}
+      }
+      .list
+}
+
+```
+
+-Types with only a few simple methods are often formatted all on the same line
+
+Fearless```
+//Fearless expected style
+Cat:{ .name:Str, .age:Num, .color:Str, }
+
+//This alternative is only used when it could not possibly fit the line
+Cat:{
+  .name:Str,
+  .age:Num,
+  .color:Str,
+  }
+```
+
+
+Common Fearless programming patterns.
+
+In addition to the `.match` methods seen before, there are many other common and interesting programming patterns in fearless.
+
+Encoding Privates:
+Fearless do not have a concept of private methods, but since there is no way to force a cast on arbitrary types, we can simply use two interfaces: one for the rich type for internal use, and one for the more restricted type to expose the user.
+For example
+Fearless```
+Person:{ .name:Str, .age:Num } //type exposed out of the package
+_Person:Person{//type used only internally.
+  .computeFiscalCode->/*..*/,
+  }
+_FPerson:F[Str,Num,_Person]:{ name,age->{.name->name,.age->age} }
+City:{ .citizens:List[Person] }
+```
+Now there is no way for the user to access the private method of `_Person` from `Person`, and using a `City`, the user will only get references of `Person` type.
+
+
+Encoding super calls.
+Different languages have sigtly different ways to encode the sematic of super calls.
+In Fearless, we do not have a build in concept of super calls, but we can emulate them by reling on a much simpler concept: giving names to things!
+
+Consider the example below:
+Java```
+  class Bar{ int foo(A a){return /*code here*/;} }
+  class Beer extends Bar{ int foo(A a){return super.foo(a)+1; } }
+```
+The code below encodes this same idea in Fearless
+Fearless```
+  Foo:{#(self:Bar, a:A):Num->/*code here*/}
+  Bar:{ .foo(a:A):Num->Foo#(self,a) }
+  Beer:Bar{ .foo(a)-> Foo#(self,a)+1}
+```
+As you can see, in order to reuse the implementation of `Bar.foo`, we simply give it a name, so that we can reuse it using its name.
+
+Overall, in many other languages classes are large units of abstraction and thus they offer many features like private, super and constructors.
+In Fearless instead, types are smaller units of abstraction, and we encode private, super, constructors and many other things simply by defining more top level types.
+
+Casting:
+In Fearless there are no casts.
+However, it is easy for the user to implement them for specific data types; consider the code below:
+
+Fearless```
+Shape:{ .circle:Circle, .square:Square, }
+Circle:Shape{
+  .circle->this,
+  .square->Error!,
+  }
+Square:Shape{
+  .circle->Error!,
+  .square->this,
+  }
+```
+Where `Error` is a type in the standard library with a `!` method throwing a dynamic error.
+Using the code above, we can perform the equivalent of a dynamic cast on shapes, and turning them into circles or squares.
+
+This techinque is simple to use and flexible, but introduces dynamic checks, that can be undesirable in many contexts.
+An alternative solution is to use generic, where a generic argument can remember the exact type of the current object:
+
+Fearless```
+Shape[S]:{ .self:S, /*more methods here*/}
+Circle:Shape[Circle]{ .self->this, }
+Square:Shape[Square]{ .self->this, }
+
+//user code
+.useShapes[S](a:Shape[S],b:Shape[S]):Shape[S]->
+  /*code here sees shapes, and can call shape methods*/
+//code using .useShapes can recover the exact type as below:
+Geomerty.useShapes(mySquare1,mySquare2).self
+```
+The code above compiles since `mySquare1` and `mySquare2` are of type `Square`, thus `Shape[Square]`.
+the generic type `S` is inferred to be `Square`, and the code eventually return a `Shape[Square]`, where the `.self` method recovers the precise `Square` type.
+This pattern is useful because Fearless only have simple generics and do not support FBound polymorphism.
+
+Flexible subtyping for immutable objects
+
+How to add "!!" at the end of a string?
+In many languages, Strings are immutable, so instead of mutating the string object, we update the variable containing the string with another string that looks like the original but has and extra "!!" at the end.
+We can do the same for any kind of data types, but the interaction with subtyping is not trivial.
+Combinging the featueres seen above, we can support functional `Point` and `CPoint`, where withers are used to update the state by creating new objects that look like the old ones, but with an updated piece of data.
+This is problematic in other languages, but easy in Fearless by using the above well known patterns.
+Fearless```
+//First we name methods Times and Max following the 'super pattern'
+Times:{#[S](self:Point[S],x:Num):Point[S]->self
+  .withX(self.x*r).withY(self.y*r),
+  }
+Max:{#[S](self:Point[S],x:Num)->Block#
+  .if{self.x>x}.return {self}
+  .return {self.withX x}
+  }
+//Then we have two different version of Point, following the private pattern
+Point:{
+  .x:Num, .y:Num,
+  .withX(x:Num):Point, .withY(y:Num):Point,
+  .id:String,
+  .times(r:Nat):Point,
+  .max(r:Nat):Point,
+  }
+//Point[S] is another type, since it has one generic argument instead of zero. This class follows the precise type recovery pattern.
+Point[S]:Point{
+  .withX(x:Num):Point[S], .withY(y:Num):Point[S],
+  .self:S,
+  .times(r:Nat):Point[S]->Times#(this,r),
+  .max(r:Nat):Point[S]->Max#(this,x),
+  }
+//Here Factory Point1 creates a specific kind of Point called Point1,
+//but only exposes that it return a normal Point.
+FPoint1:F[Nat,Nat,Point]{x,y->Point1:Point[Point1]{'self
+  .self->self
+  .x-> x, .y->y,
+  .withX(x')->this#(x',y)
+  .withX(y')->this#(x,y')
+  .id->"Point1"
+  }
+CPoint:Point{
+  .color:Str,
+  .withColor(c:Str):CPoint,
+  .withX(x:Nat):CPoint, .withY(x:Nat):CPoint,
+  .times(r:Nat):CPoint,
+  .max(r:Nat):CPoint,
+  }
+CPoint[S]:Point[CPoint[S]],CPoint{
+  .withColor(c:Str):CPoint[S],
+  .withX(x:Nat):CPoint[S], .withY(x:Nat):CPoint[S],
+  .times(r:Nat):CPoint[S]->Times#(this,r).self
+  .max(r:Nat):CPoint[S]->Max#(this,r).self
+  }
+FCPoint1:F[Nat,Nat,Str,CPoint]{x,y,color->CPoint1:CPoint[CPoint1]{'self
+  .self->self
+  .x-> x, .y->y, .color->color,
+  .withX(x')->this#(x',y,color)
+  .withX(y')->this#(x,y',color)
+  .withColor(color')->this#(x,y,color')
+  .id->"CPoint1"
+  }
+//This main uses .ref (working like .var but returning a Ref[T] instead of a T)
+//to show that the types work as expected, and that we can reassign our
+//updated Point or CPoint to the original references.
+Test:Main{s->Block#
+  .ref[Point] p={ FPoint1(1,2) }
+  .do{ p:=(p.withX(0)) }
+  .do{ p:=(p.times(5)) }
+  .ref[CPoint] p={ FCPoint1(1,2,"red") }
+  .do{ cp:=(cp.withX(0)) }
+  .do{ cp:=(cp.times(5)) }
+  .return{ Void }
+  }
+```
+
+Comparators and equality 
+
+Fearless does not have an `Any` or an `Object` type, and there no method we can assume on all objects, not 	`.toStr`, not `.equals` and not even identity checks.
+
+The standard library makes it easy to add comparision operations like `==`, `!=`, `<=` and so on using the type `Order`, as shown below.
+
+Fearless```
+//Order is also a good example of how to define an 'enum' in fearless
+Order:{ .match(m:OrderMatch[R]):R }
+
+OrderMatch[R]:{ .less:R, .eq:R .more:R }  }
+
+OrderLess:Eq{ m->m.less }
+
+OrderEq:Eq{ m->m.eq }
+
+OrderMore:Eq{ m->m.more }
+
+Comparator[T]:{
+  #(a:T, b:T): Order,//the only abstract method
+  #[S](supplier : F[S,T]) : Comparator[T] -> 
+    { a,b -> this#(supplier#a,supplier#b) }
+  .eq(a:T, b:T): Bool ->
+    this#(a,b).match{.less->False,.eq->True,.more->False}
+  .leq(a:T, b:T): Bool -> ..//and so on for the other derived convenience methods
+  .with(a: T): RelativeOrder[T] -> 
+    { #(b: T): Order -> this#(a,b) }
+  }
+
+//usage
+FPerson:F[...Person]{...}
+CPerson:Comparator[Person]{ p1,p2->... }
+
+myCars.flow.max CPerson#{car->car.driver}
+//max takes a Comparator[Car], CPerson# produces a comparator of car,
+//comparing the drivers as persons
+
+//We also have a interface
+Ordered[T]:{
+  .order: RelativeOrder[T],//only abstract method
+  ==(other:T):Bool ->this.order#other.match{.less->False,.eq->True,.more->False},
+  >=(other:T):Bool ->..,//other derived methods
+  }
+
+//If we have a CPerson, it is trival to implement Ordered[Person] in person:
+Person:Ordered[Person]{
+  .order-> CPerson.with this //this line is all we need
+  }
+```
+That is, in Fearless we often declare `MyType`, `FMyType` and `CMyType` 
+To create sets or maps, we need to provide the comparator for the keys,
+writing code like `Set.of(CPerson,FPerson#(..),FPerson#(..),..)`
+or `Map.of(CPerson,FPerson#(..),"Hello",  FPerson#(..),"hi", ..)`
+
+
+
+Extension methods
+The following two types present in the standard library encode the concept of extension methods.
+Fearless```
+Extensible[S]:{
+  mut  .self: mut  S,
+  read .self: read S,
+  imm  .self: imm  S,
+
+  mut  #[R](ext: mut Extension[mut  S, R]): R -> ext#(this.self),
+  read #[R](ext: mut Extension[read S, R]): R -> ext#(this.self),
+  imm  #[R](ext: mut Extension[imm  S, R]): R -> ext#(this.self),
+  }
+Extension[S,R]:{ mut #(self: S): R }
+```
+A data type `Foo` that wants to support extension methods just have to implement `Extensible[Foo]` and implement the `.self` method returning `this`.
+Then user code can define extension methods by implementing
+`Extension[Foo,R]`
+Extension methods are very convenient, and they also allow to capture the concept that some functionalities should only be avaliable for certain generic instantiations.
+For example the method `Flow.str` is defined as follows:
+Fearless```
+.str(separator: Str): mut Extension[mut Flow[Str], Str] -> {flow -> 
+  flow.fold[Str](
+    "",
+    {acc, str -> acc.size == 0u ? {
+      .then -> acc + str,
+      .else -> acc + separator + str,
+      }
+    })
+  },
+```
+In this way, with in any `x: Flow[Str]` 
+we can write `x#(Flow.str";")`
+and turn our flow of strings into a single string.
+Crucial, this only compiles on flows of strings.
+Similarly, `Flow.sum` work only on flows of numbers.
+
+Full Fearless standard library below
+
+
+//---File assertions.fear
+package base
+
+Assert:Sealed{
+  !(assertion: Bool): Void -> this!(assertion, { Void }),
+  ![R](assertion: Bool, cont: mut AssertCont[R]): R -> assertion ? {
+    .then -> cont#,
+    .else -> this._fail
+    },
+  ![R](assertion: Bool, msg: Str, cont: mut AssertCont[R]): R -> assertion ? {
+      .then -> cont#,
+      .else -> this._fail(msg)
+      },
+  ._fail[R]: R -> Magic!,
+  ._fail[R](msg: Str): R -> Magic!,
+  }
+AssertCont[R]:{ mut #: R }
+
+//---File blocks.fear
+package base
+
+ReturnStmt[R]:{ mut #: R }
+Condition:{ mut #: Bool }
+VarContinuation[X,R]:{ mut #(x: X, self: mut Block[R]): R }
+Block:{
+  #[R]: mut Block[R] -> {},
+  #[X:read,mut,imm,iso](x: X): Void -> this#(x, Void),
+  #[X:read,mut,imm,iso, R:read,mut,imm,iso](_: X, res: R): R -> res,
+  #[X1:read,mut,imm,iso, X2:read,mut,imm,iso, R:read,mut,imm,iso](_: X1, _: X2, res: R): R -> res,
+  #[X1:read,mut,imm,iso, X2:read,mut,imm,iso, X3:read,mut,imm,iso, R:read,mut,imm,iso](_: X1, _: X2, _: X3, res: R): R -> res,
+  #[X1:read,mut,imm,iso, X2:read,mut,imm,iso, X3:read,mut,imm,iso, X4:read,mut,imm,iso, R:read,mut,imm,iso](_: X1, _: X2, _: X3, _: X4, res: R): R -> res,
+  }
+Block[R]:{
+  mut .return(a: mut ReturnStmt[R]): R -> a#,
+  mut .do(r: mut ReturnStmt[Void]): mut Block[R] -> this._do(r#),
+    mut ._do(v: Void): mut Block[R] -> this,
+  mut .assert(p: mut Condition): mut Block[R] -> Assert!(p#, mut AssertCont[mut Block[R]]{this}),
+  mut .assert(p: mut Condition, failMsg: Str): mut Block[R] ->
+    Assert!(p#, failMsg, mut AssertCont[mut Block[R]]{this}),
+  mut .let[X](x: mut ReturnStmt[X], cont: mut VarContinuation[X, R]): R -> cont#(x#, this),
+  mut .letIso[X:iso](x: X, cont: mut VarContinuation[mut X, R]): R -> cont#(x, this),
+  mut .if(p: mut Condition): mut BlockIf[R] -> p# ? { 'cond
+    .then -> { 't
+      .return(a) -> _DecidedBlock#(a#),
+      .error(info) -> Error!(info#),
+      .do(r) -> t._do[](r#),
+        mut ._do(v: Void): mut Block[R] -> this,
+      },
+    .else -> { 'f
+      .return(_) -> this,
+      .do(_) -> this,
+      .error(_) -> this,
+      },
+    },
+  }
+BlockIf[R]:{
+  mut .return(a: mut ReturnStmt[R]): mut Block[R],
+  mut .do(r: mut ReturnStmt[Void]): mut Block[R],
+  mut .error(info: mut ReturnStmt[Info]): mut Block[R],
+  }
+_DecidedBlock:{
+  #[R](res: R): mut Block[R] -> { 'self
+    .return(_) -> res,
+    .do(_) -> self,
+    .var(_, _) -> res,
+    }
+  }
+
+//---File bools.fear
+package base
+Bool:Sealed,Stringable,ToImm[Bool]{
+  .and(b: Bool): Bool,
+  &&(b: Bool): Bool -> this.and(b),
+  .or(b: Bool): Bool,
+  ||(b: Bool): Bool -> this.or(b),
+  .not: Bool,
+  .if[R:read,mut,imm,iso](f: mut ThenElse[R]): R,
+  ?[R:read,mut,imm,iso](f: mut ThenElse[R]): R -> this.if(f),
+  }
+True:Bool{ .and(b) -> b, .or(b) -> this, .not -> False, .if(f) -> f.then(), .str -> "True", .toImm -> True }
+False:Bool{ .and(b) -> this, .or(b) -> b, .not -> True, .if(f) -> f.else(), .str -> "False", .toImm -> False }
+ThenElse[R:read,mut,imm,iso]:{ mut .then: R, mut .else: R, }
+
+//---File caps\capabilities.fear
+package base.caps
+
+System:Sealed{
+  mut .clone: iso System -> { _System },
+  ._preventCreation: _System,
+  }
+_System:Sealed,System{ _System }
+
+//---File caps\env.fear
+package base.caps
+
+Env:{
+  mut .launchArgs: base.LList[Str],
+  }
+
+FEnv:F[mut System, mut Env],Sealed{
+  #(s) -> {
+    .launchArgs -> Magic!
+    },
+  .io(io: mut IO): mut Env -> {
+    .launchArgs -> Magic!
+    }
+  }
+
+//---File caps\io.fear
+package base.caps
+alias base.LList[base.Str] as Path,
+
+IO:{
+  mut .print(msg: Str): Void,
+  mut .println(msg: Str): Void,
+  mut .printErr(msg: Str): Void,
+  mut .printlnErr(msg: Str): Void,
+  }
+FIO:F[mut System, mut IO],Sealed{
+  s -> {
+    .print(msg) -> Magic!,
+    .println(msg) -> Magic!,
+    .printErr(msg) -> Magic!,
+    .printlnErr(msg) -> Magic!,
+    }
+  }
+
+FileHandleMode:Stringable,Sealed{}
+Read:FileHandleMode{ "r" }
+Write:FileHandleMode{ "r+" }
+Create:FileHandleMode{ "w+" }
+
+//---File caps\isopod.fear
+package base.caps
+
+IsoPod:{ #[T:imm,iso](val: iso T): mut IsoPod[iso T] -> base.Magic! }
+IsoPod[T:imm,iso]:{
+  readOnly .isAlive: Bool -> Magic!,
+  readOnly .isDead: Bool -> this.isAlive.not,
+  readOnly .peek[R](f: mut IsoViewer[T, R]): R -> Magic!,
+  mut !: iso T -> Magic!,
+  mut .consume[R](f: mut IsoConsumer[T, R]): R -> this.isAlive ? { .then -> f.some(this!), .else -> f.empty },
+  mut .next(val: iso T): Void -> Magic!,
+  mut :=(val: iso T): Void -> this.next(val),
+  mut .mutate(f: F[mut T, Void]): Bool -> this.consume{
+    .some(x) -> Block#(this.next(_IsoMutator#(f, x)), True),
+    .empty -> False,
+    }
+  }
+IsoConsumer[T:imm,iso, R]:{
+  mut .some(x: iso T): R,
+  mut .empty: R,
+  }
+IsoViewer[T:imm,iso, R]:{
+  mut .some(x: readOnly T): R,
+  mut .empty: R,
+  }
+_IsoMutator:{ #[T,R](f: F[mut T, R], val: mut T): mut T -> Block#(f#val, val) }
+
+
+//---File caps\pkg.fear
+package base.caps
+alias base.Abort as Abort,
+alias base.Magic as Magic,
+alias base.Void as Void,
+alias base.F as F,
+alias base.Sealed as Sealed,
+alias base.Str as Str,
+alias base.Let as Let,
+alias base.Stringable as Stringable,
+alias base.Bool as Bool, alias base.True as True, alias base.False as False,
+alias base.Block as Block,
+
+//---File comparisons.fear
+package base
+
+Ordering: {
+  .match[R](m: mut OrderingMatch[R]): R,
+  }
+FOrdering: {
+  .less: Ordering -> {m -> m.less},
+  .equal: Ordering -> {m -> m.equal},
+  .greater: Ordering -> {m -> m.greater},
+  }
+OrderingMatch[R]: {
+  mut .less: R,
+  mut .equal: R,
+  mut .greater: R,
+  }
+
+CompareInts: F[Int, Int, Ordering]{
+  a, b -> Block#
+    .if {a > b} .return {FOrdering.greater}
+    .if {a < b} .return {FOrdering.less}
+    .return {FOrdering.equal}
+  }
+CompareUInts: F[UInt, UInt, Ordering]{
+  a, b -> Block#
+    .if {a > b} .return {FOrdering.greater}
+    .if {a < b} .return {FOrdering.less}
+    .return {FOrdering.equal}
+  }
+CompareFloats: F[Float, Float, Ordering]{
+  a, b -> Block#
+    .if {a > b} .return {FOrdering.greater}
+    .if {a < b} .return {FOrdering.less}
+    .return {FOrdering.equal}
+  }
+
+//---File either.fear
+package base
+
+Either[A,B]:{
+  mut  .match[R](m: mut EitherMatch[A, B, R]): R,
+  read .match[R](m: mut EitherMatch[read A, read B, R]): R,
+  imm  .match[R](m: mut EitherMatch[imm A, imm B, R]): R,
+  }
+EitherMatch[A,B,R]:{
+  mut .a(x: A): R,
+  mut .b(x: B): R,
+  }
+
+//---File errors.fear
+package base
+
+Error:{
+  ![R:read,mut,imm,iso,lent,readOnly](info: Info): R -> Magic!,
+  .str[R:read,mut,imm,iso,lent,readOnly](s: Str): R -> this!{
+    .str -> s,
+    .list -> List#,
+    .map -> EmptyMap[Str, Info]
+    }
+  }
+
+Todo:{
+  ![R:read,mut,imm,iso,lent,readOnly]: R -> Error.msg[R] "TODO: Implement this code",
+  ![R:read,mut,imm,iso,lent,readOnly](msg: Str): R -> Error.msg[R]("TODO: "+msg),
+}
+
+Try:{
+  #[R](try: read Try[R]): mut Res[R] -> Magic!,
+  }
+
+Try[R]:{ read #: R, }
+
+Info:Sealed{
+  .str: Str,
+  .map: Map[Str, Info],
+  .list: List[Info],
+  }
+FInfo: {
+  .str(str: Str): Info -> {
+    .str -> str,
+    .list -> List#,
+    .map -> EmptyMap[Str, Info],
+    },
+  .list(list: List[Info]): Info -> {
+    .str -> "",
+    .list -> list,
+    .map -> EmptyMap[Str, Info],
+    },
+  .map(map: Map[Str, Info]): Info -> {
+    .str -> "",
+    .list -> List#,
+    .map -> map,
+    },
+  }
+
+//---File extensions.fear
+package base
+
+Extensible[S]:{
+  mut  .self: mut  S,
+  read .self: read S,
+  imm  .self: imm  S,
+
+  mut  #[R](ext: mut Extension[mut  S, R]): R -> ext#(this.self),
+  read #[R](ext: mut Extension[read S, R]): R -> ext#(this.self),
+  imm  #[R](ext: mut Extension[imm  S, R]): R -> ext#(this.self),
+  }
+Extension[S,R]:{ mut #(self: S): R }
+
+
+//---File flows\converters.fear
+package base.flows
+
+_MutSourceCollection[E]: {
+  #(source: mut FlowOp[E]): mut Flow[E] -> Flow.fromOp(Block#
+    .let[mut Ref[mut Opt[mut FlowOp[E]]]] cloned = {Ref#[mut Opt[mut FlowOp[E]]]{}}
+    .return{{
+      .isRunning -> this.get(cloned, source).isRunning,
+      .stop -> this.get(cloned, source).stop,
+      .step(downstream) -> this.get(cloned, source).step(downstream),
+      }}),
+  .get(cloned: mut Ref[mut Opt[mut FlowOp[E]]], original: mut FlowOp[E]): mut FlowOp[E] -> cloned.get.match{
+     .some(cloned') -> cloned',
+     .empty -> Block#
+       .let[mut List[E]] dup = {Flow.fromOp(original).list}
+       .do {cloned := (Opt#(Block#[mut FlowOp[E]]
+         .let[mut Count[UInt]] cursor = {Count.uint(0u)}
+         .return {{'self
+           .isRunning -> cursor* < (dup.size),
+           .stop -> cursor := (dup.size),
+           .step(downstream) -> dup.get(cursor++).match{
+             .some(x) -> downstream#x,
+             .empty -> Block#(downstream.stop, self.stop),
+             },
+           }}))}
+       .return{cloned.get!},
+     },
+  }
+
+_FlowConverters: Sealed{
+  }
+
+_SafeSource: {
+
+  .fromList[E](list: mut List[E]): mut Flow[E] -> Flow.fromOp[E](this.fromList'[E](list), list.size),
+  .fromList'[E](list: mut List[E]): mut FlowOp[E] -> Block#
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .return {{'self
+      .isRunning -> cursor* < (list.size),
+      .stop -> cursor := (list.size),
+      .step(downstream) -> list.get(cursor++).match{
+        .some(x) -> Block#
+          .do {downstream#x}
+          .if {cursor.get >= (list.size)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }},
+  }
+
+//---File flows\flows.fear
+package base.flows
+alias base.Todo as Todo,
+
+Flow: Sealed, _FlowExtensions, _FlowConverters{
+  #[E]: mut Flow[E] -> mut EmptyFlow[E],
+  #[E](e: E): mut Flow[E] -> _SeqFlow#[E](e),
+  #[E](e1: E, e2: E): mut Flow[E] -> List#(e1, e2).flow,
+  #[E](e1: E, e2: E, e3: E): mut Flow[E] -> List#(e1, e2, e3).flow,
+  #[E](e1: E, e2: E, e3: E, e4: E): mut Flow[E] -> List#(e1, e2, e3, e4).flow,
+
+  .fromOp[E](source: mut FlowOp[E]): mut Flow[E] -> _SeqFlow.fromOp(source, {}),
+  .fromOp[E](source: mut FlowOp[E], size: UInt): mut Flow[E] -> _SeqFlow.fromOp(source, Opt#size),
+
+  .fromMutSource[E](source: mut FlowOp[E]): mut Flow[E] -> _MutSourceCollection[E]#source,
+  .fromMutSource[E](source: mut FlowOp[E], size: UInt): mut Flow[E] -> _MutSourceCollection[E]#source,
+  }
+
+Flow[E]: Sealed, Extensible[Flow[E]], _NonTerminalOps[E], _TerminalOps[E]{
+  .self -> this,
+  }
+
+_NonTerminalOps[E]: {
+  mut .filter(predicate: read F[E, Bool]): mut Flow[E],
+  mut .map[R](f: read F[E, R]): mut Flow[R],
+  mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
+
+  mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> this.actor[S,R](state, f, {_ -> {}}),
+  mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut Flow[imm R],
+  mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] -> this.actorMut[S,R](state, f, {_ -> {}}),
+  mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut Flow[R],
+
+  mut .limit(n: UInt): mut Flow[E],
+
+  mut .scan[S:imm](acc: S, f: read F[S,E,S]): mut Flow[S] -> this.actor[mut Ref[S], S](Ref#[S]acc, {downstream, acc', e -> Block#(
+    acc' := (f#(acc'.get, e)),
+    downstream#(acc'.get),
+    ActorRes.continue
+    )}),
+  }
+_TerminalOps[E]: Sealed{
+  mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R],
+  mut .find(predicate: read F[E, Bool]): mut Opt[E],
+  mut .any(predicate: read F[E, Bool]): Bool,
+  mut .all(predicate: read F[E, Bool]): Bool,
+  mut .fold[S](acc: S, f: read F[S,E,S]): S,
+  mut .fold[S](acc: S, f: read F[S,E,S], combine: read F[S, S, S]): S,
+  mut .size: UInt,
+
+  mut .for(f: read F[E, Void]): Void -> this.fold(Void, {_, e -> f#e}),
+  mut .list: mut List[E] -> this.fold(List#[E], {acc, e -> Block#(acc.add(e), acc)}),
+  mut .max(compare: read F[E, E, Ordering]): mut Opt[E] -> this.fold[mut Opt[E]]({}, {max, b -> max.match{
+    .empty -> Opt#b,
+    .some(a) -> compare#(a, b).match{
+      .less -> Opt#b,
+      .equal -> max,
+      .greater -> max,
+      }
+    }}, {a, b -> a.match{
+      .empty -> b,
+      .some(a') -> b.match{
+        .empty -> a,
+        .some(b') -> compare#(a', b').match{
+          .less -> b,
+          .equal -> a,
+          .greater -> a,
+          }
+        }
+      }})
+  }
+
+_FlowExtensions: {
+  .str(separator: Str): mut Extension[mut Flow[Str], Str] -> {flow -> flow.fold[Str]("", {acc, str -> acc.size == 0u ? {
+    .then -> acc + str,
+    .else -> acc + separator + str,
+    }})},
+
+  .sum: mut Extension[mut Flow[Int], Int] -> {flow -> flow.fold[Int](0, {acc, e -> acc + e})},
+  .uSum: mut Extension[mut Flow[UInt], UInt] -> {flow -> flow.fold[UInt](0u, {acc, e -> acc + e})},
+  .fSum: mut Extension[mut Flow[Float], Float] -> {flow -> flow.fold[Float](0.0, {acc, e -> acc + e})},
+  }
+
+EmptyFlow[E]: Flow[E]{
+  .filter(p) -> this,
+  mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut Flow[imm R] -> Block#(
+    onComplete#state,
+    mut EmptyFlow[imm R]),
+  mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut Flow[R] -> Block#(
+    onComplete#state,
+    mut EmptyFlow[R]),
+  .limit(_) -> this,
+  .findMap(_) -> {},
+  .find(_) -> {},
+  .any(p) -> False,
+  .all(p) -> False,
+  .fold(acc, _) -> acc,
+  .fold(acc, _, _) -> acc,
+  .size -> 0u,
+  }
+
+TerminalOnInfiniteError: { #: Info -> FInfo.msg "Terminal operators cannot be called on infinite flows. Use an operation like .limit(5u) to bound the flow." }
+
+//---File flows\operators.fear
+package base.flows
+
+
+FlowOp[E]: {
+  mut .step(sink: mut _Sink[E]): Void,
+  mut .stop: Void,
+  mut .isRunning: Bool,
+  mut .forRemaining(downstream: mut _Sink[E]): Void -> Block#
+    .do{this.step(downstream)}
+    .if {this.isRunning.not} .return {{}}
+    .return {this.forRemaining(downstream)},
+  mut .isFinite: Bool -> True,
+  mut .split: mut Opt[mut FlowOp[E]] -> {},
+  }
+
+
+_Sink: {
+  #[T](s: mut _Sink[T]): mut _Sink[T] -> s,
+  }
+_Sink[T]: {
+  mut #(x: T): Void,
+  mut .stop: Void,
+  }
+
+
+_Filter: {
+  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .return{{'op
+      .step(downstream) -> sink.get.match{
+        .some(sink') -> upstream.step(sink'),
+        .empty -> Block#(
+          sink := (Opt#(sinkFactory#[E]{
+            .stop -> downstream.stop,
+            #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
+            })),
+          upstream.step(sink.get!)
+          )
+        },
+      .stop -> upstream.stop,
+      .isRunning -> upstream.isRunning,
+      }}
+  }
+_Map: {
+  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .return  {{'op
+      .step(downstream) -> sink.get.match{
+        .some(sink') -> upstream.step(sink'),
+        .empty -> Block#(
+          sink := (Opt#(sinkFactory#[E]{
+            .stop -> downstream.stop,
+            #(e) -> downstream#(f#e),
+            })),
+          upstream.step(sink.get!)
+          )
+        },
+      .stop -> upstream.stop,
+      .isRunning -> upstream.isRunning,
+    }}
+  }
+_FlatMap: {
+  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .return{{'op
+      .step(downstream) -> sink.get.match{
+        .some(sink') -> upstream.step(sink'),
+        .empty -> Block#(
+          sink := (Opt#(sinkFactory#[E]{
+            .stop -> Block#(isRunning := False, downstream.stop),
+            #(e) -> f#e.list.iter.filter{_ -> op.isRunning}.for{e' -> downstream#e'},
+            })),
+          upstream.step(sink.get!)
+          )
+        },
+      .stop -> upstream.stop,
+      .isRunning -> isRunning*,
+      }}
+  }
+
+//---File flows\par.fear
+package base.flows
+
+_PipelineParallelSink: _Sink{
+  #[T](s: mut _Sink[T]): mut _PipelineParallelSink[T] -> Magic!,
+  }
+_PipelineParallelSink[T]: _Sink[T]
+
+_PipelineParallelFlow: {
+  .fromOp[E](source: mut FlowOp[E], size: Opt[UInt]): mut Flow[E] -> {'self
+    .filter(p) -> this.fromOp(_Filter#(_PipelineParallelSink, source, p), {}),
+    .map(f) -> this.fromOp(_Map#(_PipelineParallelSink, source, f), size),
+    .flatMap(f) -> this.fromOp(_FlatMap#(_PipelineParallelSink, source, f), {}),
+    mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut Flow[imm R] ->
+      this.fromOp(_Actor#[S,E,R](_PipelineParallelSink, source, state, f, onComplete), {}),
+    mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut Flow[R] ->
+      this.fromOp(_Actor.anyRet[S,E,R](_PipelineParallelSink, source, state, f, onComplete), {}),
+    .limit(n) -> this.fromOp(_Limit#(_PipelineParallelSink, source, n), size),
+
+    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> Block#
+      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
+      .let[mut Ref[mut Opt[R]]] res = {Ref#mut Opt[R]}
+      .do {source.forRemaining(_PipelineParallelSink#[E]{'runner
+        .stop -> source.stop,
+        #(e) -> f#e.match{.some(e') -> Block#(res := (Opt#e'), runner.stop), .empty -> {}},
+        })}
+      .do {source.stop}
+      .return {res.get},
+
+    .find(p) -> self.findMap{e -> p#e ? {.then -> Opt#e, .else -> {}}},
+    .any(p) -> self
+      .findMap{e -> p#e ? {.then -> Opt#True, .else -> {}}}
+      .isSome,
+    .all(p) -> self
+      .findMap{e -> p#e ? {.then -> {}, .else -> Opt#False}}
+      .isEmpty,
+
+    mut .fold[S](acc: S, f: read F[S,E,S]): S -> Block#
+      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
+      .let[mut Ref[S]] acc' = {Ref#acc}
+      .do {source.forRemaining(_PipelineParallelSink#[E]{
+        .stop -> {},
+        #(e) -> acc' := (f#(acc'.get, e)),
+        })}
+      .do {source.stop}
+      .return {acc'.get},
+    .fold(acc, f, combine) -> self.fold(acc, f),
+
+    .size -> size.match[UInt]{
+      .some(n) -> n,
+      .empty -> self.fold[UInt](0u, {acc, _ -> acc + 1u}),
+      },
+    },
+
+  #[E](e: E): mut Flow[E] -> Block#
+    .let[mut Ref[mut Opt[E]]] seq = { Ref#(Opt#e) }
+    .let[mut FlowOp[E]] source = {{ 'self
+      .isRunning -> seq.get.isSome,
+      .stop -> seq := {},
+      .step(downstream) -> seq.swap(mut Opt[E]).match{
+        .some(x) -> downstream#x,
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      .forRemaining(downstream) -> seq.swap(mut Opt[E]).match{
+        .some(x) -> Block#(downstream#x, downstream.stop, self.stop),
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }}
+    .return {this.fromOp(source, Opt#[UInt]1u)},
+  }
+
+//---File flows\pkg.fear
+package base.flows
+
+alias base.Block as Block,
+alias base.Sealed as Sealed,
+alias base.Void as Void,
+alias base.Bool as Bool, alias base.True as True, alias base.False as False,
+alias base.UInt as UInt, alias base.Int as Int, alias base.Float as Float,
+alias base.Str as Str,
+alias base.F as F, alias base.Consumer as Consumer,
+alias base.Extensible as Extensible, alias base.Extension as Extension,
+alias base.Ref as Ref, alias base.Count as Count,
+alias base.Opt as Opt,
+alias base.Let as Let,
+alias base.List as List,
+alias base.Error as Error, alias base.FInfo as FInfo, alias base.Info as Info,
+alias base.Ordering as Ordering,
+alias base.Magic as Magic,
+alias base.IsoPod as IsoPod,
+
+//---File flows\seq.fear
+package base.flows
+
+_SeqFlow: {
+  .fromOp[E](source: mut FlowOp[E], size: Opt[UInt]): mut Flow[E] -> {'self
+    .filter(p) -> this.fromOp(_Filter#(_Sink, source, p), {}),
+    .map(f) -> this.fromOp(_Map#(_Sink, source, f), size),
+    .flatMap(f) -> this.fromOp(_FlatMap#(_Sink, source, f), {}),
+    mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut Flow[imm R] ->
+      this.fromOp(_Actor#[S,E,R](_Sink, source, state, f, onComplete), {}),
+    mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut Flow[R] ->
+      this.fromOp(_Actor.anyRet[S,E,R](_Sink, source, state, f, onComplete), {}),
+    .limit(n) -> this.fromOp(_Limit#(_Sink, source, n), size),
+
+    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> Block#
+      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
+      .let[mut Ref[mut Opt[R]]] res = {Ref#mut Opt[R]}
+      .do {source.forRemaining(mut _Sink[E]{'runner
+        .stop -> {},
+        #(e) -> f#e.match{.some(e') -> Block#(res := (Opt#e'), runner.stop), .empty -> {}},
+        })}
+      .do {source.stop}
+      .return {res.get},
+
+    .find(p) -> self.findMap{e -> p#e ? {.then -> Opt#e, .else -> {}}},
+    .any(p) -> self
+      .findMap{e -> p#e ? {.then -> Opt#True, .else -> {}}}
+      .isSome,
+    .all(p) -> self
+      .findMap{e -> p#e ? {.then -> {}, .else -> Opt#False}}
+      .isEmpty,
+
+    mut .fold[S](acc: S, f: read F[S,E,S]): S -> Block#
+      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
+      .let[mut Ref[S]] acc' = {Ref#acc}
+      .do {source.forRemaining(mut _Sink[E]{
+        .stop -> {},
+        #(e) -> acc' := (f#(acc'.get, e)),
+        })}
+      .do {source.stop}
+      .return {acc'.get},
+    .fold(acc, f, combine) -> self.fold(acc, f),
+
+    .size -> size.match[UInt]{
+      .some(n) -> n,
+      .empty -> self.fold[UInt](0u, {acc, _ -> acc + 1u}),
+      },
+    },
+
+  #[E](e: E): mut Flow[E] -> Block#
+    .let[mut Ref[mut Opt[E]]] seq = { Ref#(Opt#e) }
+    .let[mut FlowOp[E]] source = {{ 'self
+      .isRunning -> seq.get.isSome,
+      .stop -> seq := {},
+      .step(downstream) -> seq.swap(mut Opt[E]).match{
+        .some(x) -> downstream#x,
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      .forRemaining(downstream) -> seq.swap(mut Opt[E]).match{
+        .some(x) -> Block#(downstream#x, downstream.stop, self.stop),
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }}
+    .return {this.fromOp(source, Opt#[UInt]1u)},
+  }
+
+//---File flows\statefulOperators.fear
+package base.flows
+
+_Limit: {
+  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], n: UInt): mut FlowOp[E] -> Block#
+    .let[mut Count[UInt]] remaining = {Count.uint(n)}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .return {{ 'runner
+      .stop -> Block#(remaining := 0u, upstream.stop),
+      .isRunning -> remaining* > 0u && (upstream.isRunning),
+      .isFinite -> True,
+      .step(downstream) -> sink.get.match{
+        .some(sink') -> upstream.step(sink'),
+        .empty -> Block#
+          .if {n == 0u} .return {runner.stop}
+          .do {sink := (Opt#(sinkFactory#[E]{
+            .stop -> downstream.stop,
+            #(e) -> remaining* == 0u || (remaining-- == 0u) ? {
+              .then -> runner.stop,
+              .else -> downstream#e
+              }
+            }))}
+          .return {upstream.step(sink.get!)}
+        },
+      }},
+  }
+
+_Actor: {
+  #[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] ->
+    _InternalActor#[S,E,R](sinkFactory, upstream, state, f, onComplete),
+
+  .anyRet[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] ->
+    _InternalActor.anyRet[S,E,R](sinkFactory, upstream, state, f, onComplete),
+  }
+_InternalActor: {
+  #[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] -> Block#
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .return {{'op
+      .stop -> op.isRunning ? {
+       .then -> Block#(isRunning := False, upstream.stop, onComplete#state),
+       .else -> {}
+       },
+      .isRunning -> isRunning*,
+      .step(downstream) -> upstream.step(sinkFactory#[E]{
+        .stop -> Block#(downstream.stop, op.stop),
+        #(e) -> f#(downstream, state, e).match{
+          .continue -> {},
+          .stop -> Block#(downstream.stop, isRunning := False, onComplete#state),
+          },
+        }),
+      }},
+
+  .anyRet[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: mut S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] -> Block#
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .return {{'op
+      .stop -> op.isRunning ? {
+       .then -> Block#(isRunning := False, upstream.stop, onComplete#state),
+       .else -> {}
+       },
+      .isRunning -> isRunning*,
+      .step(downstream) -> upstream.step(sinkFactory#[E]{
+        .stop -> Block#(downstream.stop, op.stop),
+        #(e) -> f#(downstream, state, e).match{
+          .continue -> {},
+          .stop -> Block#(downstream.stop, isRunning := False, onComplete#state),
+          },
+        }),
+      }},
+  }
+
+ActorImpl[S,E,R]: { read #(downstream: mut _Sink[imm R], state: S, e: E): ActorRes }
+ActorImplMut[S,E,R]: { read #(downstream: mut _Sink[R], state: lent S, e: E): ActorRes }
+
+ActorRes: Sealed{
+  .match[R](m: mut ActorResMatch[R]): R -> m.continue,
+  .continue: ActorRes -> {.match(m) -> m.continue},
+  .stop: ActorRes -> {.match(m) -> m.stop},
+  }
+ActorResMatch[R]: { mut .continue: R, mut .stop: R, }
+
+//---File flows.fear
+package base
+
+alias base.flows.Flow as Flow,
+alias base.flows.FlowOp as FlowOp,
+alias base.flows.ControlFlow as FlowCtrl,
+alias base.flows._Sink as FlowSink,
+
+//---File iter\automatons.fear
+package base.iter.automatons
+alias base.F as F,
+alias base.Opt as Opt,
+alias base.Void as Void,
+alias base.Bool as Bool, alias base.True as True, alias base.False as False,
+alias base.Let as Let,
+alias base.Block as Block,
+
+
+
+//---File iter\flows.fear
+package base.iter
+
+alias base.flows.Flow as Flow,
+alias base.flows.FlowOp as FlowOp,
+alias base.flows.ControlFlow as FlowCtrl,
+alias base.flows._Sink as FlowSink,
+
+//---File iter\iter.fear
+package base.iter
+
+Iter[E]:{
+  mut .next: mut Opt[E],
+  mut .find(p: mut IterPredicate[E]): mut Opt[E] -> this.next.match[mut Opt[E]]{
+    .some(x) -> p#x ? { .then -> Opt#x, .else -> this.find(p) },
+    .empty -> {}
+    },
+  mut .allMatch(p: mut IterPredicate[E]): Bool -> this.find{x -> p#x .not}.match[Bool]{
+    .some(_) -> False,
+    .empty -> True
+    },
+  mut .anyMatch(p: mut IterPredicate[E]): Bool -> this.find(p).match[Bool]{
+    .some(_) -> True,
+    .empty -> False
+    },
+
+  mut .map[R](f: mut IterMapper[E, R]): mut Iter[R] -> { this.next.map[R](f) },
+  mut .flatMap[R](f: mut IterMapper[E, mut Iter[R]]): mut Iter[R] -> Block#
+    .let[mut Iter[mut Iter[R]]] mapIter = { this.map(f) }
+    .let[mut Ref[mut Opt[mut Iter[R]]]] optCurIter = { Ref#(mapIter.next) }
+    .return(mut ReturnStmt[mut Iter[R]]{ mut Iter[R]{ 'self
+      .next -> optCurIter*[].match[mut Opt[R]]{
+        .some(curIter) -> curIter.next.match[mut Opt[R]]{
+          .some(next) -> Opt#next,
+          .empty -> Block#(optCurIter := (mapIter.next), self.next)
+          },
+        .empty -> {}
+        }
+      }}),
+  mut .filter(p: mut IterPredicate[E]): mut Iter[E] -> { .next -> this.find(p) },
+
+  mut .fold[R](acc: R, f: mut IterFolder[E, R]): R -> this.next.match[R]{
+    .some(e) -> this.fold(f#(acc, e), f),
+    .empty -> acc
+    },
+  mut .for(f: mut IterForEacher[E]): Void -> this.next.match[Void]{
+    .some(e) -> Block#(f#e, this.for(f)),
+    .empty -> {}
+    },
+
+  mut .count: UInt -> this.fold[UInt](0u, mut IterFolder[E, UInt]{ acc, _ -> acc + 1u }),
+  mut .list: mut List[E] -> this.fold(List#[E], { acc, e -> Block#(acc.add(e), acc) }),
+  mut .llist: mut LList[E] -> this.fold(mut LList[E], { acc, e -> acc +[] e }),
+  mut .str(toStr: mut IterMapper[E, Str], joining: Str): Str -> this.map(toStr)
+    .fold[Str]("", mut IterFolder[Str, Str]{ acc, e -> acc.size == 0u ? { .then -> acc + e,
+                                                                          .else -> acc + joining + e }}),
+  }
+
+Sum:{
+  .int(ns: mut Iter[Int]): Int -> ns.fold[Int](0, mut IterFolder[Int, Int]{ acc, n -> acc + n }),
+  .uint(ns: mut Iter[UInt]): UInt -> ns.fold[UInt](0u, mut IterFolder[UInt, UInt]{ acc, n -> acc + n }),
+  .float(ns: mut Iter[Float]): Float -> ns.fold[Float](0.0, mut IterFolder[Float, Float]{ acc, n -> acc + n }),
+  }
+
+IterForEacher[E]:{ mut #(e: E): Void }
+IterFolder[E,R]:{ mut #(acc: R, e: E): R }
+IterScanner[E, R, S]:{ lent #(state: mut Ref[S], e: E): S }
+IterMapper[E,R]:OptMap[E, R]
+IterPredicate[E]:{ mut #(e: E): Bool }
+
+
+//---File iter\pariter\iter.fear
+package base.iter.par
+
+Iter[E]:{
+  .cur: Opt[imm E],
+  .next: Iter[imm E],
+  .find(p: IterPredicate[imm E]): Opt[imm E] -> this.cur.match[Opt[imm E]]{
+    .some(x) -> p#x ? { .then -> Opt#x, .else -> this.next.find(p) },
+    .empty -> {}
+    },
+  .allMatch(p: IterPredicate[imm E]): Bool -> this.find{x -> p#x .not}.match[Bool]{
+    .some(_) -> False,
+    .empty -> True
+    },
+  .anyMatch(p: IterPredicate[imm E]): Bool -> this.find(p).match[Bool]{
+    .some(_) -> True,
+    .empty -> False
+    },
+
+  .map[R](f: IterMapper[imm E, imm R]): Iter[imm R] -> {
+    .cur -> this.cur.map[imm R]{ e -> f#e },
+    .next -> this.next.map[imm R](f),
+    },
+  .flatMap[R](f: IterMapper[imm E, Iter[imm R]]): Iter[imm R] -> _FlatMap[imm R].outer(this.map(f)),
+  .filter(p: IterPredicate[imm E]): Iter[imm E] -> this.cur.match[Iter[imm E]]{
+    .some(x) -> p#x ? {
+      .then -> { .cur -> this.cur, .next -> this.next.filter(p) },
+      .else -> this.next.filter(p),
+      },
+    .empty -> _Empty[imm E]
+    },
+
+  .fold[R](acc: R, f: IterFolder[imm E, R]): R -> this.cur.match[R]{
+    .some(e) -> this.next.fold(f#(acc, e), f),
+    .empty -> acc
+    },
+  .for(f: mut IterForEacher[imm E]): Void -> this.cur.match[Void]{
+    .some(e) -> Block#(f#e, this.next.for(f)),
+    .empty -> {}
+    },
+
+  .count: UInt -> this.fold[UInt](0u, IterFolder[imm E, UInt]{ acc, _ -> acc + 1u }),
+  .list: mut List[imm E] -> this.fold(List#[imm E], { acc, e -> Block#(acc.add(e), acc) }),
+  .llist: mut LList[imm E] -> this.fold(mut LList[imm E], { acc, e -> acc +[] e }),
+  .str(toStr: IterMapper[imm E, Str], joining: Str): Str -> this.map(toStr)
+    .fold[Str]("", IterFolder[Str, Str]{ acc, e -> acc.size == 0u ? { .then -> acc + e,
+                                                                       .else -> acc + joining + e }})
+  }
+
+Sum:{
+  .int(ns: Iter[Int]): Int -> ns.fold[Int](0, IterFolder[Int, Int]{ acc, n -> acc + n }),
+  .uint(ns: Iter[UInt]): UInt -> ns.fold[UInt](0u, IterFolder[UInt, UInt]{ acc, n -> acc + n }),
+  .float(ns: Iter[Float]): Float -> ns.fold[Float](0.0, IterFolder[Float, Float]{ acc, n -> acc + n }),
+  }
+
+IterForEacher[E]:{ mut #(e: imm E): Void }
+IterFolder[E,R]:{ #(acc: R, e: imm E): R }
+IterMapper[E,R]:{ #(e: imm E): imm R }
+IterPredicate[E]:{ #(e: imm E): Bool }
+
+_FlatMap[R]:Sealed{
+  .outer(mapIter: Iter[Iter[R]]): Iter[R] -> mapIter.cur.match[Iter[R]]{
+    .some(inner) -> this.inner(mapIter, inner),
+    .empty -> _Empty[R]
+    },
+  .inner(mapIter: Iter[Iter[R]], curIter: Iter[R]): Iter[R] -> curIter.cur.match{
+    .some(cur) -> { .cur ->  Opt#cur, .next -> this.inner(mapIter, curIter.next) },
+    .empty -> this.outer(mapIter.next),
+    }
+}
+_Empty[E]:Iter[imm E]{ .cur -> {}, .next -> this }
+
+//---File iter\pariter\pkg.fear
+package base.iter.par
+alias base.LList as LList, alias base.List as List,
+alias base.Opt as Opt, alias base.OptMap as OptMap, alias base.OptMatch as OptMatch,
+alias base.Void as Void,
+alias base.Bool as Bool, alias base.True as True, alias base.False as False,
+alias base.UInt as UInt, alias base.Int as Int, alias base.Float as Float,
+alias base.Str as Str,
+alias base.Let as Let,
+alias base.Block as Block, alias base.ReturnStmt as ReturnStmt,
+alias base.Ref as Ref,
+alias base.Sealed as Sealed,
+alias base.As as As,
+alias base.F as F,
+alias base.caps.IsoPod as IsoPod,
+
+//---File iter\pkg.fear
+package base.iter
+alias base.LList as LList, alias base.List as List,
+alias base.Opt as Opt, alias base.OptMap as OptMap, alias base.OptMatch as OptMatch,
+alias base.Void as Void,
+alias base.Bool as Bool, alias base.True as True, alias base.False as False,
+alias base.UInt as UInt, alias base.Int as Int, alias base.Float as Float,
+alias base.Str as Str,
+alias base.Let as Let,
+alias base.Block as Block, alias base.ReturnStmt as ReturnStmt,
+alias base.Ref as Ref,
+alias base.Sealed as Sealed,
+
+//---File lang.fear
+package base
+alias base.caps.System as System,
+
+Main: { #(s: mut System): Void }
+Sealed: {}
+Void: Sealed{}
+
+Abort: Sealed{ ![R:readOnly,lent,read,mut,imm,iso]: R -> this! } // can be optimised to just terminate (goes stuck)
+Magic: Sealed{ ![R:readOnly,lent,read,mut,imm,iso]: R -> this! } // magic'd out to tell us what we forgot to implement
+Debug: Sealed{ #[T](x: T): T -> x }
+HasIdentity: { mut .idEq(other: readOnly HasIdentity): Bool -> Magic! } // TODO: magic
+
+As[X:imm,mut,read,iso]: Sealed{ #(x: X): X -> x }
+
+Let: {
+  #[V,R](l: mut Let[V, R]): R -> l.in(l.var),
+  }
+Let[V,R]: { mut .var: V, mut .in(v: V): R }
+
+F[R:read,mut,imm,iso]: { read #: R }
+F[A:read,mut,imm,iso,R:read,mut,imm,iso]: { read #(a: A): R }
+F[A:read,mut,imm,iso, B:read,mut,imm,iso, R:read,mut,imm,iso]: { read #(a: A, b: B): R }
+F[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso, R:read,mut,imm,iso]: { read #(a: A, b: B, c: C): R }
+
+Consumer[A:read,mut,imm,iso]: { mut #(a: A): Void }
+Consumer[A:read,mut,imm,iso, B:read,mut,imm,iso]: { mut #(a: A, b: B): Void }
+Consumer[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso]: { mut #(a: A, b: B, c: C): Void }
+
+ToImm[R]: { readOnly .toImm: imm R, }
+Freezer[T,R]: { mut #(self: T): imm R }
+Ice[T]: { readOnly .get: imm T }
+
+Box[T]: {
+  mut  .get: T,
+  read .get: read T,
+  imm  .get: imm T,
+  }
+
+//---File lists.fear
+package base
+
+Collection:{
+  read .size: UInt,
+  read .isEmpty: Bool,
+  }
+
+LList:{ #[E]: mut LList[E] -> mut LList[E] }
+LList[E]:Collection,Sealed{
+  mut  .match[R](m: mut LListMatch[E, R]): R -> m.empty,
+  read .match[R](m: mut LListMatchRead[read E, R]): R -> m.empty,
+
+  mut  .get(i: UInt): mut Opt[E] -> {},
+  read .get(i: UInt): mut Opt[read E] -> {},
+  imm  .get(i: UInt): iso Opt[imm E] -> {},
+
+  mut  .head: mut Opt[E] -> {},
+  read .head: mut Opt[read E] -> {},
+  imm  .head: iso Opt[imm E] -> {},
+
+  mut  .tail: mut LList[E] -> this,
+  read .tail: read LList[read E] -> this,
+  imm  .tail: LList[imm E] -> this,
+
+  mut  ++(l1: mut LList[E]): mut LList[E] -> l1,
+  read ++(l1: read LList[read E]): read LList[read E] -> l1,
+  imm ++(l1: LList[imm E]): LList[imm E] -> l1,
+
+  mut  +(e: E): mut LList[E] -> this ++ (mut LList[E].pushFront[](e)),
+  read +(e: read E): read LList[read E] -> this ++ (read LList[read E].pushFront[](e)),
+  imm  +(e: imm E): LList[imm E] -> this ++ (LList[imm E].pushFront[](e)),
+
+  mut .iter: mut Iter[E] -> Let#{
+    .var -> Ref#this,
+    .in(cursor) -> { .next -> (cursor.swap[](cursor*[].tail[])).head[] }
+    },
+  imm .iter: mut Iter[imm E] -> Let#{
+    .var -> Ref#this,
+    .in(cursor) -> { .next -> (cursor.swap[](cursor*[].tail[])).head[] }
+    },
+  read .iter: mut Iter[read E] -> Let#{
+    .var -> Ref#this,
+    .in(cursor) -> { .next -> (cursor.swap[](cursor*[].tail[])).head[] }
+    },
+
+  mut  .flow: mut Flow[E] -> Block#
+    .var cursor = {Ref#this}
+    .return {Flow.fromMutSource{'op
+      .stop -> cursor := {},
+      .isRunning -> cursor*.isEmpty.not,
+      .step(downstream) -> (cursor.swap(cursor*.tail)).head.match{
+        .some(x) -> downstream#x,
+        .empty -> Block#(downstream.stop, op.stop),
+        },
+      }},
+  read .flow: mut Flow[read E] -> Flow.fromOp[read E](this._flowread),
+  read ._flowread: mut FlowOp[read E] -> Block#
+    .var cursor = {Ref#this}
+    .return {mut FlowOp[read E]{'op
+      .stop -> cursor := {},
+      .isRunning -> cursor*.isEmpty.not,
+      .step(downstream) -> (cursor.swap(cursor*.tail)).head.match{
+        .some(x) -> downstream#x,
+        .empty -> Block#(downstream.stop, op.stop),
+        },
+      }},
+  imm  .flow: mut Flow[imm E] -> Flow.fromOp[imm E](this._flowimm),
+  imm  ._flowimm: mut FlowOp[imm E] -> Block#
+    .var cursor = {Ref#this}
+    .return {mut FlowOp[imm E]{'op
+      .stop -> cursor := {},
+      .isRunning -> cursor*.isEmpty.not,
+      .step(downstream) -> (cursor.swap(cursor*.tail)).head.match{
+        .some(x) -> downstream#x,
+        .empty -> Block#(downstream.stop, op.stop),
+        },
+      }},
+
+  read .isEmpty: Bool -> True,
+  read .size: UInt -> 0u,
+
+  mut .list: mut List[E] -> List.fromLList[E](this),
+
+  mut .pushFront(e: E): mut LList[E] -> Let#{
+    .var -> this.size + 1u,
+    .in(len) -> {'l
+      mut  .match[R](m: mut LListMatch[E, R]): R -> m.elem(e, this),
+      read .match[R](m: mut LListMatchRead[read E, R]): R -> m.elem(e, this),
+      imm  .match[R](m: mut LListMatchRead[imm E, R]): R -> m.elem(e, this),
+
+      mut  .get(i: UInt): mut Opt[E] -> (i == 0u) ? { .then -> Opt#e, .else -> this.get[](i - 1u) },
+      read .get(i: UInt): mut Opt[read E] -> (i == 0u) ? { .then -> Opt#[read E]e, .else -> this.get[](i - 1u) },
+      imm  .get(i: UInt): iso Opt[imm E] -> (i  == 0u) ? { .then -> Opt#[imm E]e, .else -> this.get[](i - 1u) },
+
+      mut  .head: mut Opt[E] -> Opt#e,
+      read .head: mut Opt[read E] -> Opt#[read E]e,
+      imm  .head: iso Opt[imm E] -> Opt#[imm E]e,
+
+      .tail -> this,
+      ++(l1) -> (this ++ l1).pushFront[](e),
+      .isEmpty -> False,
+      .size -> len,
+      }
+    },
+  read .pushFront(e: read E): read LList[read E] -> Let#{
+    .var -> this.size + 1u,
+    .in(len) -> {'l
+      read .match[R](m: mut LListMatchRead[read E, R]): R -> m.elem(e, this),
+      imm  .match[R](m: mut LListMatchRead[imm E, R]): R -> m.elem(e, this),
+
+      read .get(i: UInt): mut Opt[read E] -> (i == 0u) ? { .then -> Opt#e, .else -> this.get[](i - 1u) },
+      imm  .get(i: UInt): iso Opt[imm E] -> (i == 0u) ? { .then -> Opt#[imm E]e, .else -> this.get[](i - 1u) },
+
+      read .head: mut Opt[read E] -> Opt#e,
+      imm  .head: iso Opt[imm E] -> Opt#[imm E]e,
+      .tail -> this,
+      ++(l1) -> (this ++ l1).pushFront[](e),
+      .isEmpty -> False,
+      .size -> len,
+      }
+    },
+  }
+LListMatch[E,R]:{
+  mut .elem(head: E, tail: mut LList[E]): R,
+  mut .empty: R,
+  }
+LListMatchRead[E,R]:{
+  mut .elem(head: read E, tail: read LList[read E]): R,
+  mut .empty: R,
+  }
+
+List:{
+  #[E]: mut List[E] -> _List.new(Ref#(_ListState#[E](0u, {}))),
+  #[E](e1: E): mut List[E] -> this.fromLList[E](mut LList[E].pushFront(e1)),
+  #[E](e1: E, e2: E): mut List[E] -> this.fromLList[E](mut LList[E].pushFront(e2).pushFront(e1)),
+  #[E](e1: E, e2: E, e3: E): mut List[E] -> this.fromLList[E](mut LList[E].pushFront(e3).pushFront(e2).pushFront(e1)),
+  #[E](e1: E, e2: E, e3: E, e4: E): mut List[E] -> this.fromLList[E](mut LList[E].pushFront(e4).pushFront(e3).pushFront(e2).pushFront(e1)),
+  .fromLList[E](list: mut LList[E]): mut List[E] -> _List.new(Ref#(_ListState#[E](list.size, list))),
+  }
+_List:{
+  .new[E](s: mut Ref[mut _ListState[E]]): mut List[E] -> {'l
+    .size -> s*.size,
+    .isEmpty -> s*.inner.isEmpty,
+    .get(i) -> s*.inner.get(i),
+    .add(e) -> s := (_ListState#[E](s*.size + 1u, s*.inner + e)),
+    }
+  }
+List[E]: Collection,Sealed{
+  mut  .get(i: UInt): mut Opt[E],
+  read .get(i: UInt): mut Opt[read E],
+  imm  .get(i: UInt): iso Opt[imm E],
+  mut .add(e: E): Void,
+  mut .addAll(other: mut List[E]): Void -> other.iter.for{ e -> this.add(e) },
+
+  mut .flow: mut Flow[E] -> Block#
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .return {Flow.fromMutSource({'self
+      .isRunning -> cursor* < (this.size),
+      .stop -> cursor := (this.size),
+      .step(downstream) -> this.get(cursor++).match{
+        .some(x) -> Block#
+          .do {downstream#x}
+          .if {cursor.get >= (this.size)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }, this.size)},
+  read .flow: mut Flow[read E] -> Flow.fromOp(this._flowread, this.size),
+  read ._flowread: mut FlowOp[read E] -> Block#
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .return {{'self
+      .isRunning -> cursor* < (this.size),
+      .stop -> cursor := (this.size),
+      .step(downstream) -> this.get(cursor++).match{
+        .some(x) -> Block#
+          .do {downstream#x}
+          .if {cursor.get >= (this.size)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }},
+  imm .flow: mut Flow[imm E] -> Flow.fromOp(this._flowimm, this.size),
+  imm ._flowimm: mut FlowOp[imm E] -> Block#
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .return {{'self
+      .isRunning -> cursor* < (this.size),
+      .stop -> cursor := (this.size),
+      .step(downstream) -> this.get(cursor++).match{
+        .some(x) -> Block#
+          .do {downstream#x}
+          .if {cursor.get >= (this.size)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+      }},
+
+
+  mut .iter: mut Iter[E] -> Let#{
+    .var -> Count.uint(0u),
+    .in(cursor) -> { .next -> this.get(cursor++) }
+    },
+  read .iter: mut Iter[read E] -> Let#{
+    .var -> Count.uint(0u),
+    .in(cursor) -> { .next -> this.get(cursor++) }
+    },
+  imm .iter: mut Iter[imm E] -> Let#{
+    .var -> Count.uint(0u),
+    .in(cursor) -> { .next -> this.get(cursor++) }
+    },
+  }
+_ListParIter:{
+  #[E](l: List[imm E], i: UInt): base.iter.par.Iter[imm E] -> {
+    .cur -> l.get(i),
+    .next -> this#(l, i + 1u),
+    }
+  }
+_ListState[E]:{
+  read .size: UInt,
+  mut .inner: mut LList[E],
+  read .inner: read LList[read E],
+  }
+_ListState:{
+  #[E](len: UInt, inner: mut LList[E]): mut _ListState[E] -> {
+    .size -> len,
+    .inner -> inner
+    }
+  }
+
+AppendList[E]: Collection{
+  mut  .get(i: UInt): mut Opt[E],
+  read .get(i: UInt): mut Opt[read E],
+  imm  .get(i: UInt): iso Opt[imm E],
+  mut .append(e: E): Void,
+  }
+
+//---File maps.fear
+package base
+
+Map[K:imm, V]:{
+  read .keyEq(k1: K, k2: K): Bool,
+  imm  .get(k: K): mut Opt[imm V] -> {},
+  }
+
+EmptyMap[K:imm,V]:Map[K, V]{
+  .keyEq(k1, k2) -> False,
+  .get(k) -> {},
+  }
+
+Lens[K: imm, V]:Map[K, imm V]{
+  .put(k: K, v: imm V): mut Lens[K, V] -> {'next
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    .get(k') -> next.keyEq(k, k') ? {.then -> Opt#v, .else -> this.get(k')}
+    },
+  .map[R](f: MapMapImm[K, imm V, imm R]): Lens[K, imm R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    .get(k) -> this.get(k).map{res -> f#(k, res)},
+    },
+  }
+
+LinkedLens[K:imm, V]:Map[K, V]{
+  imm  .get(k: K): mut Opt[imm V] -> {},
+  mut  .get(k: K): mut Opt[V] -> {},
+  read .get(k: K): mut Opt[read V] -> {},
+
+  mut  .put(k: K, v: V): mut LinkedLens[K, V] -> {'next
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k': K): mut Opt[imm V] -> next.keyEq(k, k') ? {.then -> Opt#[imm V]v, .else -> this.get(k')},
+    mut  .get(k': K): mut Opt[V] -> next.keyEq(k, k') ? {.then -> Opt#v, .else -> this.get(k')},
+    read .get(k': K): mut Opt[read V] -> next.keyEq(k, k') ? {.then -> Opt#[read V]v, .else -> this.get(k')},
+    },
+  read .put(k: K, v: read V): read LinkedLens[K, read V] -> {'next
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k': K): mut Opt[imm V] -> next.keyEq(k, k') ? {.then -> Opt#[imm V]v, .else -> this.get(k')},
+    read .get(k': K): mut Opt[read V] -> next.keyEq(k, k') ? {.then -> Opt#[read V]v, .else -> this.get(k')},
+    },
+
+  imm .map[R](fImm: MapMapImm[K, imm V, imm R], fRead: MapMapRead[K, V, R]): LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map{res -> fRead#(k, res)},
+    },
+  mut .map[R](fImm: MapMapImm[K, imm V, imm R], fMut: mut MapMapMut[K, V, R], fRead: read MapMapRead[K, V, R]): mut LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    mut  .get(k: K): mut Opt[R] ->      this.get(k).map{res -> fMut#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map mut OptMap[read V, read R]{res -> fRead#(k, res)},
+    },
+  read .map[R](fImm: MapMapImm[K, imm V, imm R], fRead: read MapMapRead[K, V, R]): read LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map{res -> fRead#(k, res)},
+    },
+  }
+
+MapMapImm[K:imm,V,R]:{ #(k: K, v: imm V): R }
+MapMapMut[K:imm,V,R]:{ mut #(k: K, v: V): R }
+MapMapRead[K:imm,V,R]:{ read #(k: K, v: read V): read R }
+
+//---File nums.fear
+package base
+
+Int:Sealed,_MathOps[imm Int],_IntOps[imm Int]{
+  readOnly .uint: UInt,
+  readOnly .float: Float,
+  read .str: Str,
+  }
+UInt:Sealed,_MathOps[imm UInt],_IntOps[imm UInt]{
+  readOnly .int: Int,
+  readOnly .float: Float,
+  read .str: Str,
+  }
+Float:Sealed,_MathOps[imm Float]{
+  readOnly .int: Int,
+  readOnly .uint: UInt,
+  readOnly .round: Int,
+  readOnly .ceil: Int,
+  readOnly .floor: Int,
+  readOnly **(n: readOnly Float): Float, // pow
+  readOnly .isNaN: Bool,
+  readOnly .isInfinite: Bool,
+  readOnly .isPosInfinity: Bool,
+  readOnly .isNegInfinity: Bool,
+  read .str: Str,
+  }
+
+_MathOps[T]:Sealed{
+  readOnly .toImm: T,
+  readOnly +(n: readOnly T): T,
+  readOnly -(n: readOnly T): T,
+  readOnly *(n: readOnly T): T,
+  readOnly /(n: readOnly T): T,
+  readOnly %(n: readOnly T): T,
+  readOnly .abs: T,
+
+  readOnly >(n: readOnly T): Bool,
+  readOnly <(n: readOnly T): Bool,
+  readOnly >=(n: readOnly T): Bool,
+  readOnly <=(n: readOnly T): Bool,
+  readOnly ==(n: readOnly T): Bool,
+  }
+_IntOps[T]:Sealed{
+  readOnly >>(n: readOnly T): T,
+  readOnly <<(n: readOnly T): T,
+  readOnly ^(n: readOnly T): T,
+  readOnly &(n: readOnly T): T,
+  readOnly |(n: readOnly T): T,
+
+  readOnly **(n: readOnly UInt): T, // pow
+  }
+
+_IntInstance:Int{
+  .uint -> Magic!,
+  .float -> Magic!,
+  .str -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+
+  >>(n) -> Magic!,
+  <<(n) -> Magic!,
+  ^(n) -> Magic!,
+  &(n) -> Magic!,
+  |(n) -> Magic!,
+
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+_UIntInstance:UInt{
+  .int -> Magic!,
+  .float -> Magic!,
+  .str -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+
+  >>(n) -> Magic!,
+  <<(n) -> Magic!,
+  ^(n) -> Magic!,
+  &(n) -> Magic!,
+  |(n) -> Magic!,
+
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+_FloatInstance:Float{
+  .int -> Magic!,
+  .uint -> Magic!,
+  .str -> Magic!,
+  .round -> Magic!,
+  .ceil -> Magic!,
+  .floor -> Magic!,
+  .isNaN -> Magic!,
+  .isInfinite -> Magic!,
+  .isPosInfinity -> Magic!,
+  .isNegInfinity -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+
+//---File optionals.fear
+package base
+
+Opt:{ #[T](x: T): mut Opt[T] -> {
+   .match(m) -> m.some(x),
+  }}
+Opt[T]:Extensible[Opt[T]]{
+  .self -> this,
+  mut  .match[R](m: mut OptMatch[T, R]): R -> m.empty,
+  read .match[R](m: mut OptMatch[read T, R]): R -> m.empty,
+  imm  .match[R](m: mut OptMatch[imm T, R]): R -> m.empty,
+
+  mut  !: T -> this.match[T](mut OptMatch[T, T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  read !: read T -> this.match[read T](mut OptMatch[read T, read T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  imm  !: imm T -> this.match[imm T](mut OptMatch[imm T, imm T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+
+  mut .map[R](f: mut OptMap[T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+  read .map[R](f: mut OptMap[read T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+  imm  .map[R](f: mut OptMap[imm T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+
+
+  read .isEmpty: Bool -> this.match[Bool](mut OptMatch[read T, Bool]{ .empty -> True, .some(_) -> False }),
+  read .isSome: Bool -> this.match[Bool](mut OptMatch[read T, Bool]{ .empty -> False, .some(_) -> True }),
+
+  mut  .flow: mut Flow[T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  imm  .flow: mut Flow[imm T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  read .flow: mut Flow[read T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  }
+
+OptMatch[T,R]:{ mut .some(x: T): R, mut .empty: R }
+OptOrElse[R]:{ mut #: R }
+OptMap[T,R]:OptMatch[T, mut Opt[R]]{
+  mut #(t: T): R,
+  .some(x) -> Opt#(this#x),
+  .empty -> {}
+  }
+
+OptOrElseExt[T]:Extension[mut Opt[T], T]{
+  mut .alt: T,
+  #(opt) -> opt.match{ .some(x) -> x, .empty -> this.alt }
+  }
+
+//---File pkg.fear
+package base
+alias base.iter.Iter as Iter,
+
+//---File ref.fear
+package base
+
+Ref:{
+  #[X](x: X): mut Ref[X] -> Magic!,
+  readOnly #[X](x: imm X): mut RefImm[imm X] -> Ref.ofImm x,
+  .ofImm[X](x: imm X): mut RefImm[imm X] -> Let#{
+    .var -> Ref#(Ice[imm X]{x}),
+      .in(ref) -> {
+         mut  .get: imm X -> ref.get.get,
+         read .get: imm X -> ref.get.get,
+         .swap(newX) -> ref.swap(Ice[imm X]{newX}).get,
+         }
+      }
+  }
+Ref[X:imm,mut,read]:Sealed{
+  mut  .get: X,
+  read .get: read X,
+  read .getImm(f: mut Freezer[read X, imm X]): imm X -> f#(this.get),
+  read .getImm: Opt[imm X] -> {},
+  mut  *: X -> this.get,
+  read *: read X -> this.get,
+
+  mut .swap(x: X): X,
+  mut :=(x: X): Void -> Block#(this.swap(x)),
+  mut .set(x: X): Void -> this := x,
+  mut <-(f: mut UpdateRef[X]): X -> this.swap(f#(this*)),
+  mut .update(f: mut UpdateRef[X]): X -> this <- f,
+  }
+UpdateRef[X]:{ mut #(x: X): X }
+RefImm[X:imm]:Ref[X]{
+  read .get: X,
+  read *: X -> this.get,
+  .getImm(f) -> this.get,
+  .getImm -> Opt#(this.get),
+  }
+
+Count[N:imm]:RefImm[imm N]{
+  mut ++: N,
+  mut --: N,
+  mut +=(n: N): N,
+  mut -=(n: N): N,
+  mut *=(n: N): N,
+  }
+Count:{
+  #(n: Int): mut Count[Int] -> this.int(n),
+  .int(n: Int): mut Count[Int] -> Let#({
+    .var -> Ref.ofImm n,
+    .in(c) -> {
+      .get -> c.get,
+      .swap(x) -> c.swap(x),
+      ++ -> c <- { c' -> c' + 1 },
+      -- -> c <- { c' -> c' - 1 },
+      +=(n2) -> c <- { c' -> c' + n2 },
+      -=(n2) -> c <- { c' -> c' - n2 },
+      *=(n2) -> c <- { c' -> c' * n2 },
+      }
+    }),
+  .uint(n: UInt): mut Count[UInt] -> Let#({
+    .var -> Ref.ofImm n,
+    .in(c) -> {
+      .get -> c.get,
+      .swap(x) -> c.swap(x),
+      ++ -> c <- { c' -> c' + 1u },
+      -- -> c <- { c' -> c' - 1u },
+      +=(n2) -> c <- { c' -> c' + n2 },
+      -=(n2) -> c <- { c' -> c' - n2 },
+      *=(n2) -> c <- { c' -> c' * n2 },
+      }
+    })
+  }
+
+//---File repr.fear
+package base.repr
+
+alias base.Str as Str,
+alias base.F as F,//check if we can 'import F[T]'
+alias base.Block as Block,
+alias base.Void as Void,
+alias base.Error as Error,
+alias base.Bool as Bool,
+
+FRepr[T:imm]:F[iso T, F[read T,Bool], mut Repr[T]]{
+  _x,_inv->Block#
+   .letIso x = _x
+   .let[mut Repr[T]] res= {mut Repr[T:imm]:{'repr
+    read .look[R](f:read F[read T,imm R]): imm R ->f#x,
+    mut  .mutate[R](f:read F[mut T,imm R]): imm R -> Block#
+      .let[imm R] res={f#x}
+      .do{repr.reset}
+      .return {res},
+    mut  .reset:Void->_inv#x?{.then->Void,.else->Error.msg "AAAH",},
+    read .cached[R](f:F[read T,imm R]): imm R ->f#x, //magic
+     }}
+   .do {res.reset}
+   .return {res}
+  }
+
+
+
+
+
+
+
+
+//---File results.fear
+package base
+
+Res:{
+  #[T](x: T): mut Res[T] -> { .match(m) -> m.a(x), },
+  .ok[T,E](x: T): mut Res[T, E] -> { .match(m) -> m.a(x), },
+  .err[T,E](x: E): mut Res[T, E] -> { .match(m) -> m.b(x), },
+  }
+Res[T]:Res[T, Info]
+Res[T,E]:Either[T, E]{
+  mut  .resMatch[R](m: mut ResMatch[T, E, R]): R -> this.match(m),
+  read .resMatch[R](m: mut ResMatch[read T, read E, R]): R -> this.match(m),
+  imm  .resMatch[R](m: mut ResMatch[imm T, imm E, R]): R -> this.match(m),
+
+  mut  !: T -> this.resMatch[T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  read !: read T -> this.resMatch[read T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  imm  !: imm T -> this.resMatch[imm T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+
+  mut  .map[R](f: mut ResMap[T, E, R]): mut Res[R, E] -> this.match(f),
+  read .map[R](f: mut ResMap[read T, read E, R]): mut Res[R, read E] -> this.match(f),
+  imm  .map[R](f: mut ResMap[imm T, imm E, R]): mut Res[R, imm E] -> this.match(f),
+
+  mut  .mapErr[R](f: mut ResMapErr[T, E, R]): mut Res[T, R] -> this.match(f),
+  read .mapErr[R](f: mut ResMapErr[read T, read E, R]): mut Res[read T, R] -> this.match(f),
+  imm  .mapErr[R](f: mut ResMapErr[imm T, imm E, R]): mut Res[imm T, R] -> this.match(f),
+
+  mut  .ok: mut Opt[T] -> this.resMatch{ .ok(x) -> Opt#x, .err(_) -> {} },
+  read .ok: mut Opt[read T] -> this.resMatch{ .ok(x) -> Opt#x, .err(_) -> {} },
+  imm  .ok: iso Opt[imm T] -> this.resMatch[mut Opt[imm T]]{ .ok(x) -> Opt#x, .err(_) -> {} },
+
+  mut  .err: mut Opt[E] -> this.resMatch{ .ok(_) -> {}, .err(e) -> Opt#e },
+  read .err: mut Opt[read E] -> this.resMatch{ .ok(_) -> {}, .err(e) -> Opt#e },
+  imm  .err: iso Opt[imm E] -> this.resMatch[mut Opt[imm E]]{ .ok(_) -> {}, .err(e) -> Opt#e },
+
+  read .isErr: Bool -> this.resMatch{ .err(_) -> True, .ok(_) -> False },
+  read .isOk: Bool -> this.resMatch{ .err(_) -> False, .ok(_) -> True },
+  }
+
+ResMatch[T,E,R]:EitherMatch[T, E, R]{
+  .a(x) -> this.ok(x), .b(x) -> this.err(x),
+  mut .ok(x: T): R,
+  mut .err(x: E): R
+  }
+ResMap[T,E,R]:ResMatch[T, E, mut Res[R, E]]{
+  mut #(x: T): R,
+  .ok(x) -> Res.ok[R, E](this#x),
+  .err(x) -> Res.err[R, E](x),
+  }
+ResMapErr[T,E,R]:ResMatch[T, E, mut Res[T, R]]{
+  mut #(x: E): R,
+  .ok(x) -> Res.ok[T, R](x),
+  .err(x) -> Res.err[T, R](this#x),
+  }
+
+//---File strings.fear
+package base
+Str:Sealed {
+  read .str: Str,
+  readOnly .size: UInt,
+  readOnly .isEmpty: Bool,
+  readOnly +(other: readOnly Str): Str,
+  readOnly ==(other: readOnly Str): Bool,
+  readOnly .toImm: Str,
+  readOnly .assertEq(other: readOnly Str): Void,
+  }
+Stringable: {
+  read .str: Str,
+  }
+_StrInstance:Str {
+  .size -> Magic!,
+  .isEmpty -> Magic!,
+  .str -> Magic!,
+  +(other) -> Magic!,
+  ==(other) -> Magic!,
+  .toImm -> Magic!,
+  .assertEq(other) -> Magic!,
+  }
+
+_StrHelpers: {
+  .assertEq(expected: readOnly Str, actual: readOnly Str): Void ->
+    Assert!(expected == actual, "Expected: "+expected+"\nActual: "+actual, {{}}),
+  }
+
+StrMap[V]:LinkedLens[Str, V] { k1, k2 -> k1 == k2 }
+edLens[K, read V] -> {'next
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k': K): mut Opt[imm V] -> next.keyEq(k, k') ? {.then -> Opt#[imm V]v, .else -> this.get(k')},
+    read .get(k': K): mut Opt[read V] -> next.keyEq(k, k') ? {.then -> Opt#[read V]v, .else -> this.get(k')},
+    },
+
+  imm .map[R](fImm: MapMapImm[K, imm V, imm R], fRead: MapMapRead[K, V, R]): LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map{res -> fRead#(k, res)},
+    },
+  mut .map[R](fImm: MapMapImm[K, imm V, imm R], fMut: mut MapMapMut[K, V, R], fRead: read MapMapRead[K, V, R]): mut LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    mut  .get(k: K): mut Opt[R] ->      this.get(k).map{res -> fMut#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map mut OptMap[read V, read R]{res -> fRead#(k, res)},
+    },
+  read .map[R](fImm: MapMapImm[K, imm V, imm R], fRead: read MapMapRead[K, V, R]): read LinkedLens[K, R] -> {
+    .keyEq(k1, k2) -> this.keyEq(k1, k2),
+    imm  .get(k: K): mut Opt[imm R] ->  As[mut Opt[imm V]]#(this.get(k)).map{res -> fImm#(k, res)},
+    read .get(k: K): mut Opt[read R] -> this.get(k).map{res -> fRead#(k, res)},
+    },
+  }
+
+MapMapImm[K:imm,V,R]:{ #(k: K, v: imm V): R }
+MapMapMut[K:imm,V,R]:{ mut #(k: K, v: V): R }
+MapMapRead[K:imm,V,R]:{ read #(k: K, v: read V): read R }
+
+//---File nums.fear
+package base
+
+Int:Sealed,_MathOps[imm Int],_IntOps[imm Int]{
+  readOnly .uint: UInt,
+  readOnly .float: Float,
+  // not Stringable due to limitations of the Java codegen target
+  read .str: Str,
+  }
+UInt:Sealed,_MathOps[imm UInt],_IntOps[imm UInt]{
+  readOnly .int: Int,
+  readOnly .float: Float,
+  // not Stringable due to limitations of the Java codegen target
+  read .str: Str,
+  }
+Float:Sealed,_MathOps[imm Float]{
+  readOnly .int: Int,
+  readOnly .uint: UInt,
+  readOnly .round: Int,
+  readOnly .ceil: Int,
+  readOnly .floor: Int,
+  readOnly **(n: readOnly Float): Float, // pow
+  readOnly .isNaN: Bool,
+  readOnly .isInfinite: Bool,
+  readOnly .isPosInfinity: Bool,
+  readOnly .isNegInfinity: Bool,
+  // not Stringable due to limitations of the Java codegen target
+  read .str: Str,
+  }
+
+_MathOps[T]:Sealed{
+  readOnly .toImm: T,
+  readOnly +(n: readOnly T): T,
+  readOnly -(n: readOnly T): T,
+  readOnly *(n: readOnly T): T,
+  readOnly /(n: readOnly T): T,
+  readOnly %(n: readOnly T): T,
+  readOnly .abs: T,
+
+  // Comparisons
+  readOnly >(n: readOnly T): Bool,
+  readOnly <(n: readOnly T): Bool,
+  readOnly >=(n: readOnly T): Bool,
+  readOnly <=(n: readOnly T): Bool,
+  readOnly ==(n: readOnly T): Bool,
+  }
+_IntOps[T]:Sealed{
+  // bitwise
+  readOnly >>(n: readOnly T): T,
+  readOnly <<(n: readOnly T): T,
+  readOnly ^(n: readOnly T): T,
+  readOnly &(n: readOnly T): T,
+  readOnly |(n: readOnly T): T,
+
+  readOnly **(n: readOnly UInt): T, // pow
+  }
+
+// Fake concrete type for all numbers. The real implementation is generated at code-gen.
+_IntInstance:Int{
+  .uint -> Magic!,
+  .float -> Magic!,
+  .str -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+
+  // bitwise
+  >>(n) -> Magic!,
+  <<(n) -> Magic!,
+  ^(n) -> Magic!,
+  &(n) -> Magic!,
+  |(n) -> Magic!,
+
+  // Comparisons
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+_UIntInstance:UInt{
+  .int -> Magic!,
+  .float -> Magic!,
+  .str -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+
+  // bitwise
+  >>(n) -> Magic!,
+  <<(n) -> Magic!,
+  ^(n) -> Magic!,
+  &(n) -> Magic!,
+  |(n) -> Magic!,
+
+  // Comparisons
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+_FloatInstance:Float{
+  .int -> Magic!,
+  .uint -> Magic!,
+  .str -> Magic!,
+  .round -> Magic!,
+  .ceil -> Magic!,
+  .floor -> Magic!,
+  .isNaN -> Magic!,
+  .isInfinite -> Magic!,
+  .isPosInfinity -> Magic!,
+  .isNegInfinity -> Magic!,
+  +(n) -> Magic!,
+  -(n) -> Magic!,
+  *(n) -> Magic!,
+  /(n) -> Magic!,
+  %(n) -> Magic!,
+  **(n) -> Magic!,
+  .abs -> Magic!,
+  .toImm -> Magic!,
+  // Comparisons
+  >n -> Magic!,
+  <n -> Magic!,
+  >=n -> Magic!,
+  <=n -> Magic!,
+  ==n -> Magic!,
+  }
+
+//---File optionals.fear
+package base
+
+Opt:{ #[T](x: T): mut Opt[T] -> {
+   .match(m) -> m.some(x),
+//  mut .match[R](m: mut OptMatch[T, R]): R -> m.some(x),
+//  read .match[R](m: mut OptMatch[read T, R]): R -> m.some(x),
+//  // imm case is needed because the read one will return read E even if E is imm
+//  imm  .match[R](m: mut OptMatch[T, R]): R -> m.some(x),
+  }}
+Opt[T]:Extensible[Opt[T]]{
+  .self -> this,
+  mut  .match[R](m: mut OptMatch[T, R]): R -> m.empty,
+  read .match[R](m: mut OptMatch[read T, R]): R -> m.empty,
+  imm  .match[R](m: mut OptMatch[imm T, R]): R -> m.empty,
+
+  mut  !: T -> this.match[T](mut OptMatch[T, T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  read !: read T -> this.match[read T](mut OptMatch[read T, read T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  imm  !: imm T -> this.match[imm T](mut OptMatch[imm T, imm T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+
+  mut .map[R](f: mut OptMap[T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+  read .map[R](f: mut OptMap[read T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+  imm  .map[R](f: mut OptMap[imm T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
+
+//  mut |(alt: T): T -> this.match[T](mut OptMatch[T, T]{
+//    .some(x) -> x,
+//    .empty -> alt
+//    }),
+//  read |(alt: read T): read T -> this.match[read T](mut OptMatch[read T, read T]{
+//    .some(x) -> x,
+//    .empty -> alt
+//    }),
+//  imm  |(alt: T): T -> this.match[T](mut OptMatch[T, T]{
+//      .some(x) -> x,
+//      .empty -> alt
+//      }),
+//
+//  mut  ||(alt: mut OptOrElse[T]): T -> this.match[T](mut OptMatch[T, T]{
+//    .some(x) -> x,
+//    .empty -> alt#
+//    }),
+//  read ||(alt: mut OptOrElse[read T]): read T -> this.match[read T](mut OptMatch[read T, read T]{
+//    .some(x) -> x,
+//    .empty -> alt#
+//    }),
+//  imm ||(alt: mut OptOrElse[T]): T -> this.match[T](mut OptMatch[T, T]{
+//    .some(x) -> x,
+//    .empty -> alt#
+//    }),
+//
+//  mut .or(f: mut OptOrElse[mut Opt[T]]): mut Opt[T] -> this.match[mut Opt[T]](mut OptMatch[T, mut Opt[T]]{
+//    .some(x) -> this,
+//    .empty -> f#
+//    }),
+////   TODO: this is the method that breaks the adapter ok check for imm Opt[read T] < imm Opt[imm T]
+//  read .or(f: mut OptOrElse[read Opt[T]]): read Opt[T] -> this.match[read Opt[T]](mut OptMatch[read T, read Opt[T]]{
+//    .some(x) -> this,
+//    .empty -> f#
+//    }),
+//  imm .or(f: mut OptOrElse[Opt[T]]): Opt[T] -> this.match[Opt[T]](mut OptMatch[T, Opt[T]]{
+//      .some(x) -> this,
+//      .empty -> f#
+//      }),
+
+  read .isEmpty: Bool -> this.match[Bool](mut OptMatch[read T, Bool]{ .empty -> True, .some(_) -> False }),
+  read .isSome: Bool -> this.match[Bool](mut OptMatch[read T, Bool]{ .empty -> False, .some(_) -> True }),
+
+  mut  .flow: mut Flow[T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  imm  .flow: mut Flow[imm T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  read .flow: mut Flow[read T] -> this.match{
+    .empty -> Flow#,
+    .some(x) -> Flow#(x)
+    },
+  }
+
+OptMatch[T,R]:{ mut .some(x: T): R, mut .empty: R }
+OptOrElse[R]:{ mut #: R }
+OptMap[T,R]:OptMatch[T, mut Opt[R]]{
+  mut #(t: T): R,
+  .some(x) -> Opt#(this#x),
+  .empty -> {}
+  }
+
+// TODO: proof of concept for extension methods
+OptOrElseExt[T]:Extension[mut Opt[T], T]{
+  mut .alt: T,
+  #(opt) -> opt.match{ .some(x) -> x, .empty -> this.alt }
+  }
+
+//---File pkg.fear
+package base
+alias base.iter.Iter as Iter,
+
+//---File ref.fear
+package base
+
+Ref:{
+  #[X](x: X): mut Ref[X] -> Magic!,
+  readOnly #[X](x: imm X): mut RefImm[imm X] -> Ref.ofImm x,
+  .ofImm[X](x: imm X): mut RefImm[imm X] -> Let#{
+    .var -> Ref#(Ice[imm X]{x}),
+      .in(ref) -> {
+         mut  .get: imm X -> ref.get.get,
+         read .get: imm X -> ref.get.get,
+         .swap(newX) -> ref.swap(Ice[imm X]{newX}).get,
+         }
+      }
+  }
+Ref[X:imm,mut,read]:Sealed{
+  mut  .get: X,
+  read .get: read X,
+  // TODO: this will be unneeded if we add read/imm
+  read .getImm(f: mut Freezer[read X, imm X]): imm X -> f#(this.get),
+  read .getImm: Opt[imm X] -> {},
+  mut  *: X -> this.get,
+  read *: read X -> this.get,
+
+  mut .swap(x: X): X,
+  mut :=(x: X): Void -> Block#(this.swap(x)),
+  mut .set(x: X): Void -> this := x,
+  mut <-(f: mut UpdateRef[X]): X -> this.swap(f#(this*)),
+  mut .update(f: mut UpdateRef[X]): X -> this <- f,
+  }
+UpdateRef[X]:{ mut #(x: X): X }
+RefImm[X:imm]:Ref[X]{
+  read .get: X,
+  read *: X -> this.get,
+  .getImm(f) -> this.get,
+  .getImm -> Opt#(this.get),
+  }
+
+Count[N:imm]:RefImm[imm N]{
+  mut ++: N,
+  mut --: N,
+  mut +=(n: N): N,
+  mut -=(n: N): N,
+  mut *=(n: N): N,
+  }
+Count:{
+  #(n: Int): mut Count[Int] -> this.int(n),
+  .int(n: Int): mut Count[Int] -> Let#({
+    .var -> Ref.ofImm n,
+    .in(c) -> {
+      .get -> c.get,
+      .swap(x) -> c.swap(x),
+      ++ -> c <- { c' -> c' + 1 },
+      -- -> c <- { c' -> c' - 1 },
+      +=(n2) -> c <- { c' -> c' + n2 },
+      -=(n2) -> c <- { c' -> c' - n2 },
+      *=(n2) -> c <- { c' -> c' * n2 },
+      }
+    }),
+  .uint(n: UInt): mut Count[UInt] -> Let#({
+    .var -> Ref.ofImm n,
+    .in(c) -> {
+      .get -> c.get,
+      .swap(x) -> c.swap(x),
+      ++ -> c <- { c' -> c' + 1u },
+      -- -> c <- { c' -> c' - 1u },
+      +=(n2) -> c <- { c' -> c' + n2 },
+      -=(n2) -> c <- { c' -> c' - n2 },
+      *=(n2) -> c <- { c' -> c' * n2 },
+      }
+    })
+  }
+
+//---File repr.fear
+package base.repr
+
+alias base.Str as Str,
+alias base.F as F,//check if we can 'import F[T]'
+alias base.Block as Block,
+alias base.Void as Void,
+alias base.Error as Error,
+alias base.Bool as Bool,
+
+FRepr[T:imm]:F[iso T, F[read T,Bool], mut Repr[T]]{
+  _x,_inv->Block#
+   .letIso x = _x
+   .let[mut Repr[T]] res= {mut Repr[T:imm]:{'repr
+    read .look[R](f:read F[read T,imm R]): imm R ->f#x,
+    mut  .mutate[R](f:read F[mut T,imm R]): imm R -> Block#
+      .let[imm R] res={f#x}
+      .do{repr.reset}
+      .return {res},
+    mut  .reset:Void->_inv#x?{.then->Void,.else->Error.msg "AAAH",},
+    read .cached[R](f:F[read T,imm R]): imm R ->f#x, //magic
+    //read .cached[R](f:RepeatableF[read T,imm R]): imm R ->f#x, //magic
+    //read .derived[R](f:F[read T,imm R]): imm R ->f#x, //magic
+     }}
+   .do {res.reset}
+   .return {res}
+  }
+
+//TODO: add .repr to block with .invariant?
+//RepeatableF could be a magic type that give extra type errors if it captures badly
+
+  //489 errors: comma after methods
+  // colon (:) for inline declarations, (:) after implements
+  // missing return type
+
+
+  //inference bug: why Block#.let[imm R] res={f#x} .do{repr.reset} .return {res}, requires imm R
+
+
+
+  //FRepr[T:imm]:F[iso T, List[F[read T,Bool]], mut Repr[T]]{
+
+//---File results.fear
+package base
+
+Res:{
+  #[T](x: T): mut Res[T] -> { .match(m) -> m.a(x), },
+  .ok[T,E](x: T): mut Res[T, E] -> { .match(m) -> m.a(x), },
+  .err[T,E](x: E): mut Res[T, E] -> { .match(m) -> m.b(x), },
+  }
+Res[T]:Res[T, Info]
+Res[T,E]:Either[T, E]{
+  mut  .resMatch[R](m: mut ResMatch[T, E, R]): R -> this.match(m),
+  read .resMatch[R](m: mut ResMatch[read T, read E, R]): R -> this.match(m),
+  imm  .resMatch[R](m: mut ResMatch[imm T, imm E, R]): R -> this.match(m),
+
+  mut  !: T -> this.resMatch[T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  read !: read T -> this.resMatch[read T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  imm  !: imm T -> this.resMatch[imm T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+
+  mut  .map[R](f: mut ResMap[T, E, R]): mut Res[R, E] -> this.match(f),
+  read .map[R](f: mut ResMap[read T, read E, R]): mut Res[R, read E] -> this.match(f),
+  imm  .map[R](f: mut ResMap[imm T, imm E, R]): mut Res[R, imm E] -> this.match(f),
+
+  mut  .mapErr[R](f: mut ResMapErr[T, E, R]): mut Res[T, R] -> this.match(f),
+  read .mapErr[R](f: mut ResMapErr[read T, read E, R]): mut Res[read T, R] -> this.match(f),
+  imm  .mapErr[R](f: mut ResMapErr[imm T, imm E, R]): mut Res[imm T, R] -> this.match(f),
+
+  mut  .ok: mut Opt[T] -> this.resMatch{ .ok(x) -> Opt#x, .err(_) -> {} },
+  read .ok: mut Opt[read T] -> this.resMatch{ .ok(x) -> Opt#x, .err(_) -> {} },
+  imm  .ok: iso Opt[imm T] -> this.resMatch[mut Opt[imm T]]{ .ok(x) -> Opt#x, .err(_) -> {} },
+
+  mut  .err: mut Opt[E] -> this.resMatch{ .ok(_) -> {}, .err(e) -> Opt#e },
+  read .err: mut Opt[read E] -> this.resMatch{ .ok(_) -> {}, .err(e) -> Opt#e },
+  imm  .err: iso Opt[imm E] -> this.resMatch[mut Opt[imm E]]{ .ok(_) -> {}, .err(e) -> Opt#e },
+
+  read .isErr: Bool -> this.resMatch{ .err(_) -> True, .ok(_) -> False },
+  read .isOk: Bool -> this.resMatch{ .err(_) -> False, .ok(_) -> True },
+  }
+
+ResMatch[T,E,R]:EitherMatch[T, E, R]{
+  .a(x) -> this.ok(x), .b(x) -> this.err(x),
+  mut .ok(x: T): R,
+  mut .err(x: E): R
+  }
+ResMap[T,E,R]:ResMatch[T, E, mut Res[R, E]]{
+  mut #(x: T): R,
+  .ok(x) -> Res.ok[R, E](this#x),
+  .err(x) -> Res.err[R, E](x),
+  }
+ResMapErr[T,E,R]:ResMatch[T, E, mut Res[T, R]]{
+  mut #(x: E): R,
+  .ok(x) -> Res.ok[T, R](x),
+  .err(x) -> Res.err[T, R](this#x),
+  }
+
+//---File strings.fear
+package base
+Str:Sealed {
+  // Str is not Stringable due to limitations of the Java codegen target
+  read .str: Str,
+  readOnly .size: UInt,
+  readOnly .isEmpty: Bool,
+  readOnly +(other: readOnly Str): Str,
+  readOnly ==(other: readOnly Str): Bool,
+  readOnly .toImm: Str,
+  readOnly .assertEq(other: readOnly Str): Void,
+  }
+Stringable: {
+  read .str: Str,
+  }
+_StrInstance:Str {
+  .size -> Magic!,
+  .isEmpty -> Magic!,
+  .str -> Magic!,
+  +(other) -> Magic!,
+  ==(other) -> Magic!,
+  .toImm -> Magic!,
+  .assertEq(other) -> Magic!,
+  }
+
+_StrHelpers: {
+  .assertEq(expected: readOnly Str, actual: readOnly Str): Void ->
+    Assert!(expected == actual, "Expected: "+expected+"\nActual: "+actual, {{}}),
+  }
+
+StrMap[V]:LinkedLens[Str, V] { k1, k2 -> k1 == k2 }

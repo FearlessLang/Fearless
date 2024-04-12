@@ -30,7 +30,7 @@ Opt:{ #[T](x: T): mut Opt[T] -> {m->m.some(x)} }
 Opt[mut Person] omp = Opt![mut Person] //mut Option[mut Person] 
 mut Person bob = omp.match{
   .some(bob) -> bob //type error imm!=mut
-  .none -> Error.str("AAAH")
+  .none -> Error.msg("AAAH")
   }
 //fully inferred below
 mut Person bob = omp.[mut Person]match(mut OptMatch[imm Person,mut Person]{

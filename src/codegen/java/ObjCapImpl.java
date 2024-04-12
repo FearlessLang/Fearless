@@ -6,5 +6,5 @@ import id.Id;
 import java.util.List;
 
 public interface ObjCapImpl {
-  String call(MagicImpls ctx, Id.MethName m, List<? extends MIR.E> args);
+  String call(JavaMagicImpls ctx, Id.MethName m, List<? extends MIR.E> args);
 }

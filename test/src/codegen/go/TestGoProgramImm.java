@@ -49,7 +49,7 @@ public class TestGoProgramImm {
     inferred.typeCheck(resolvedCalls);
     var mir = new MIRInjectionVisitor(inferred, resolvedCalls).visitProgram();
     var go = new GoCodegen(mir).visitProgram(new Id.DecId("test.Test", 0));
-    var vb = new CompilerFrontEnd.Verbosity(true, true, CompilerFrontEnd.ProgressVerbosity.Full);
+    var vb = new CompilerFrontEnd.Verbosity(true, false, CompilerFrontEnd.ProgressVerbosity.Full);
     Res res; try {
       var binary = new GoCompiler(go.mainFile(), GoCompiler.IMM_RUNTIME_UNITS, go.pkgs(), vb).compile();
       res = RunOutput.go(binary, args).join();
@@ -77,7 +77,7 @@ public class TestGoProgramImm {
     ConcurrentHashMap<Long, EMethTypeSystem.TsT> resolvedCalls = new ConcurrentHashMap<>();
     inferred.typeCheck(resolvedCalls);
     var mir = new MIRInjectionVisitor(inferred, resolvedCalls).visitProgram();
-    var vb = new CompilerFrontEnd.Verbosity(true, true, CompilerFrontEnd.ProgressVerbosity.Full);
+    var vb = new CompilerFrontEnd.Verbosity(true, false, CompilerFrontEnd.ProgressVerbosity.Full);
     try {
       var go = new GoCodegen(mir).visitProgram(new Id.DecId("test.Test", 0));
       Res res; try {

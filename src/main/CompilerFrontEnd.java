@@ -18,13 +18,15 @@ import program.TypeSystemFeatures;
 import program.inference.InferBodies;
 import program.typesystem.EMethTypeSystem;
 import program.typesystem.XBs;
+import utils.ThrowingFunction;
 import utils.Box;
 import utils.Bug;
-import utils.ResolveResource;
+import rt.ResolveResource;
 import wellFormedness.WellFormednessFullShortCircuitVisitor;
 import wellFormedness.WellFormednessShortCircuitVisitor;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
@@ -34,9 +36,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.zalando.fauxpas.FauxPas.throwingFunction;
-import static utils.ResolveResource.read;
 
 // TODO: It might be good to ban any files from having a "package base*" that are not in the base directory.
 
@@ -73,8 +72,8 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v, TypeSystemFeatures t
       Files.writeString(dir.resolve("lib.fear"), "package " + name + "\nGreeting:{ .get: Str -> \"Hello, World!\" }\n");
       Files.writeString(dir.resolve("main.fear"), "package " + name + "\n"+"""
         App:Main{ sys -> Block#
-          .var io = {FIO#sys}
-          .var[Str] greeting = {Greeting.get}
+          .let io = {FIO#sys}
+          .let[Str] greeting = {Greeting.get}
           .return {io.println(greeting)}
           }
         """.stripIndent());
@@ -95,9 +94,9 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v, TypeSystemFeatures t
     Path root = Path.of("docs");
     try { Files.createDirectory(root); } catch (FileAlreadyExistsException ignored) {}
     Files.writeString(root.resolve(docs.fileName()), docs.index());
-    var styleCss = ResolveResource.of("/style.css", throwingFunction(ResolveResource::read));
-    var highlightingJs = ResolveResource.of("/highlighting.js", throwingFunction(ResolveResource::read));
+    var styleCss = ResolveResource.getAndRead("/style.css");
     Files.writeString(root.resolve("style.css"), styleCss);
+    var highlightingJs = ResolveResource.getAndRead("/highlighting.js");
     Files.writeString(root.resolve("highlighting.js"), highlightingJs);
     for (var pkg : docs.docs()) {
       var links = pkg.links();
@@ -209,35 +208,36 @@ public record CompilerFrontEnd(BaseVariant bv, Verbosity v, TypeSystemFeatures t
       case Std -> "/default-aliases.fear";
       case Imm -> "/default-imm-aliases.fear";
     };
-    return ResolveResource.getStringOrThrow(path);
+    return ResolveResource.getAndRead(path);
   }
 
+
   Map<String, List<Package>> parseBase() {
-    var load = throwingFunction(CompilerFrontEnd::load);
+    var load = ThrowingFunction.of(CompilerFrontEnd::load);
     Map<String, List<Package>> ps; try { ps =
       switch (bv) {
         case Std -> {
           var res = baseLib.get();
-          if (res == null) { res = ResolveResource.of("/base", load); baseLib.set(res); }
+          if (res == null) { res = load(ResolveResource.of("/base")); baseLib.set(res); }
           yield res;
         }
         case Imm -> {
           var res = immBaseLib.get();
-          if (res == null) { res = ResolveResource.of("/immBase", load); immBaseLib.set(res); }
+          if (res == null) { res = load(ResolveResource.of("/immBase")); immBaseLib.set(res); }
           yield res;
         }
       };
-    } catch (URISyntaxException | IOException e) {
-      throw Bug.of(e);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
     return ps;
   }
 
-  static Map<String, List<Package>> load(Path root) throws IOException {
+  static Map<String, List<Package>> load(Path root) throws IOException{
     try(var fs = Files.walk(root)) {
       return fs
         .filter(Files::isRegularFile)
-        .map(throwingFunction(path->new Parser(path, read(path)).parseFile(CompileError::err)))
+        .map(path->new Parser(path, ResolveResource.read(path)).parseFile(CompileError::err))
         .collect(Collectors.groupingBy(Package::name));
     }
   }

@@ -14,7 +14,7 @@ _SeqFlow: {
 
     // terminals
     mut .first: mut Opt[E] -> Block#
-      .var[mut Ref[mut Opt[E]]] res = {Ref#mut Opt[E]}
+      .let[mut Ref[mut Opt[E]]] res = {Ref#mut Opt[E]}
       .do {source.forRemaining(mut _Sink[E]{'runner
         .stop -> source.stop,
         #(e) -> res.get.isEmpty ? {
@@ -28,7 +28,7 @@ _SeqFlow: {
       .return {res.get},
 
     mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> Block#
-      .var[mut Ref[mut Opt[R]]] res = {Ref#mut Opt[R]}
+      .let[mut Ref[mut Opt[R]]] res = {Ref#mut Opt[R]}
       .do {source.forRemaining(mut _Sink[E]{'runner
         .stop -> source.stop,
         #(e) -> res.get.isEmpty ? {
@@ -54,7 +54,7 @@ _SeqFlow: {
 
     mut .fold[S](acc: S, f: read F[S,E,S]): S -> Block#
       .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
-      .var[mut Ref[S]] acc' = {Ref#acc}
+      .let[mut Ref[S]] acc' = {Ref#acc}
       .do {source.forRemaining(mut _Sink[E]{
         .stop -> {},
         #(e) -> acc' := (f#(acc'.get, e)),
@@ -65,7 +65,7 @@ _SeqFlow: {
     .fold(acc, f, combine) -> self.fold(acc, f),
 //      .return{self.forRemainingSeq[S] mut _Sink[E, S]{
 //        mut #(e: E): mut ControlFlow[S] -> Block#(acc' := (f#(acc'.get, e)), ControlFlow.continue[S]),
-//        read #(e: E): mut ControlFlow[S] -> Error.str "unreachable",
+//        read #(e: E): mut ControlFlow[S] -> Error.msg "unreachable",
 //        }.match[S]{
 //          .continue -> acc'.get,
 //          .break -> acc'.get,
@@ -79,8 +79,8 @@ _SeqFlow: {
     },
 
   #[E](e: E): mut Flow[E] -> Block#
-    .var[mut Ref[mut Opt[E]]] seq = { Ref#(Opt#e) }
-    .var[mut FlowOp[E]] source = {{ 'self
+    .let[mut Ref[mut Opt[E]]] seq = { Ref#(Opt#e) }
+    .let[mut FlowOp[E]] source = {{ 'self
       .isRunning -> seq.get.isSome,
       .stop -> seq := {},
       .step(downstream) -> seq.swap(mut Opt[E]).match{

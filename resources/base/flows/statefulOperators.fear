@@ -4,8 +4,8 @@ package base.flows
 // it a static size, which is more info than we could get if this was just an ActorImpl.
 _Limit: {
   #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], n: UInt): mut FlowOp[E] -> Block#
-    .var[mut Count[UInt]] remaining = {Count.uint(n)}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .let[mut Count[UInt]] remaining = {Count.uint(n)}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return {{ 'runner
       .stop -> Block#(remaining := 0u, upstream.stop),
       .isRunning -> remaining* > 0u && (upstream.isRunning),
@@ -44,8 +44,8 @@ _Actor: {
   }
 _InternalActor: {
   #[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] -> Block#
-    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return {{'op
       .stop -> op.isRunning ? {
        .then -> Block#(isRunning := False, upstream.stop, onComplete#state),
@@ -70,8 +70,8 @@ _InternalActor: {
       }},
 
   .anyRet[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: mut S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] -> Block#
-    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return {{'op
       .stop -> op.isRunning ? {
        .then -> Block#(isRunning := False, upstream.stop, onComplete#state),

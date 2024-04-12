@@ -4,20 +4,20 @@ import userCode.FProgram;
 
 public final class IO implements FProgram.base$46caps.IO_0 {
 	public static final IO _$self = new IO();
-	@Override public FProgram.base.Void_0 printlnErr$mut$(String msg$) {
-		System.err.println(msg$);
+	@Override public FProgram.base.Void_0 printlnErr$mut$(Str msg$) {
+		NativeRuntime.printlnErr(msg$.utf8());
 		return FProgram.base.Void_0._$self;
 	}
-	@Override public FProgram.base.Void_0 println$mut$(String msg$) {
-		System.out.println(msg$);
+	@Override public FProgram.base.Void_0 println$mut$(Str msg$) {
+		NativeRuntime.println(msg$.utf8());
 		return FProgram.base.Void_0._$self;
 	}
-	@Override public FProgram.base.Void_0 print$mut$(String msg$) {
-		System.out.print(msg$);
+	@Override public FProgram.base.Void_0 print$mut$(Str msg$) {
+		NativeRuntime.print(msg$.utf8());
 		return FProgram.base.Void_0._$self;
 	}
-	@Override public FProgram.base.Void_0 printErr$mut$(String msg$) {
-		System.err.print(msg$);
+	@Override public FProgram.base.Void_0 printErr$mut$(Str msg$) {
+		NativeRuntime.printErr(msg$.utf8());
 		return FProgram.base.Void_0._$self;
 	}
 }

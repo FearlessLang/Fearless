@@ -1,18 +1,28 @@
 package base
-
-Str:Sealed{
-  .size: UInt,
+Str:Sealed {
   // Str is not Stringable due to limitations of the Java codegen target
-  .str: Str,
-  +(other: Str): Str,
-  ==(other: readOnly Str): Bool,
+  read .str: Str,
+  readOnly .size: UInt,
+  readOnly .isEmpty: Bool,
+  readOnly +(other: readOnly Str): Str,
+  readOnly ==(other: readOnly Str): Bool,
+  readOnly .toImm: Str,
+  readOnly .assertEq(other: readOnly Str): Void,
   }
-Stringable:{
-  .str: Str,
+Stringable: {
+  read .str: Str,
   }
-_StrInstance:Str{
-  .size -> this.size,
-  .str -> this.str,
-  +(other) -> this + other,
-  ==(other) -> this == other,
+_StrInstance:Str {
+  .size -> Magic!,
+  .isEmpty -> Magic!,
+  .str -> Magic!,
+  +(other) -> Magic!,
+  ==(other) -> Magic!,
+  .toImm -> Magic!,
+  .assertEq(other) -> Magic!,
+  }
+
+_StrHelpers: {
+  .assertEq(expected: readOnly Str, actual: readOnly Str): Void ->
+    Assert!(expected == actual, "Expected: "+expected+"\nActual: "+actual, {{}}),
   }

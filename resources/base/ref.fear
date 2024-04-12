@@ -2,7 +2,7 @@ package base
 
 Ref:{
   #[X](x: X): mut Ref[X] -> Block#
-    .var[mut _MagicRefImpl[X]] inner = {_MagicRefImpl#x}
+    .let[mut _MagicRefImpl[X]] inner = {_MagicRefImpl#x}
     .return {{
       .get -> inner.get,
       .swap(x') -> inner.swap(x'),

@@ -9,14 +9,14 @@ alias base.Bool as Bool,
 
 FRepr[T:imm]:F[iso T, F[read T,Bool], mut Repr[T]]{
   _x,_inv->Block#
-   .varIso x = _x
-   .var[mut Repr[T]] res= {mut Repr[T:imm]:{'repr
+   .letIso x = _x
+   .let[mut Repr[T]] res= {mut Repr[T:imm]:{'repr
     read .look[R](f:read F[read T,imm R]): imm R ->f#x,
     mut  .mutate[R](f:read F[mut T,imm R]): imm R -> Block#
-      .var[imm R] res={f#x}
+      .let[imm R] res={f#x}
       .do{repr.reset}
       .return {res},
-    mut  .reset:Void->_inv#x?{.then->Void,.else->Error.str "AAAH",},
+    mut  .reset:Void->_inv#x?{.then->Void,.else->Error.msg "AAAH",},
     read .cached[R](f:F[read T,imm R]): imm R ->f#x, //magic
     //read .cached[R](f:RepeatableF[read T,imm R]): imm R ->f#x, //magic
     //read .derived[R](f:F[read T,imm R]): imm R ->f#x, //magic
@@ -33,7 +33,7 @@ FRepr[T:imm]:F[iso T, F[read T,Bool], mut Repr[T]]{
   // missing return type
 
 
-  //inference bug: why Block#.var[imm R] res={f#x} .do{repr.reset} .return {res}, requires imm R
+  //inference bug: why Block#.let[imm R] res={f#x} .do{repr.reset} .return {res}, requires imm R
 
 
 

@@ -13,7 +13,7 @@ Block[R: imm,mut]:{
   mut .assert(p: mut Condition): mut Block[mdf R] -> mut Assert#(p#, mut AssertCont[mut Block[mdf R]]{this}),
   mut .assert(p: mut Condition, failMsg: Str): mut Block[mdf R] ->
     mut Assert#(p#, failMsg, mut AssertCont[mut Block[mdf R]]{this}),
-  mut .var[X](x: mut ReturnStmt[mdf X], cont: mut VarContinuation[mdf X, mdf R]): mdf R -> cont#(x#, this),
+  mut .let[X](x: mut ReturnStmt[mdf X], cont: mut VarContinuation[mdf X, mdf R]): mdf R -> cont#(x#, this),
   mut .ref[X:imm,mut](x: mut ReturnStmt[mdf X], cont: mut VarContinuation[mut Ref[mdf X], mdf R]): mdf R -> cont#(Ref#(x#), this),
 //  mut .isoPod[X:iso](x: mut ReturnStmt[mdf X], cont: mut VarContinuation[mut IsoPod[mdf X], mdf R]): mdf R -> cont#(IsoPod#(x#), this),
   mut .if(p: mut Condition): mut BlockIf[mdf R] -> p# ? { 'cond
@@ -50,7 +50,7 @@ _DecidedBlock:{
 //  recMdf .assert(cond: mut Condition, msg: Str): recMdf Block[recMdf R] -> Block#(Assert#(cond#, msg, {Void}), this),
 //  mut .do(a: mut DoRunner): mut Block[mdf R] -> this._do(a#),
 //    mut ._do(v: Void): mut Block[mdf R] -> this,
-//  mut .var[X](x: mut ReturnStmt[mdf X], cont: mut Continuation[mdf X, mdf R]): mdf R -> cont#(x#, this),
+//  mut .let[X](x: mut ReturnStmt[mdf X], cont: mut Continuation[mdf X, mdf R]): mdf R -> cont#(x#, this),
 //  mut .if(a: mut Condition): mut BlockIf[mdf R] -> a# ? {
 //    .then -> mut BlockIfTrue[mdf R]{ ._outer -> this },
 //    .else -> mut BlockIfFalse[mdf R]{ ._outer -> this }
@@ -106,7 +106,7 @@ _DecidedBlock:{
 //  lent .do(a: lent DoRunnerHyg): lent BlockHyg[mdf R] -> this._do(a#),
 //    lent ._do(v: Void): lent BlockHyg[mdf R] -> {},
 //  lent .assert(cond: lent ConditionHyg, msg: Str): lent BlockHyg[mdf R] -> Block#(Assert#(cond#, msg, {Void}), this),
-//  lent .var[X](x: lent ReturnStmtHyg[mdf X], cont: lent ContinuationHyg[mdf X, mdf R]): mdf R -> cont#(x#, this),
+//  lent .let[X](x: lent ReturnStmtHyg[mdf X], cont: lent ContinuationHyg[mdf X, mdf R]): mdf R -> cont#(x#, this),
 //  lent .if(a: lent ConditionHyg): lent BlockIfHyg[mdf R] -> a#.ifHyg{
 //    .then -> lent BlockIfTrueHyg[mdf R]{ this },
 //    .else -> lent BlockIfFalseHyg[mdf R]{ this }
@@ -173,7 +173,7 @@ _DecidedBlock:{
 //    .then -> BlockIfTrue[mdf R]{ this },
 //    .else -> BlockIfFalse[mdf R]{ this },
 //    },
-//  mut .var[X](x: mut ReturnStmt[mdf X], cont: mut Continuation[mdf X,mdf R]): mdf R -> cont#(x#, this),
+//  mut .let[X](x: mut ReturnStmt[mdf X], cont: mut Continuation[mdf X,mdf R]): mdf R -> cont#(x#, this),
 //  mut .do(a: mut Do): mut Block[mdf R] -> this._do(a#),
 //  mut ._do(a: Void): mut Block[mdf R] -> this,
 ////  mut .loop(a: mut LoopBody[mdf R]): mut Block[mdf R] -> a#.match{

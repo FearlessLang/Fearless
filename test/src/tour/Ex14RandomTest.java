@@ -25,9 +25,9 @@ public class Ex14RandomTest {
   @Test void generatesNumberWithRandomSeed() { ok(new RunOutput.Res("", "", 0), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var[mut RandomSeed] seeder = {FRandomSeed#sys}
-      .var rng1 = {FRandom#(seeder#)}
-      .var rng2 = {FRandom#(seeder#)}
+      .let[mut RandomSeed] seeder = {FRandomSeed#sys}
+      .let rng1 = {FRandom#(seeder#)}
+      .let rng2 = {FRandom#(seeder#)}
       // I mean, this technically has a _tiny_ chance of failing but it's so small that
       // a bug in the random number generator is more likely than this test failing due to a genuine collision
       .assert {(rng1.uint == (rng2.uint)).not}

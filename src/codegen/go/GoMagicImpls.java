@@ -14,7 +14,7 @@ import java.util.Set;
 
 import static magic.MagicImpls.getLiteral;
 
-public record MagicImpls(PackageCodegen gen, ast.Program p) implements magic.MagicImpls<MagicImpls.Res> {
+public record GoMagicImpls(PackageCodegen gen, ast.Program p) implements magic.MagicImpls<GoMagicImpls.Res> {
   public record Res(String output, Set<String> imports) {
     public Res(String output) { this(output, Set.of()); }
     public Optional<Res> opt() { return Optional.of(this); }

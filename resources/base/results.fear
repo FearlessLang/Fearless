@@ -11,9 +11,9 @@ Res[T,E]:Either[T, E]{
   read .resMatch[R](m: mut ResMatch[read T, read E, R]): R -> this.match(m),
   imm  .resMatch[R](m: mut ResMatch[imm T, imm E, R]): R -> this.match(m),
 
-  mut  !: T -> this.resMatch[T]{ .ok(x) -> x, .err(_) -> Error.str "Res was not ok" },
-  read !: read T -> this.resMatch[read T]{ .ok(x) -> x, .err(_) -> Error.str "Res was not ok" },
-  imm  !: imm T -> this.resMatch[imm T]{ .ok(x) -> x, .err(_) -> Error.str "Res was not ok" },
+  mut  !: T -> this.resMatch[T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  read !: read T -> this.resMatch[read T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
+  imm  !: imm T -> this.resMatch[imm T]{ .ok(x) -> x, .err(_) -> Error.msg "Res was not ok" },
 
   mut  .map[R](f: mut ResMap[T, E, R]): mut Res[R, E] -> this.match(f),
   read .map[R](f: mut ResMap[read T, read E, R]): mut Res[R, read E] -> this.match(f),

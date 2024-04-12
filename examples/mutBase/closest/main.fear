@@ -1,14 +1,14 @@
 package closest
 Test:Main{ _ -> Block#
-  .var[Int] closest = { Closest#(LList[Int] + 35 + 52 + 84 + 14, 49) }
+  .let[Int] closest = { Closest#(LList[Int] + 35 + 52 + 84 + 14, 49) }
   .assert({closest == 52}, closest.str)
   .return{{}}
   }
 Closest:{
   #(ns: LList[Int], target: Int): Int -> Block#
     .assert({ns.isEmpty.not}, "empty list :-(")
-    .var[Int] closest' = { (ns.get(0u))! }
-    .var[mut Ref[Int]] closest = { Ref#closest' }
+    .let[Int] closest' = { (ns.get(0u))! }
+    .let[mut Ref[Int]] closest = { Ref#closest' }
     .do{ mut Closest'{ 'self
       h, t -> h.match{
         .empty -> {},

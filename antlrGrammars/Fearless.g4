@@ -36,7 +36,7 @@ fragment IdChar: 'a'..'z' | 'A'..'Z' | '_' | '0'..'9';
 fragment CHAR:
 'A'..'Z'|'a'..'z'|'0'..'9' | '(' | ')' | '[' | ']' | '<' | '>' | '&' | '|' | '*' | '+' | '-' | '=' | '/' | '!' | '?' | ';' | ':' | ',' | '.' | ' ' | '~' | '@' | '#' | '$' | '%' | '`' | '^' | '_' | '\\' | '{' | '}' | '"' | '\'' | '\n';
 fragment CHARInStringSingle:
-'A'..'Z'|'a'..'z'|'0'..'9' | '(' | ')' | '[' | ']' | '<' | '>' | '&' | '|' | '*' | '+' | '-' | '=' | '/' | '!' | '?' | ';' | ':' | ',' | '.' | ' ' | '~' | '@' | '#' | '$' | '%' | '`' | '^' | '_' | '\\' | '{' | '}' |       '\'';//no \n and " 
+'A'..'Z'|'a'..'z'|'0'..'9' | '(' | ')' | '[' | ']' | '<' | '>' | '&' | '|' | '*' | '+' | '-' | '=' | '/' | '!' | '?' | ';' | ':' | ',' | '.' | ' ' | '~' | '@' | '#' | '$' | '%' | '`' | '^' | '_' | '\\' | '{' | '}' | '\\"'|'\'';//no \n and " by itself
 fragment CHARInStringMulti:
 'A'..'Z'|'a'..'z'|'0'..'9' | '(' | ')' | '[' | ']' | '<' | '>' | '&' | '|' | '*' | '+' | '-' | '=' | '/' | '!' | '?' | ';' | ':' | ',' | '.' | ' ' | '~' | '@' | '#' | '$' | '%' | '`' | '^' | '_' | '\\' | '{' | '}' | '"' | '\'';//no \n
 
@@ -44,7 +44,7 @@ fragment StringMultiOpen:'"""' '\n';
 fragment StringMultiClose:(' ')* '"""';
 fragment StringMultiLine:(' ')* '|' CHARInStringMulti* '\n';
 fragment FStringMulti: StringMultiOpen StringMultiLine+ StringMultiClose;
-fragment FStringSingle: '"' CHARInStringSingle* '"';
+fragment FStringSingle: '"' (CHARInStringSingle* | ) '"';
 // TODO: ensure we throw an error in the parser for malformed nums (i.e. u in the middle)
 fragment FNumber: '-'? '0'..'9' ('.'|'_'|'u'|'0'..'9')*; //flexible for more error messages
 fragment FIdLow:IdLow IdChar* ('\'')*;

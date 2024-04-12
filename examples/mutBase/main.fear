@@ -1,7 +1,7 @@
 package examples
 MyApp:Main{ s -> Block#
-  .var io = { FIO#s }
-  .var args = { FEnv#s.launchArgs }
+  .let io = { FIO#s }
+  .let args = { FEnv#s.launchArgs }
   .return{ io.println(ImmMain#args) }
   }
 ImmMain:{
@@ -20,8 +20,8 @@ ImmMain:{
 //  #(args: LList[Str]): Str -> args.get 0u || (Box#"Sad"),
 
   .errMsg(retCounter: Bool): mut Ref[Str] -> Block#
-    .var res = { Ref#[mut Ref[Str]](Ref#[Str]"Sad") }
-    .var counter = { Count.int(42) }
+    .let res = { Ref#[mut Ref[Str]](Ref#[Str]"Sad") }
+    .let counter = { Count.int(42) }
     .do{ res* := "mutability!" }
     .do{ Block#(counter++) }
     .if{ False }.return{ Ref#[Str]"Short cut" }

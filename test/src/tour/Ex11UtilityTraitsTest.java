@@ -10,8 +10,8 @@ public class Ex11UtilityTraitsTest {
   @Test void flowSumStr() { ok(new RunOutput.Res("", "", 0), "test.Test", """
     package test
     Test:Main {sys -> Block#
-      .var[mut Person] personMut = {FPerson#("Bob")}
-      .var[read Person] personRead = {Foo#{personMut}}
+      .let[mut Person] personMut = {FPerson#("Bob")}
+      .let[read Person] personRead = {Foo#{personMut}}
       .assert{personMut.name == (personRead.name)}
       .do{personMut.name("Alice")}
       .assert{personRead.name == "Alice"}
@@ -19,7 +19,7 @@ public class Ex11UtilityTraitsTest {
       }
     Foo:{ #(f: read F[read Person]): read Person -> f# }
     FPerson:{ #(name: Str): mut Person -> Block#
-      .var nameRef = {Ref#name}
+      .let nameRef = {Ref#name}
       .return {mut Person:{
         read .name: Str -> nameRef.get.toImm,
         mut .name(newName: Str): Void -> nameRef.set(newName),

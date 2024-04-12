@@ -415,3 +415,6 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,eclipse,intellij,node,rust
 /docs/
+.classpath
+.classpath
+.project

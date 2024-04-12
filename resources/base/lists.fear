@@ -49,7 +49,7 @@ LList[E]:Collection,Sealed{
     },
 
 //  mut  .flow: mut Flow[E] -> Block#
-//    .var cursor = {Ref#this}
+//    .let cursor = {Ref#this}
 //    .return {Flow.fromOp{ 'self
 //      .step(sink) -> (cursor.swap(cursor*.tail)).head.match{
 //        .some(x) -> sink#x,
@@ -57,7 +57,7 @@ LList[E]:Collection,Sealed{
 //        },
 //      }},
 //  read .flow: mut Flow[read E] -> Block#
-//    .var cursor = {Ref#this}
+//    .let cursor = {Ref#this}
 //    .return {Flow.fromOp{ 'self
 //      .step(sink) -> (cursor.swap(cursor*.tail)).head.match{
 //        .some(x) -> sink#x,
@@ -65,7 +65,7 @@ LList[E]:Collection,Sealed{
 //        },
 //      }},
   mut  .flow: mut Flow[E] -> Block#
-    .var cursor = {Ref#this}
+    .let cursor = {Ref#this}
     .return {Flow.fromMutSource{'op
       .stop -> cursor := {},
       .isRunning -> cursor*.isEmpty.not,
@@ -76,7 +76,7 @@ LList[E]:Collection,Sealed{
       }},
   read .flow: mut Flow[read E] -> Flow.fromOp[read E](this._flowread),
   read ._flowread: mut FlowOp[read E] -> Block#
-    .var cursor = {Ref#this}
+    .let cursor = {Ref#this}
     .return {mut FlowOp[read E]{'op
       .stop -> cursor := {},
       .isRunning -> cursor*.isEmpty.not,
@@ -87,7 +87,7 @@ LList[E]:Collection,Sealed{
       }},
   imm  .flow: mut Flow[imm E] -> Flow.fromOp[imm E](this._flowimm),
   imm  ._flowimm: mut FlowOp[imm E] -> Block#
-    .var cursor = {Ref#this}
+    .let cursor = {Ref#this}
     .return {mut FlowOp[imm E]{'op
       .stop -> cursor := {},
       .isRunning -> cursor*.isEmpty.not,
@@ -199,7 +199,7 @@ List[E]: Collection,Sealed{
   mut .addAll(other: mut List[E]): Void -> other.iter.for{e -> this.add(e)},
 
   mut .flow: mut Flow[E] -> Block#
-    .var[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
     .return {Flow.fromMutSource({'self
       .isRunning -> cursor* < (this.size),
       .stop -> cursor := (this.size),
@@ -213,7 +213,7 @@ List[E]: Collection,Sealed{
       }, this.size)},
   read .flow: mut Flow[read E] -> Flow.fromOp(this._flowread, this.size),
   read ._flowread: mut FlowOp[read E] -> Block#
-    .var[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
     .return {{'self
       .isRunning -> cursor* < (this.size),
       .stop -> cursor := (this.size),
@@ -227,7 +227,7 @@ List[E]: Collection,Sealed{
       }},
   imm .flow: mut Flow[imm E] -> Flow.fromOp(this._flowimm, this.size),
   imm ._flowimm: mut FlowOp[imm E] -> Block#
-    .var[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
     .return {{'self
       .isRunning -> cursor* < (this.size),
       .stop -> cursor := (this.size),
@@ -248,7 +248,7 @@ List[E]: Collection,Sealed{
 //         .empty -> FlowCtrl.break,
 //         },
 //       mut .forRemaining[R](sink: mut FlowSink[read E, R]): mut FlowCtrl[R] -> Block#
-//         .var from = {cursor*}
+//         .let from = {cursor*}
 //         .do {cursor := 0u}
 //         .return {self.range[R](from, this.size, sink)},
 //       mut .range[R](from: UInt, to: UInt, sink: mut FlowSink[read E, R]): mut FlowCtrl[R] -> from >= to ? {
@@ -261,7 +261,7 @@ List[E]: Collection,Sealed{
 //          .empty -> FlowCtrl.break,
 //          },
 //        mut .forRemainingSeq[R](sink: mut FlowSink[read E, R]): mut FlowCtrl[R] -> Block#
-//          .var from = {cursor*}
+//          .let from = {cursor*}
 //          .do {cursor := 0u}
 //          .return {self.range[R](from, this.size, sink)},
 //        mut .rangeSeq[R](from: UInt, to: UInt, sink: mut FlowSink[read E, R]): mut FlowCtrl[R] -> from >= to ? {
@@ -275,7 +275,7 @@ List[E]: Collection,Sealed{
 //        .empty -> FlowCtrl.break,
 //        },
 //      mut .forRemainingSeq[R](sink: mut FlowSink[imm E, R]): mut FlowCtrl[R] -> Block#
-//        .var from = {cursor*}
+//        .let from = {cursor*}
 //        .do {cursor := 0u}
 //        .return {self.range[R](from, this.size, sink)},
 //      mut .rangeSeq[R](from: UInt, to: UInt, sink: mut FlowSink[imm E, R]): mut FlowCtrl[R] -> from >= to ? {

@@ -246,7 +246,7 @@ public class TestTypeSystemWithBase {
     
     MyApp:{
       #: Void -> Block#
-        .var[mut List[mut Person]] ps = { List#(Person'#"Alice", Person'#"Bob", Person'#"Nick") }
+        .let[mut List[mut Person]] ps = { List#(Person'#"Alice", Person'#"Bob", Person'#"Nick") }
         .do{ ps.iter.for{ p -> p.name := "new name" } }
         .return{{}}
       }
@@ -291,8 +291,8 @@ public class TestTypeSystemWithBase {
     Usage:{
       .mutate(p: lent Person): iso Ref[Str] -> p.name,
 //      .break: Void -> Block#
-//        .var[mut Person] p = { Person'#"Alice" }
-//        .var[imm Ref[Str]] illegal = { this.mutate(p) }
+//        .let[mut Person] p = { Person'#"Alice" }
+//        .let[imm Ref[Str]] illegal = { this.mutate(p) }
 //        .do{ p.name := "Charles" }
 //        .return
       }
@@ -303,13 +303,13 @@ public class TestTypeSystemWithBase {
     package test
     Person:{ read .age: UInt, mut .age(n: UInt): Void }
     FPerson:F[UInt,mut Person]{ age -> Block#
-      .var[mut Count[UInt]] age' = { Count.uint(age) }
+      .let[mut Count[UInt]] age' = { Count.uint(age) }
       .return{{ .age -> age'*, .age(n) -> age' := n }}
       }
     Test:Main{ s -> Block#
-      .var[mut Person] p = { FPerson#24u }
-      .var[imm List[read Person]] unsound = { A#(iso List#[read Person], p) }
-      .var[imm Person] uhOh = { unsound.get(0u)! }
+      .let[mut Person] p = { FPerson#24u }
+      .let[imm List[read Person]] unsound = { A#(iso List#[read Person], p) }
+      .let[imm Person] uhOh = { unsound.get(0u)! }
       .do{ p.age(25u) }
       .assert({ uhOh.age == 24u }, uhOh.age.str)
       .return{{}}
@@ -324,13 +324,13 @@ public class TestTypeSystemWithBase {
     package test
     Person:{ readOnly .age: UInt, mut .age(n: UInt): Void }
     FPerson:F[UInt,mut Person]{ age -> Block#
-      .var[mut Count[UInt]] age' = { Count.uint(age) }
+      .let[mut Count[UInt]] age' = { Count.uint(age) }
       .return{{ .age -> age'*, .age(n) -> age' := n }}
       }
     Test:Main{ s -> Block#
-      .var[mut Person] p = { FPerson#24u }
-      .var[imm LList[read Person]] unsound = { A#(iso LList[read Person]{}, p) }
-      .var[imm Person] uhOh = { unsound.get(0u)! }
+      .let[mut Person] p = { FPerson#24u }
+      .let[imm LList[read Person]] unsound = { A#(iso LList[read Person]{}, p) }
+      .let[imm Person] uhOh = { unsound.get(0u)! }
       .do{ p.age(25u) }
       .assert({ uhOh.age == 24u }, uhOh.age.str)
       .return{{}}
@@ -360,13 +360,13 @@ public class TestTypeSystemWithBase {
     package test
     Person:{ read .age: UInt, mut .age(n: UInt): Void }
     FPerson:F[UInt,mut Person]{ age -> Block#
-      .var[mut Count[UInt]] age' = { Count.uint(age) }
+      .let[mut Count[UInt]] age' = { Count.uint(age) }
       .return{{ .age -> age'*, .age(n) -> age' := n }}
       }
     Test:Main{ s -> Block#
-      .var[mut Person] p = { FPerson#24u }
-      .var[imm LList[read Person]] unsound = { A#(iso LList[read Person]{}, p) }
-      .var[imm Person] uhOh = { unsound.get(0u)! }
+      .let[mut Person] p = { FPerson#24u }
+      .let[imm LList[read Person]] unsound = { A#(iso LList[read Person]{}, p) }
+      .let[imm Person] uhOh = { unsound.get(0u)! }
       .do{ p.age(25u) }
       .assert({ uhOh.age == 24u }, uhOh.age.str)
       .return{{}}
@@ -432,7 +432,7 @@ public class TestTypeSystemWithBase {
       }
     FReadBox:{
       #[T](t: mut T): mut ReadBox[T] -> Block#
-        .var[mut Ref[mut ReadBox[T]]] state = { Ref#[mut ReadBox[T]](mut _MutBox[T]{ t }) }
+        .let[mut Ref[mut ReadBox[T]]] state = { Ref#[mut ReadBox[T]](mut _MutBox[T]{ t }) }
         .return{{
           .get -> state*.get,
           .setImm(x) -> state := mut _ImmBox[T]{ x },
@@ -523,8 +523,8 @@ public class TestTypeSystemWithBase {
     """, """
     package test
     Test:Main{ _ -> Block#
-      .var[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(0))) }
-      .var[imm Count[Int]] ok = { a.peek[Count[Int]]{ .some(m) -> m.rn, .empty -> base.Abort! } }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(0))) }
+      .let[imm Count[Int]] ok = { a.peek[Count[Int]]{ .some(m) -> m.rn, .empty -> base.Abort! } }
       .return{Void}
       }
     MutThingy:{ mut .n: mut Count[Int], read .rn: read Count[Int] }
@@ -571,7 +571,7 @@ public class TestTypeSystemWithBase {
       #(s) -> FIO#s.println(this.m2.str),
       .m1(r: mut Ref[Int]): Int -> Block#
         .do{ r := 12 }
-        .var[read Ref[Int]] rr = { r }
+        .let[read Ref[Int]] rr = { r }
         .return{ rr.get },
       .m2: Int -> this.m1(Ref.ofImm[Int]5),
       }
@@ -622,7 +622,7 @@ public class TestTypeSystemWithBase {
   @Test void extensionMethodMdfDispatch() { ok("""
     package test
     Test:Main{ s -> Block#
-      .var[Opt[Int]] res = { Opt[Int]
+      .let[Opt[Int]] res = { Opt[Int]
         #{opt -> opt.match{.some(_) -> opt, .empty -> Opt#[Int]9001}}
         }
       .assert{res! == 9001}
@@ -633,7 +633,7 @@ public class TestTypeSystemWithBase {
   @Test void inferListWithDifferentNums() { ok("""
     package test
     Test: Main{s -> Block#
-      .var myList = {List#[Int](5, 10, -15)}
+      .let myList = {List#[Int](5, 10, -15)}
       .do {FIO#s.println(myList.get(0u)! .str)}
       .return {Void}
       }

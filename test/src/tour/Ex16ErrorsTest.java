@@ -17,10 +17,33 @@ public class Ex16ErrorsTest {
       }
     """, Base.mutBaseAliases); }
 
-  @Test void catchExplicitError() { ok(new RunOutput.Res("Sad", "", 0), "test.Test", """
+  @Test void catchExplicitError() { ok(new RunOutput.Res("\"Sad\"", "", 0), "test.Test", """
     package test
     Test:Main{s ->
-      FIO#s.println(Try#[Str]{Error.str "Sad"}.resMatch{
+      FIO#s.println(Try#[Str]{Error.msg "Sad"}.resMatch{
+        .ok(res) -> res,
+        .err(err) -> err.str,
+        })
+      }
+    """, Base.mutBaseAliases); }
+  @Test void catchExplicitErrorMsg() { ok(new RunOutput.Res("Sad", "", 0), "test.Test", """
+    package test
+    Test:Main{s ->
+      FIO#s.println(Try#[Str]{Error.msg "Sad"}.resMatch{
+        .ok(res) -> res,
+        .err(err) -> err.msg,
+        })
+      }
+    """, Base.mutBaseAliases); }
+  @Test void catchExplicitErrorList() { ok(new RunOutput.Res("""
+    ["big",["oof"]]
+    """, "", 0), "test.Test", """
+    package test
+    Test:Main{s ->
+      FIO#s.println(Try#[Str]{Error!(FInfo.list(List#(
+        FInfo.msg "big",
+        FInfo.list(List#(FInfo.msg "oof"))
+      )))}.resMatch{
         .ok(res) -> res,
         .err(err) -> err.str,
         })
@@ -41,8 +64,8 @@ public class Ex16ErrorsTest {
   @Test void capabilityCatchStackOverflow() { ok(new RunOutput.Res("Stack overflowed", "", 0), "test.Test", """
     package test
     Test:Main{s -> Block#
-      .var io = {FIO#s}
-      .var try = {CapTries#s}
+      .let io = {FIO#s}
+      .let try = {CapTries#s}
       .return {io.println(try#[Str]{Loop!}.resMatch{
         .ok(res) -> res,
         .err(err) -> err.str,

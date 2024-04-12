@@ -6,50 +6,85 @@ import org.junit.jupiter.api.Test;
 import static tour.TourHelper.*;
 public class Ex01HelloWorldTest {
 /*
-----A tour of Fearless via the standard library----
+# A tour of Fearless standard library
+
+# Preface
+This is a guide to learn the standard library of fearless.
+This guide assumes that you know all the language features already, but you have no idea how the standard library works, or
+how the files are organized into a project.
+
+# Hello world
+
 A Fearless project is a folder containing files with extension *.fear.
-Those files can be at top level or inside folders.
-The organization of files in folders is for the benefit of the programmers and
-have no impact on the semantic of fearless.
-To start a Fearless application, we specify the fully qualified name of a type.
-In the example below, we would need to run
-> java -jar fearless.jar -e test.Test -r myFolder
+Those files can be at top level or inside folders. The organization of files in folders is for the benefit of the programmers and
+has no impact on the semantics of fearless.
+Assume in folder 'myFolder' we have a file with the following content:  
 -------------------------*/@Test void helloWorld() { run("""
     package test
-    Test:Main {sys -> FIO#sys.println("Hello, World!")}
+    alias base.Main as Main,
+    //alias base.caps.UnrestrictedIO as UnrestrictedIO,
+    alias base.caps.FIO as UnrestrictedIO,
+    
+    Test:Main {sys -> UnrestrictedIO#sys.println("Hello, World!")}
     //prints Hello, World!
     """); }/*--------------------------------------------
-As you can see, the code above is a very minimal Hello World program.
+To run it, we specify the fully qualified name of the runnable type `test.Test`.
+  `> java -jar fearless.jar -e test.Test -r myFolder`//From nick
+  `> java -jar fearless.jar myFolder;.test.Test`//marco's favorite. // Nick: this will not work, `;` has special meaning in shell syntax
+If we look in the folder again, we will see that there is now a subfolder `/out`
+containing the code that was compiled. (as 'myFolder.far')
+
+That command actually runs two separate commands:
+-  `> java -jar fearless.jar myFolder` This just compiles
+-  `> java -jar fearless.jar myFolder.test.Test`  This ignores the source and runs the compiled code
+
+We can re run the code without re-compiling by using the second command.
+
+The code above is a minimal Hello World program.
 - In the first line we declare that our file belongs to the package 'test'.
-Note how there is no need for the files inside the package 'test' to be all contained inside a 'test' folder.
+Note how there is no need for the files inside the package 'test' to be all contained inside a 'test' folder. In this example it is just contained directly inside `myFolder`
 We will omit the `package test` line in all other examples.
-- We then declare the type Test. Test implements Main. All runnable types must implement Main and have zero
-abstract methods.
-- In the body of Test we implement main by `sys -> FIO#sys.println("Hello, World!")`,
-  - `sys` is a parameter name (we can freely choose those) that will refer to a mutable System object.
-  The System object is our starting point for any kind of interaction with the real world.
-  We call those objects that allows us to interact with the real world 'Object Capabilities'.
-  In this example, we call `FIO#sys` to produce an `IO` object capability, and then we call the method `.println` on it.
-  The syntax `FIO#sys` calls the method `#` on the object `FIO` passing `sys` as a parameter. You can read `FIO` as 'Factory for InputOutput'.
-  Many types in Fearless start with 'F' for 'Factory/Function'.
-  They serve the role of constructors in other languages.
+- We then declare the type Test. Test implements Main. All runnable types implement Main.
+- `Main` is declared like this: `Main: {.main(sys: mut System): Void}`
+- In the body of Test we implement Main by `sys -> UnrestrictedIO#sys.println("Hello, World!")`,
+- `sys` is a parameter name (we can freely choose those) that will refer to a mutable System object.
+- `UnrestrictedIO` is a factory creating an IO capability that can do any kind of IO.
+The System object is our starting point for any kind of interaction with the real world.
+We call those objects that allows us to interact with the real world 'Object Capabilities'.
+In this example, we call `UnrestrictedIO#sys` to produce an `IO` object capability, and then we call the method `.println` on it.
+The syntax `UnrestrictedIO#sys` calls the method `#` on the object `IOs` passing `sys` as a parameter.
+
+As you can see, `UnrestrictedIO#sys.println(..)`
+is quite verbose.
+We do not expect this code to be very common in Fearless.
+If someone is printing just because they want a debugging printout, the can use
+-------------------------*/@Test void helloWorldDebug() { run("""
+    package test
+    Test:Main {sys -> Debug#("Hello, World!")}
+    //prints Hello, World!
+    """); }/*--------------------------------------------
+
+On the other hand, if they are writing a console program, or any kind of program that needs to do input output, there will be a few
+well-designed types that have this responsibility, and the main will assign capabilities to those types. We will see an example of this (much) later.
+
+ # Block
+One of the easier ways to start writing fearless code when coming from other languages is to use `Block`.
 -------------------------*/@Test void helloWorldBlockVar() { run("""
     Test:Main {sys -> Block#
-      .var io = {FIO#sys}
+      .let io = {UnrestrictedIO#sys}
       .return {io.println("Hello, World!")}
       }
     //prints Hello, World!
     """); }/*--------------------------------------------
-In this other example we declare a local variable `io` and then we use it to call the `.println` method.
+In this example, by using `Block` we declare a local binding `io` and then we use it to call the `.println` method.
 We use `Block` to open a statements block.
-The `.var` method is used to declare the local variable `io`, that is initialized with the result of
-executing `FIO#sys`.
+The `.let` method is used to declare the local binding `io`, that is initialized with the result of executing `UnrestrictedIO#sys`.
 The `.return` method concludes the block of statements.
-In this case we need to return Void.
+Since the block is implementing `Main.main`, we need to return `Void`.
 We could alternatively write
 -------------------------*/@Test void helloWorldBlockVar2() { run("""
     Test:Main {sys -> Block#
-      .var io = {FIO#sys}
+      .let io = {UnrestrictedIO#sys}
       .do {io.println("Hello, World!")}
       .return {Void}
       }
@@ -57,39 +92,141 @@ We could alternatively write
     """); }/*--------------------------------------------
 The method `.do` just do some action in the middle of a block.
 It is like declaring a local variable of type `Void` whose name is never used.
--------------------------*/@Disabled /*TODO: unimplemented lib code*/ @Test void fsReadHello() { run("""
+Since writing `.return{Void}` can get verbose and repetitive, we can just write `.done` instead.
+-------------------------*/@Test void helloWorldBlockDone() { run("""
     Test:Main {sys -> Block#
-      .var[mut IO] io = {FIO#sys}
-      .var[mut File] file = {io.file(Path#"test.txt")}
-      .var content = {file.read!}
-      .return {io.println(content)}
+      .let io = {UnrestrictedIO#sys}
+      .do {io.println("Hello, World!")}
+      .done
       }
-    //prints ContentOfTextDotTxt
+    //prints Hello, World!
     """); }/*--------------------------------------------
-Here we show how to read and write files.
-We use `io` to open a  `mut File file`.
-Note how we use `[..]` to specify the type of the local variable. The type can often be inferred,
-we write it down here explicitly for clarity.
-'file.read' reads the content of the file, but it does not directly return a string, since the operation
-may fail. Instead, it returns an `Either[Str]` type.
-The method `!` of either gets the string out (in the positive case), or throws an error in the case the
-file could not be read.
--------------------------*/@Disabled /*TODO: unimplemented lib code*/ @Test void fsWriteHello() { run("""
-    Test:Main {sys -> Block#
-      .var   io = {FIO#sys}
-      .var file = {io.file(Path#"test.txt")}
-      .var    c = {"ContentOfTextDotTxt"}
-      .return {file.write(c)!}
+Block supports early exits, using the `.if` method, and many other useful features. To explore them, we write a `StrToMessage` function
+that can be useful to map strings into good error messages
+-------------------------*/@Test void blockIf() { run("""
+    StrToMessage:F[Str,Str]{s->Block#
+      .if {s.isEmpty} .return {"<EmptyString>"}
+      .let res = {s}
+      .if {res#.contains("\\n")} .do {res := res#.replaceAll("\\n","\\\\n")}
+      .if {res#.size > 100} .do {Block#
+        .let start = {res#.substring(0,48)}
+        .let end   = {res#.substringLast(48,0)}
+        .return {res := start + "[..]" + end}
+        }
+      .return {res#}
       }
     """); }/*--------------------------------------------
-Consider this other example, writing on the file.
-`file.write` does not throw an error if the operation fails, but returns an `Either[Void]`.
-In most languages this would be bad API design, since the error could be ignored if the `Either[Void]`
-is simply discarded. This concern is less valid in Fearless, where discarding values by accident is unlikely.
-If the user forgot to use the `!` and just wrote
-`.return {file.write(c)}`, the code would have not compiled.
-To return for that block, we need a `Void` value, but `file.write(c)` produces an `Either[Void]`.
 
-Overall, `IO` handles file system interactions (local IO) while Network IO is handled by another capability.
+The code starts by marking empty strings in an easily recognizable way,
+then replaces new lines with their escaped form, and finally cut off strings that are too long.
+Here we can see that `.if .. .return` can return a value early.
+`.if .. .error` is a variant that throws an error.
+The Fearless standard library throws errors only to signal observed bugs, and encourages you to do the same. 
+It is common to start methods with a Block with a bunch of
+`.if .. .return` or `.if .. .error` at the start.
+
+Finally, `.if .. .do` just does something if the condition is true.
+Note the difference between `.var` and `.let`:
+
+- `.let` declares a local binding.
+  Note how after we declare `start`, we can directly access its value of  in the following code.
+- `.var` declares a local variable. We use `.var` to access and update the value of something.
+  In the example we use it like this: `res := res#.replaceAll(..)`
+  As you can see, we update it with `:=` and we access it with `res#`.
+  That is, `res` on its own is of type `Var[T]` and can be passed around
+  directly. 
+  However doing so may prevent the Fearless compiler to apply some optimizations.
+
+The nested block ends with '.return'. This is different from what you may expect, the '.return' here is making the inner block return `Void`, the result of `:=`.
+To clarify the behavior of nested blocks, we show some alternative to that code below:
+-------------------------*/@Test void blockNested1() { run("""
+    StrToMessage:F[Str,Str]{s->Block#
+      .if {s.isEmpty} .return {"<EmptyString>"}
+      .let res = {s}
+      .if {res.contains("\\n")} .do {res := res#.replaceAll("\\n","\\\\n")}
+      .if {res.size() > 100} .return {Block#
+        .let start = {res#.substring(0,48)}
+        .let end   = {res#.substringLast(48,0)}
+        .return {start + "[..]" + end}
+        }
+      .return {res#}
+      }
+    """); }/*--------------------------------------------
+In this alternative, we use `.if .. .return` to propagate out the result. Note how we now return the final result directly instead of updating `res`.
+-------------------------*/@Test void blockNested2() { run("""
+    StrToMessage:F[Str,Str]{s->Block#
+      .if {s.isEmpty} .return {"<EmptyString>"}
+      .let res = {s}
+      .if {res#.contains("\\n")} .do {res := res#.replaceAll("\\n","\\\\n")}
+      .if {res#.size() > 100} .do {Block#
+        .let start = {res#.substring(0,48)}
+        .let end   = {res#.substringLast(48,0)}
+        .do {res := start + "[..]" + end}
+        .done
+        }
+      .return {res#}
+      }
+    """); }/*--------------------------------------------
+In this alternative, we mimic more closely what happens in conventional statements. We think this is just more verbose that using `.return` directly.
+Note that without `.done` the code would not compile, since `.do` returns a `Block[Void]` and not `Void`.
+
+As always, the best alternative is to avoid nesting and to write
+
+-------------------------*/@Test void blockNested3() { run("""
+    StrToMessage:F[Str,Str]{s->Block#      
+      .if {s.isEmpty} .return {"<EmptyString>"}
+      .let res = {s}
+      .if {res#.contains("\\n")} .do {res := res#.replaceAll("\\n","\\\\n")} 
+      .if {res#.size() <= 100} .return {res#}
+      .let start = {res#.substring(0,48)}
+      .let end   = {res#.substringLast(48,0)}
+      .return {start + "[..]" + end}
+      }
+    """); }/*--------------------------------------------
+
+As you can see, by inverting the `.if` condition and inserting a one liner early return, we can make the code look much better.
+
+Block is much more powerful that usual statements, because each individual bit is an expression. Thus we can use it to modularize method bodies that requires many early returns, and we can scope local variables:
+
+-------------------------*/@Test void blockScoped() { run("""
+  Example: F[Str,Str]{s->Block# //bad all mixed
+    //part1 //comments used to denote section of code: bad smell
+    .let res = {s}
+    .if {res#.isEmpty} .return {"<EmptyString>"}
+    .if {res#.contains("\\n")} .do {res := res#.replaceAll("\\n","\\\\n")}
+    .if {res#.size() <= 100} .return {res#}
+    //part2
+    .let start = {res#.substring(0,48)}
+    .let end   = {res#.substringLast(48,0)}
+    .return {start + "[..]" + end}
+    }
+    
+  Example:F[Str,Str]{//Better version, with division in parts
+    #(s) -> Block#
+      .let res = {s}
+      .let scope = {ExampleParts{.res->res}}
+      .part{b->scope.part1(b)}
+      .part{b->scope.part2(b)}
+    }
+   ExampleParts:{//could be many traits with just one part each
+    .res:Var[Str],
+    
+    .part1(c: Block[Str]): Block[Str] -> c
+      .if {this.res#.isEmpty} .return {"<EmptyString>"}
+      .if {this.res#.contains("\\n")}
+        .do {this.res# := this.res#.replaceAll("\\n","\\\\n")}
+      .if {this.res#.size() <= 100} .return {this.res#},
+
+    .part2(c: Block[Str]):Str -> c
+      .let start = {this.res#.substring(0,48)}
+      .let end   = {this.res#.substringLast(48,0)}
+      .return start + "[..]" + end
+  """); }/*--------------------------------------------
+As we can see, using `Block.part` we can divide a large block in many parts.
+- The early return feature would still work.
+- Shared local variables will have to be lifted as captured data.
+- Local bindings and variables will be scoped to the part.
+- In this way we could divide a large method in many types, that could even be spread between files.
+
 */
 }

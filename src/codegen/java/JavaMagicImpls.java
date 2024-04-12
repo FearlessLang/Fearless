@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static magic.MagicImpls.getLiteral;
 
-public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicImpls<String> {
+public record JavaMagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicImpls<String> {
   @Override public MagicTrait<MIR.E,String> int_(MIR.E e) {
     var name = e.t().name().orElseThrow();
     return new MagicTrait<>() {
@@ -46,7 +46,7 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
           return "("+"(double)"+instantiate().orElseThrow()+")";
         }
         if (m.equals(new Id.MethName(".str", 0))) {
-          return "Long.toString("+instantiate().orElseThrow()+")";
+          return "rt.Str.fromJavaStr(Long.toString("+instantiate().orElseThrow()+"))";
         }
         if (m.equals(new Id.MethName("+", 1))) { return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true); }
         if (m.equals(new Id.MethName("-", 1))) { return instantiate().orElseThrow()+" - "+args.getFirst().accept(gen, true); }
@@ -105,7 +105,7 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
           return "("+"(double)"+instantiate().orElseThrow()+")";
         }
         if (m.equals(new Id.MethName(".str", 0))) {
-          return "Long.toUnsignedString("+instantiate().orElseThrow()+")";
+          return "rt.Str.fromJavaStr(Long.toUnsignedString("+instantiate().orElseThrow()+"))";
         }
         if (m.equals(new Id.MethName("+", 1))) { return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true); }
         if (m.equals(new Id.MethName("-", 1))) { return instantiate().orElseThrow()+" - "+args.getFirst().accept(gen, true); }
@@ -160,7 +160,7 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
           return instantiate().orElseThrow();
         }
         if (m.equals(new Id.MethName(".str", 0))) {
-          return "Double.toString("+instantiate().orElseThrow()+")";
+          return "rt.Str.fromJavaStr(Double.toString("+instantiate().orElseThrow()+"))";
         }
         if (m.equals(new Id.MethName("+", 1))) { return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true); }
         if (m.equals(new Id.MethName("-", 1))) { return instantiate().orElseThrow()+" - "+args.getFirst().accept(gen, true); }
@@ -190,25 +190,12 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
   }
 
   @Override public MagicTrait<MIR.E,String> str(MIR.E e) {
-    var name = e.t().name().orElseThrow();
     return new MagicTrait<>() {
       @Override public Optional<String> instantiate() {
-        var lit = getLiteral(p, name);
-        return lit.orElseGet(()->"((String)"+e.accept(gen, true)+")").describeConstable();
+        throw Bug.unreachable();
       }
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
-        if (m.equals(new Id.MethName(".size", 0))) { return Optional.of(instantiate().orElseThrow()+".length()"); }
-        if (m.equals(new Id.MethName(".isEmpty", 0))) { return Optional.of("("+instantiate().orElseThrow()+".isEmpty()?base.True_0._$self:base.False_0._$self)"); }
-        if (m.equals(new Id.MethName(".str", 0))) { return Optional.of(instantiate().orElseThrow()); }
-        if (m.equals(new Id.MethName(".toImm", 0))) { return Optional.of(instantiate().orElseThrow()); }
-        if (m.equals(new Id.MethName("+", 1))) { return Optional.of("("+instantiate().orElseThrow()+"+"+args.getFirst().accept(gen, true)+")"); }
-        if (m.equals(new Id.MethName("==", 1))) {
-          return Optional.of("("+instantiate().orElseThrow()+".equals("+args.getFirst().accept(gen, true)+")?base.True_0._$self:base.False_0._$self)");
-        }
-        if (m.equals(new Id.MethName(".assertEq", 1))) {
-          return Optional.of("base.$95StrHelpers_0._$self.assertEq$imm$("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+")");
-        }
-        throw Bug.unreachable();
+        return Optional.empty();
       }
     };
   }
@@ -230,12 +217,12 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
               var strMethod = java.util.Arrays.stream(xObj.getClass().getMethods())
                 .filter(meth->
                   (meth.getName().equals("str$read$") || meth.getName().equals("str$readOnly$"))
-                  && meth.getReturnType().equals(String.class)
+                  && meth.getReturnType().equals(rt.Str.class)
                   && meth.getParameterCount() == 0)
                 .findAny();
               if (strMethod.isPresent()) {
                 try {
-                  System.out.println(strMethod.get().invoke(x));
+                  rt.NativeRuntime.println(((rt.Str)strMethod.get().invoke(x)).utf8());
                 } catch(java.lang.IllegalAccessException | java.lang.reflect.InvocationTargetException err) {
                   System.out.println(x);
                 }
@@ -294,7 +281,7 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
               public Object peek$readOnly$(userCode.FProgram.base$46caps.IsoViewer_2 f) { return this.isAlive ? ((base$46caps.IsoViewer_2)f).some$mut$(this.x) : ((base$46caps.IsoViewer_2)f).empty$mut$(); }
               public Object $33$mut$() {
                 if (!this.isAlive) {
-                  base.Error_0._$self.str$imm$("Cannot consume an empty IsoPod.");
+                  base.Error_0._$self.msg$imm$(rt.Str.fromJavaStr("Cannot consume an empty IsoPod."));
                   return null;
                 }
                 this.isAlive = false;
@@ -330,7 +317,7 @@ public record MagicImpls(JavaCodegen gen, ast.Program p) implements magic.MagicI
         if (m.equals(new Id.MethName("._fail", 1))) {
           return Optional.of(String.format("""
             (switch (1) { default -> {
-              System.err.println(%s);
+              rt.NativeRuntime.printlnErr(%s.utf8());
               System.exit(1);
               yield %s;
             }})

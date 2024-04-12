@@ -54,7 +54,7 @@ public class TestJavaOptimisations {
     package test
     alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
     Test:base.Main {_ -> Block#
-     .var[Int] n = {5}
+     .let[Int] n = {5}
      .do {ForceGen#}
      .return {Void}
      }
@@ -89,7 +89,7 @@ public class TestJavaOptimisations {
     """, "test.Test", true, """
     package test
     Test:Main {sys -> Block#
-      .var n = {Count.int(0)}
+      .let n = {Count.int(0)}
       .loop {Block#
         .if {n.get == 10} .return {ControlFlow.break}
         .do {Block#(n++)}
@@ -116,7 +116,7 @@ public class TestJavaOptimisations {
     package test
     Test:Main {sys -> (FIO#sys).println(Foo#)}
     Foo: {#: Str -> Block#
-      .var n = {Count.int(0)}
+      .let n = {Count.int(0)}
       .loop {Block#
         .if {n.get == 10} .return {ControlFlow.return[Str](n.get.str)}
         .do {Block#(n++)}
@@ -141,9 +141,9 @@ public class TestJavaOptimisations {
     [###]
     """, "test.Test", true, """
     package test
-    Test:Main {sys -> (FIO#sys).println(Foo#)}
+    Test:Main{sys -> (FIO#sys).println(Foo#)}
     Foo: {#: Str -> Block#
-      .var n = {Count.int(0)}
+      .let n = {Count.int(0)}
       .loop {Block#
         .if {n.get == 10} .return {ControlFlow.return[Str](n.get.str)}
         .do {Block#(n++)}
@@ -152,4 +152,12 @@ public class TestJavaOptimisations {
       .return {"Boo :("}
       }
     """, Base.mutBaseAliases);}
+
+  @Disabled @Test void methodChainDevirtualisation() { ok("""
+    """, "test.Test", true, """
+    package test
+    A: {.m1(a: A): A}
+    B: {.m1: A -> A{a0 -> a0}.m1(A{.m1(a1) -> A{.m1(a2) -> a1}})}
+    Test: Main{sys -> Void}
+    """, Base.mutBaseAliases); }
 }

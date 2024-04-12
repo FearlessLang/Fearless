@@ -54,15 +54,15 @@ IsoF[A,R]:{ #(a:iso A):mdf R }
 Iso[R]:{ #:iso R }
 .isoVar[A](fx:mut Iso[A],f:mut IsoF[A,mdf R]):mdf R
 .mutVar[A](fx:mut F[mut A],f:mut F[mut A,mdf R]):mdf R
-.var[A](fx:mut F[mdf A],f:mut F[mdf A,R]):mdf R
+.let[A](fx:mut F[mdf A],f:mut F[mdf A,R]):mdf R
 Evil:Main{
   #(s) -> Block
-//    .var[iso Person] p = {Person'#23} // nvm this is an error because we cannot have iso generics. This implies no iso local vars
+//    .let[iso Person] p = {Person'#23} // nvm this is an error because we cannot have iso generics. This implies no iso local vars
     .isoVar p = {Person'#23} // nvm this is an error because we cannot have iso generics. This implies no iso local vars
-    .var[mut Ref[mut Person]] r = {Ref#Person'#0}
+    .let[mut Ref[mut Person]] r = {Ref#Person'#0}
     .mutVar r = {Ref#Person'#0}//mut ref of mut Person
     .isoVar a = {}
-    .var[imm Person]{ a.multiGet(p, r) } // I now have an imm and mut refs to the same person
+    .let[imm Person]{ a.multiGet(p, r) } // I now have an imm and mut refs to the same person
     ...
  */
 

@@ -4,8 +4,8 @@ package base.flows
 // from within the flow itself. This is prevented by collecting the flow-source into a list and then
 // flowing on that instead.
 _MutSourceCollection[E]: {
-  #(source: mut FlowOp[E]): mut Flow[E] -> Flow.fromOp(Block#
-    .var[mut Ref[mut Opt[mut FlowOp[E]]]] cloned = {Ref#[mut Opt[mut FlowOp[E]]]{}}
+  #(source: mut FlowOp[E]): mut Flow[E] -> Flow.fromOp(Block#[mut FlowOp[E]]
+    .let[mut Ref[mut Opt[mut FlowOp[E]]]] cloned = {Ref#[mut Opt[mut FlowOp[E]]]{}}
     .return{{
       .isRunning -> this.get(cloned, source).isRunning,
       .stop -> this.get(cloned, source).stop,
@@ -14,9 +14,9 @@ _MutSourceCollection[E]: {
   .get(cloned: mut Ref[mut Opt[mut FlowOp[E]]], original: mut FlowOp[E]): mut FlowOp[E] -> cloned.get.match{
      .some(cloned') -> cloned',
      .empty -> Block#
-       .var[mut List[E]] dup = {Flow.fromOp(original).list}
+       .let[mut List[E]] dup = {Flow.fromOp(original).list}
        .do {cloned := (Opt#(Block#[mut FlowOp[E]]
-         .var[mut Count[UInt]] cursor = {Count.uint(0u)}
+         .let[mut Count[UInt]] cursor = {Count.uint(0u)}
          .return {{'self
            .isRunning -> cursor* < (dup.size),
            .stop -> cursor := (dup.size),
@@ -33,7 +33,7 @@ _MutSourceCollection[E]: {
 _FlowConverters: Sealed{
   .range(start: Int, end: Int): mut Flow[Int] -> _PipelineParallelFlow.fromOp[Int](this.range'(start, end), Opt#((end - start).uint)),
   .range'(start: Int, end: Int): mut FlowOp[Int] -> Block#
-    .var cursor = {Count.int(start)}
+    .let cursor = {Count.int(start)}
     .return {{'self
       .isRunning -> cursor* < end,
       .stop -> cursor := end,
@@ -55,7 +55,7 @@ _FlowConverters: Sealed{
 _SafeSource: {
 //  .fromIter[E](iter: mut base.iter.Iter[E]): mut Flow[E] -> Flow.fromOp[E](this.fromIter'[E](iter)),
 //  .fromIter'[E](iter: mut base.iter.Iter[E]): mut FlowOp[E] -> Block#
-//    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+//    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
 //    .return {{'op
 //      .stop -> isRunning := False,
 //      .isRunning -> isRunning*,
@@ -70,7 +70,7 @@ _SafeSource: {
 
   .fromList[E](list: mut List[E]): mut Flow[E] -> Flow.fromOp[E](this.fromList'[E](list), list.size),
   .fromList'[E](list: mut List[E]): mut FlowOp[E] -> Block#
-    .var[mut Count[UInt]] cursor = {Count.uint(0u)}
+    .let[mut Count[UInt]] cursor = {Count.uint(0u)}
     .return {{'self
       .isRunning -> cursor* < (list.size),
       .stop -> cursor := (list.size),

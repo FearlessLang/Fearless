@@ -4,7 +4,7 @@
 // Res.err("boo").map({n -> n + 1}) || 
 
 Block
-  .var[Res[Num, Str]] r={ Res.err("boo") }
+  .let[Res[Num, Str]] r={ Res.err("boo") }
   .return{
     r.map{n -> n + 1} || {_ -> 0}
     }

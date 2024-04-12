@@ -86,6 +86,10 @@ public sealed interface MIR {
       this(recv, name, args, t, t, mdf, variant);
     }
 
+    public MCall withRecv(E recv) {
+      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+    }
+
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitMCall(this, checkMagic);
     }
@@ -125,24 +129,54 @@ public sealed interface MIR {
 
   record Block(E original, Collection<BlockStmt> stmts, MT expectedT) implements E {
     public sealed interface BlockStmt {
-      record Return(E e) implements BlockStmt {}
-      record Do(E e) implements BlockStmt {}
-      record Loop(E e) implements BlockStmt {}
-      record If(E pred) implements BlockStmt {}
-      record Var(String name, E value) implements BlockStmt {}
+      E e();
+      BlockStmt withE(E e);
+      record Return(E e) implements BlockStmt {
+        @Override public Return withE(E e) { return new Return(e); }
+      }
+      record Do(E e) implements BlockStmt {
+        @Override public Do withE(E e) { return new Do(e); }
+      }
+      record Loop(E e) implements BlockStmt {
+        @Override public Loop withE(E e) { return new Loop(e); }
+      }
+      record If(E pred) implements BlockStmt {
+        @Override public E e() { return pred; }
+        @Override public If withE(E e) { return new If(e); }
+      }
+      record Var(String name, E value) implements BlockStmt {
+        @Override public E e() { return value; }
+        @Override public Var withE(E e) { return new Var(name, e); }
+      }
     }
+
+    public Block withStmts(Collection<BlockStmt> stmts) {
+      return new Block(original, stmts, expectedT);
+    }
+
+    @Override public MT t() {
+      return original.t();
+    }
+    @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
+      return v.visitBlockExpr(this, checkMagic);
+    }
+  }
+
+  record StaticCall(E original, FName fun, List<E> args, Optional<MT> castTo) implements E {
+
     @Override public MT t() {
       return original.t();
     }
 
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
-      return v.visitBlockExpr(this, checkMagic);
+      return v.visitStaticCall(this, checkMagic);
     }
   }
 
   sealed interface MT {
     Mdf mdf();
     Optional<Id.DecId> name();
+    default boolean isAny() { return false; }
     static MT of(T t) {
       return t.match(gx->new Any(t.mdf()), it->new Usual(t));
     }
@@ -157,11 +191,32 @@ public sealed interface MIR {
         return (Id.IT<T>) t.rt();
       }
       public Optional<Id.DecId> name() { return Optional.of(it().name()); }
+
+      @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MT mt)) { return false; }
+        if (mt.name().isEmpty()) { return false; }
+        return this.t().mdf().equals(mt.mdf()) && this.it().name().equals(mt.name().get());
+      }
+      @Override public int hashCode() {
+        return Objects.hash(this.t.mdf(), this.it().name());
+      }
     }
     record Plain(Mdf mdf, Id.DecId id) implements MT {
       public Optional<Id.DecId> name() { return Optional.of(id); }
+      @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MT mt)) { return false; }
+        if (mt.name().isEmpty()) { return false; }
+        return this.mdf().equals(mt.mdf()) && this.id.equals(mt.name().get());
+      }
+      @Override public int hashCode() {
+        return Objects.hash(this.mdf(), this.id());
+      }
+
     }
     record Any(Mdf mdf) implements MT {
+      @Override public boolean isAny() { return true; }
       @Override public Optional<Id.DecId> name() {
         return Optional.empty();
       }

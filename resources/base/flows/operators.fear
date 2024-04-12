@@ -32,8 +32,8 @@ _Sink[T]: {
 
 _Filter: {
   #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
-//    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+//    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
@@ -53,8 +53,8 @@ _Filter: {
   }
 _Map: {
   #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
-//    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+//    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return  {{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
@@ -74,8 +74,8 @@ _Map: {
   }
 _FlatMap: {
   #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
-    .var[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
-    .var[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
+    .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
+    .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),

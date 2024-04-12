@@ -1,46 +1,58 @@
 package base
 
-Error:{
+Error: {
   ![R:read,mut,imm,iso,lent,readOnly](info: Info): R -> Magic!,
-  .str[R:read,mut,imm,iso,lent,readOnly](s: Str): R -> this!{
-    .str -> s,
+  .msg[R:read,mut,imm,iso,lent,readOnly](msg: Str): R -> this!{
+    .msg -> msg,
     .list -> List#,
     .map -> EmptyMap[Str, Info]
     }
   }
 
-Todo:{
-  ![R:read,mut,imm,iso,lent,readOnly]: R -> Error.str[R] "TODO: Implement this code",
-  ![R:read,mut,imm,iso,lent,readOnly](msg: Str): R -> Error.str[R]("TODO: "+msg),
+Todo: {
+  ![R:read,mut,imm,iso,lent,readOnly]: R -> Error.msg[R] "TODO: Implement this code",
+  ![R:read,mut,imm,iso,lent,readOnly](msg: Str): R -> Error.msg[R]("TODO: "+msg),
 }
 
 /// Strong exception safety is upheld:
 /// The operation has either completed successfully or thrown an exception,
 // leaving the program state exactly as it was before the operation started.
-Try:{
+Try: {
   #[R](try: read Try[R]): mut Res[R,Info] -> Magic!,
   }
 Try[R]:{ read #: R, }
 
-Info:Sealed{
-  .str: Str,
+Info: Sealed,_InfoToJson{
+  .msg: Str,
   .map: Map[Str, Info],
   .list: List[Info],
+  .str: Str -> _InfoToJson#this,
   }
 FInfo: {
-  .str(str: Str): Info -> {
-    .str -> str,
+  .msg(msg: Str): Info -> {
+    .msg -> msg,
     .list -> List#,
     .map -> EmptyMap[Str, Info],
     },
   .list(list: List[Info]): Info -> {
-    .str -> "",
+    .msg -> "",
     .list -> list,
     .map -> EmptyMap[Str, Info],
     },
   .map(map: Map[Str, Info]): Info -> {
-    .str -> "",
+    .msg -> "",
     .list -> List#,
     .map -> map,
     },
+  }
+
+_InfoToJson: {#(info: Info): Str -> Block#
+  .if {info.msg.isEmpty.not} .return {"\""+(info.msg)+"\""}
+  .if {info.list.isEmpty.not} .return {"["+(this.list(info.list))+"]"}
+  .if {info.map.isEmpty.not} .return {Todo! "Flows over maps are not implemented yet"}
+  .return {Error.msg "Unreachable"},
+
+  .list(l: List[Info]): Str -> l.flow
+    .map{info->this#info}
+    #(Flow.str ","),
   }

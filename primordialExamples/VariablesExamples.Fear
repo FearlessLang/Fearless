@@ -59,7 +59,7 @@ Foo   {}  x! //we want to AT LEAST WRITE SOMETHING
 
 Var[E]:Data{
   mut r:mut Ref[mut Opt[mdf E]]
-  mut*:mdf E->this.r*.get{Error.str"Nope"}
+  mut*:mdf E->this.r*.get{Error.msg"Nope"}
   mut:=(e:mdf E):Void->this.r:=Opt#e
   }
 
@@ -112,7 +112,7 @@ Block
   .var y={e} //can see x,y?
   .do({..can see x,y..}//can do x* and x:=
 
-.var[E](v:CachedVarF[E])->v.init
+.let[E](v:CachedVarF[E])->v.init
 
 CachedVar:{
   #(init: F[E])[E] -> Let#{
@@ -260,7 +260,7 @@ myStream.map{v1->v1.foo()}.var (
   (v3,self)->self.map { } .more
   )
 Stream[T]:{
-  .var[V,R](f:F[T,V],c:VarAcc[V,T,R])->c#(f,this)
+  .let[V,R](f:F[T,V],c:VarAcc[V,T,R])->c#(f,this)
   }
   
 VarAcc[V,T,R]:{ //variable V, Stream[T], becomes an R

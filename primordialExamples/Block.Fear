@@ -72,7 +72,7 @@ Block[R]:{
     .then -> BlockIfTrue[mdf R]{ this },
     .else -> BlockIfFalse[mdf R]{ this },
     },
-  mut .var[X](x: mut ReturnStmt[mdf X],
+  mut .let[X](x: mut ReturnStmt[mdf X],
               cont: mut Continuation[mdf X,mdf R]): mdf R ->
     cont#(x#, this)
   

@@ -1,0 +1,35 @@
+package base
+
+Info:Sealed{
+  .msg: Str,
+  .map: Map[Str, Info],
+  .list: LList[Info],
+  .str: Str -> _InfoToJson#this,
+  }
+FInfo: {
+  .msg(msg: Str): Info -> {
+    .msg -> msg,
+    .list -> {},
+    .map -> EmptyMap[Str, Info],
+    },
+  .list(list: LList[Info]): Info -> {
+    .msg -> "",
+    .list -> list,
+    .map -> EmptyMap[Str, Info],
+    },
+  .map(map: Map[Str, Info]): Info -> {
+    .msg -> "",
+    .list -> {},
+    .map -> map,
+    },
+  }
+
+Map[K:imm,V:imm]: {.isEmpty: Bool -> True}
+EmptyMap[K:imm,V:imm]: Map[K,V]{}
+
+_InfoToJson: {#(info: Info): Str -> Block#
+  .if {info.msg.isEmpty.not} .return {"\""+(info.msg)+"\""}
+  .if {info.list.isEmpty.not} .return {"List info printing is unimplemented in the imm stdlib right now."}
+  .if {info.map.isEmpty.not} .return {"Map info printing is unimplemented in the imm stdlib right now."}
+  .return {"Unreachable"},
+  }

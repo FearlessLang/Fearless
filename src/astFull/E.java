@@ -5,7 +5,6 @@ import files.Pos;
 import id.Id;
 import id.Id.MethName;
 import id.Mdf;
-import main.Main;
 import utils.Bug;
 import utils.Mapper;
 import visitors.FreeGensFullVisitor;

@@ -19,4 +19,7 @@ public interface MIRVisitor<R> {
   default R visitBlockExpr(MIR.Block expr, boolean checkMagic) {
     return expr.original().accept(this, checkMagic);
   }
+  default R visitStaticCall(MIR.StaticCall call, boolean checkMagic) {
+    return call.original().accept(this, checkMagic);
+  }
 }

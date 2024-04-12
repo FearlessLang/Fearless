@@ -5,6 +5,7 @@ import java.util.Objects;
 
 //Note: we plan to soft connect positions with AST node by having a static external hash map
 public record Pos(URI fileName, int line, int column) implements java.io.Serializable {
+  public static Pos UNKNOWN = Pos.of(URI.create("unknown"), 0, 0);
   public static Pos of(URI fileName, int line, int column){
     return new Pos(fileName,line,column);
   }

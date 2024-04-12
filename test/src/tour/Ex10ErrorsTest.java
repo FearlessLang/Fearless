@@ -23,10 +23,10 @@ public class Ex10ErrorsTest {
     """, Base.mutBaseAliases); }
   @Test void caughtFearlessError() { ok(new Res("", "oh no", 0), "test.Test", """
     package test
-    Test:Main {sys -> FIO#sys.printlnErr(Try#[Int]{Error.str "oh no"}.err!.str)}
+    Test:Main {sys -> FIO#sys.printlnErr(Try#[Int]{Error.msg "oh no"}.err!.str)}
     """, Base.mutBaseAliases); }
   @Test void uncaughtFearlessError() { ok(new Res("", "Program crashed with: oh no", 1), "test.Test", """
     package test
-    Test:Main {sys -> Error.str "oh no"}
+    Test:Main {sys -> Error.msg "oh no"}
     """, Base.mutBaseAliases); }
 }

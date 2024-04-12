@@ -2,7 +2,7 @@ package parser;
 
 import failure.CompileError;
 import main.Main;
-import net.jqwik.api.Example;
+//import net.jqwik.api.Example;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import utils.Bug;

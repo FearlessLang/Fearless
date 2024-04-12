@@ -1,0 +1,470 @@
+# Fearless
+
+# Preface
+This is a guide to learn the standard library of fearless.
+This guide assums that you know all of the language features already, but you have no idea how the standard library works, or
+how the files are organized into a project.
+
+# Hello world
+
+A Fearless project is a folder containing files with extension *.fear.
+Those files can be at top level or inside folders. The organization of files in folders is for the benefit of the programmers and
+have no impact on the semantic of fearless.
+Assume in folder 'myFolder' we have a file with the following content:
+    package test
+    Test:Main {sys -> UnrestrictedIO#sys.println("Hello, World!")}
+    //prints Hello, World!
+
+To run it, we specify the fully qualified name of the runnable type `test.Test`.
+  `> java -jar fearless.jar -e test.Test -r myFolder`
+  `> java -jar fearless.jar myFolder;.test.Test`//marco favorite
+If we look in the folder again, we will see that there is now a subfolder `/out`
+containing the code that was compiled. (as 'myFolder.far')
+
+That command actually runs two separate commands:
+-  `> java -jar fearless.jar myFolder` This just compiles
+-  `> java -jar fearless.jar myFolder.test.Test`  This ignores the source and runs the compiled code
+
+We can re run the code without re-compiling by using the second command.
+
+The code above is a minimal Hello World program.
+- In the first line we declare that our file belongs to the package 'test'.
+Note how there is no need for the files inside the package 'test' to be all contained inside a 'test' folder.
+We will omit the `package test` line in all other examples.
+- We then declare the type Test. Test implements Main. All runnable types implement Main.
+- In the body of Test we implement Main by `sys -> IOs#sys.println("Hello, World!")`,
+- `sys` is a parameter name (we can freely choose those) that will refer to a mutable System object.
+
+The System object is our starting point for any kind of interaction with the real world.
+We call those objects that allows us to interact with the real world 'Object Capabilities'.
+In this example, we call `IOs#sys` to produce an `IO` object capability, and then we call the method `.println` on it.
+The syntax `IOs#sys` calls the method `#` on the object `IOs` passing `sys` as a parameter.
+
+
+Next:
+Int,Nat,Str,Optional,HasStr,Ordered/Comparator,List,
+
+------
+Below attempting to explain the language while explaining the standard library.
+Overall, a failure.
+----------------------------------------------------------------------------------
+# Fearless
+
+# Preface
+This is a guide to learn the programming language fearless.
+Fearless is in many ways similar to Java, C#, Kotlin or Scala. We expect you to know at least one of those languages to be able to follow this guide.
+We will sometime use technical terminology that you may not be aware of.
+This is to connect Fearless concepts to existing concepts: those discussions are designed to enreich the reading experience for readers familiar with those existing conecepts.
+However, we designed this guide so that understanding those more technical discussions is not required to learn to code in Fearless. 
+This guide has plenty of examples and informal discussions too.
+The first paragraph of the guide is a perfect example of this idea: plenty of technical jargons that helping experts to pinpoint what fearless is and is not, but not preventing novices to ignore it and move on.
+If that is you, do not be scared by those few unknown terms.
+Be Fearless!
+
+
+# Intro
+
+Fearless is a minimal nominally typed functional pure object oriented language, where the only core operation is the dynamically dispatched method call.
+There are no fields since all the state is captured by closures.
+Mutation is present, but it is kept under control by a sophisticated type system, and it is overall less prominent that in Java/Scala.
+Exceptions are supported, but the standard library only uses them to report observed bugs, and users are encouraged to do the same.
+
+In this guide we will use the term *user* to mean Fearless programmers, not the final users of a Fearless application.
+If you are working in a company using Fearless, your users are your coworkers and your future self. If you ever write a Fearless library, you may have plenty of users that you will never met. Please, always care about your users.
+
+## Type names and Packages
+Programming projects may involve thousands of different types.
+Fearless projects are no different. To allow for hierarchical organization of code, Fearless code is divided in packages, and types belong to a specific package.
+A type has a type name, that can be simple or fully qualiefied.
+For example `Person` is a simple type name, and `com.city.Person` is a fully qualified type name.
+We will discuss packages much later in this guide, for now all our example code is assumed to live in the same package.
+At this stage, we would just like to reassure you that they are much less annoying that Java packages.
+
+## Types, methods and expressions.
+
+Types, methods and expressions are the main concepts in Fearless.
+Type declarations contains method declarations, method declarations contain expressions.
+An expression can be a reference name, a method call or an object literal.
+An object literal is simply a type declaration happening inside of a method body;
+it both creates and object and declares a new type.
+
+Finally, a program is just as set of type declarations.
+Top level type declarations are rougly similar to interfaces in Java8: they can implement other types and methods can be abstract or implemented.
+Type declarations inside method bodies are not nested types, and are rougly similar to final classes: all methods have to be implemented.
+
+The code below is a type declaration for point.
+It relies on the standard library type Int representing signed 64 bit ints.
+
+Points: {
+  #(x: Int, y: Int): Point ->
+    Point: {
+      .x: Int -> x,
+      .y: Int -> y,
+  }
+}
+UserCode:{
+  .sumPoint(p1: Point, p2: Point): Point ->
+    Points#(p1.x + (p2.x), p1.y + (p2.y))
+}
+We now show how to read this code:
+Line 1 is a type declaration for the type Points.
+Points have a single method called #, taking two Int parameters and returning a Point.
+The body of the method Points# is the type declaration for Point.
+Point has two methods taking zero arguments and return an int. They just return the value of the parameters.
+
+Line 8 define type UserCode, showing how to sum two Points.
+As you can see, even if Point is defined inside of Points, we just use it as 'Point', not Points.Point.
+
+As in many other languages,
+Types and methods are both named parametric abstractions:
+Type declarations have parameters: generic type parameters,
+Methods declarations have parameters: generic type parameters and formal parameters.
+Concrete types are instantiated by passing actual types to their generic type parameters.
+Methods are called by passing actual types to their generic type parameters and actual parameters to their formal parameters.
+
+Consider this simple code example, showing how Fearless encodes first class functions as objects, exactly like Java and Scala do.
+
+F[A,R]:{
+  #[](a:A):R,
+  .andThen[R2](f: F[R,R2]): F[A,R2] ->
+    {a->f#(this#a)}
+  }
+Here F is the type name, A and R are the generic type parameters of F.
+We conventionally use `R` for generic results.
+Method `#` have zero generic type parameters. Empty parenthesis can always be omitted, so we could have just written `#(a:A):R,`.
+This method is abstract since it has no body.
+The method `.andThen`
+
+
+The following code is an example of a type declaration, containing two method declarations.
+TotalMap[K,E]:{
+  .get[](k:K):E,
+  .combine[V](other: TotalMap[E,V]):TotalMap[K,V]->{
+    .get(k)->other.get(this.get)
+    }
+}
+
+HashMaps are common data types, where a Key may map to a value (that is, not all keys maps to values). TotalMap represents total mappings, where all keys maps to a value.
+Here TotalMap is the type name, K and E are the generic type parameters of TotalMap.
+method `.get` have zero generic type parameters. Empty parenthesis can always be omitted, so we could have just written `.get(k:K):E,`.
+This method is abstract. It 
+
+For example
+The code below is a type declaration for point.
+It relies on the standard library type Nat representing unsigned 64 bit ints.
+
+Points: {
+  #(x: Nat, y: Nat): Point ->
+    Point: {
+      .x: Nat -> x,
+      .y: Nat -> y,
+  }
+}
+UserCode:{
+  .sumPoint(p1: Point, p2: Point): Point ->
+    Points#(p1.x + (p2.x), p1.y + (p2.y))
+}
+
+
+
+## Type declaration
+
+The main concept in fearless is the concept of a **type declaration**.
+By declaring types we model our application domain.
+Of course types and type declarations are not a new concept. Most languages have various kinds of types, distinguishing for example between classes, interfaces, records, structs, enumeration, pointers, arrays, primitive. Other languages sometimes also have type-like concepts that either are not types or are not intended to be used as types. This may include annotations, decorators, traits. 
+In contrast, in Fearless there is only one kind of type declaration, and it can be used to flexibly encode the needed features from all of those different kinds of declarations popular in other languages.
+Between all of those kinds of types, interfaces in Java 8 are the closest concept to Fearless type declarations.
+
+
+## Objects
+In OO languages, objects can form complex networks of dependencies by referring to each other. The Reachable Object Graph (ROG) of a given object is the graph of all objects reachable from it, including itself.
+An object is mutated whenever its ROG changes.
+A mutable object is an object that can be mutated.
+The Fearless type system is able to ensure that some objects can not be mutated. We call those immutable objects.
+
+Immutable objects are easy to use safely; but may be inadequate when representing entities whose state can change across time.
+However, mutable objects are the source of many surprising bugs in OO languages.
+
+##Types and Objects
+As in class based OO languages, in Fearless objects are instances of types. However, Fearless distinguish between the two kinds of instances: mutable or immutable.
+In Fearless all values are objects, and objects are always accessed by references. Thus all types are reference types.
+Fearless tames mutation using Reference Capabilities (RC).
+A RC is a keyword (`mut`,`imm`,`read` and others) placed in front of a type name.
+Summarizing, a single type declaration defines two kinds of instances (mutable and immutable) and a family of reference types. For example, the type declaration
+```
+Person:{...}
+```
+defines two kinds of objects:
+- mutable Person objects and immutable Person objects.
+and a family of reference types. For example 
+- A reference of type `mut Person` refers to a mutable person object.
+- A reference of type `imm Person` refers to an immutable person object.
+- A reference of type `read Person` can refer to either a mutable or an immutable person object.
+That is, objects are either mutable or immutable, but there are more kinds of refences.
+
+We first show a Point type, where all the instances are immutable, and then we show an Animal type, allowing for both mutable and immutable instances.
+We will rely on the standard library type Nat representing unsigned 64 bit ints.
+
+Points: {
+  #(x: Nat, y: Nat): Point ->
+    Point: {
+      .x: Nat -> x,
+      .y: Nat -> y,
+  }
+}
+//user code
+Points#(34,21).x == 34
+
+Here Point and Points are two type declarations.
+Let's read this code from the top:
+We define a type Points, with a single method called `#`, taking formal parameters x and y of type Nat and returning a Point.
+The method body (introduced by `->`) is a single expression, returning an instace of the type Point, that is declared on the spot and has two methods:
+The method called `.x` takes zero parameters and returns a Nat. The body of the method captures the reference to 'x' and returns it.
+ Same for the method `.y`.
+
+As you can see, the declaration for Point is contained inside the declaration of Points.
+This is common when defining simple record-like types. 
+In other languages when using a similar code structure the name of the Point type ends up being `Points.Point`. In Fearless, this is not the case. Fearless do not have nested types, and those types are simply called `Point` and `Points`.
+
+In Fearless type declarations are quite atomic, and usually many type declarations are required to cover what can be defined with, for example, a single class declaration in Java. In this way type declarations stay simple of follow specific roles.
+Here Point only define an API and Points only creates instances.
+
+We then show how the user could instantiate a `Point` and access back the x coordinate.
+Let's examin that code carefully:
+In `Points#(..)..`, `Points` is an object:
+The Points type declaration has zero abstract methods, thus we can summon an instance of
+that type by simply writing its name.
+We call the method called `#` using `Points` as the receiver, and we pass 34 and 21 as arguments.
+The result of the method call `Points#(34,21)` is an instance of type Point.
+The ROG of this instance contains the objects 34, 21 and the point object itself.
+
+We then call the method `.x` on that instance, extracting the value 34.
+In fearless there are two kinds of method names:
+- Alphanumeric names, that must start with the '.' symbol followed by a non empty alphanumeric identifier. `.foo`, `.1`, `.x12` and `._hi` are examples of valid method names.
+- Operator names, composed by a set of reserved symbols.
+`#`, `+`, `++`, `<=`, `==`, `*` and `!` are examples of valid method names.
+Operator `#` is often use to represent the most common operation of a type.
+
+Look again to the declaration of Point:
+    `Point: {.x: Nat -> x, .y: Nat -> y,}`
+This expression is a closure: it captures external references (x and y in this case).
+Indeed that expression is all of the following: a value, an object literal, a closure and a type declaration.
+
+Consider now the following Animal type declaration:
+
+Animals:{
+  #(start: Point): mut Animal -> Block#
+    .let[Point] location = {start}//var vs val
+    .return {
+      mut Animal:{
+        read .location: Point -> location#,
+        mut  .run(x:Num): Void ->
+          location := Point(location#.x  + x, location#.y)
+        }
+      },
+  }
+
+The code structure is similar to Points/Point:
+Animals define the `#` factory method to instantiate `Animal`, that is defined internally.
+
+However, animals are mutable since their location may change when they `.run` forward.
+To this aim, the `#` method returns a `mut Animal`.
+The method body uses `Block` to define a local updatable varible using `.var`.
+We will explain the Block syntax later in the detail, but from this simple example you can see that we can declare local variables with types, names and initialization expressions.
+The variable is initialized the the starting point, and is visible in the closure below.
+Then we `.return` the mutable animal by creating a `mut` Animal object literal, defining a getter method for the location Point and a mutator method allowing the animal to run.
+- `.location` is a `read` method, thus it can be called on all kinds of animals.
+  expression `location#` calls the `#` method on the local variable, extracting the current value.
+- `.run` is a `mut` method and thus it can only be called on mut references.
+  expression `location:= ..` calls the `:=` method on the local variable, updating the current value.
+  The expression `location#.x  + x` calls the method `+` using the result of `location#.x` as the receiver and `x` as the argument.
+  In Fearless, all binary methods can be invoked without parenthesis, and they work as left associative operators, thus 1 + 2 * 3 == (1 + 2) * 3 == 1+(2)*(3)
+
+Consider the following code as an example:
+```
+Block#
+  .val[mut Animal]    bunny = {Animals#(Positions#(20,5))}
+  .val[imm Animal]      rat = {Animals#(Positions#(10,15))}
+  .val[read Animal]  mammal = {myBool?{.then->bunny, .else->rat}}
+  .do {bunny.run(5)} //OK
+//.do {rat.run(5)}  //ill typed: imm receiver for mut method
+//.do {mammal.run(5)}//ill typed: read receiver for mut method
+  .return {bunny.location.x + rat.location.x + mammal.location.x}
+```
+Here `.val` defines local values.
+While a local variable can be updated, and thus needs a `#` to return the stored information, a local value directly refers to the intended data. 
+Types for local variable and values can often be inferred and thus omitted, but we write it out explicitly here for clarity.
+
+Notably, bunny and rar are of diferent types:
+- `bunny` is a `mut Animal` but
+- `rat` is an `imm Animal`.
+
+Note how even if the method `Animals#` returns a `mut Animal` we can use it to initialize both a `mut Animal` and an `imm Animal`. This is not simple subyping. This is possible because of a concept called `promotion`, that we will see later.
+
+We then assign one of bunny or rat to mammal. This is allowed by subtyping: read references can be either imm or mut.
+
+We then make the bunny `.run`. This is accepted since bunny is a mut reference.
+The two commented lines below show that we could not use neither rat nor mammal in the same way.
+Then, we can compute the sum of the x coordinates from our 3 values.
+We can invoke the `.location` method from all the three values, since `.location` is a `read` method, and `read` methods are always accessible.
+
+As you can see, the type defition for `Animal` defined a family of types: mut,imm and read Animal. `mut`, `imm` and `read` are kinds of Reference Capabilities (RC). We well see more kinds of RC later on.
+`imm` is the default RC, and it is present if an RC is not specified explicity.
+That is, whenever we just mentioned `Nat` and `Void` types directly, the language understood those types as `imm Nat` and `imm Void`.
+Similarly, when we did not specified an RC in when declaring methods `#`, `.x` and `.y`, the language undesrtood those methods as imm methods.
+
+Generics allow for richer families of types.
+An iconic example to illustrate genercis is the Box.
+A box is the simplest possible form of container, containing exactly one instance of a generic type `E`. RC make defining boxes, and other kinds of collections, harder than in other languages.
+Consider the following type declaration
+```
+Box[E]:{
+  mut  .get: E
+//  mut  .get2: E
+//  read .get1: read/imm E,
+  }
+Box[E]:{ mut  .get: E  }
+Boxs:{ #[E](e: E): mut Box[E] -> {e} }
+```
+This example introduces generic types and generic methods:
+`Box[E]` is a generic type, 
+`E` is a type variable: it needs to be replaces with an actual type.
+`Box` is a family of types: new elements of this family exists for each possible way to replace `E`.
+Thus, we can have
+`Box[Str]`, that is just a short version for `imm Box[imm Str]`.
+We can also have `Box[Box[Str]]`, `Box[Box[Box[Str]]]` and so on at infinitum.
+We can have `mut Box[mut Person]`, but also `read Box[mut Person]`.
+
+Method `#` of Boxs is a generic method. As for most languages, when invoking a generic method, generic arguments are often inferred, so we will be able to just write
+`Boxs#(myAnimal)` instead of `Boxs#[mut Animal](myAnimal)`.
+
+At a first sight, the implementation of Boxs# is quite misterious.
+Fearless is applying a lot of type inference and sugar to that code.
+Let's unfold it.
+`{e}` is an object literal where both the type name and the implemented method name has been inferred. Without this inference the code would look as follows:
+`mut Fresh[E]: Box[E]{ mut .get: E -> e }`. How is this inferred?
+The expected type of `{e}` is `mut Box[E]`, so we know we need to return a new kind of Box.
+Box has a single abstract method `.get`, so to implement `Box` we infer that the implementation is meant for the method `.get`.
+This is equivalent to target type inference in Java lambdas.
+A fresh name, unused anywhere else, is given to the particular type declaration.
+This is equivalent to an anonymus inner class in Java.
+We will discuss later why it is `Fresh[E]` and not just `Fresh`.
+
+Indeed, the {..} in the Blocks are using this sugar and inference extensively. We will soon pull the courtain out of `Block` and show how it works internally; but now we keep focusing on Box.
+
+With `Box` as defined, `mut Box[E]` works well for any kind of E:
+- If `x:mut Box[mut Animal]`, `x.get` is of type `mut Animal`
+- If `x:mut Box[imm Animal]`, `x.get` is of type `imm Animal`
+- If `x:mut Box[read Animal]`, `x.get` is of type `read Animal`
+
+Box.get is defined as returning just `E`, thus the return type will have the same RC of the type used to instantiate `E`.
+However, the current version of Box.get only works for `mut` boxes, since it is marked as `mut`.
+
+If we were to define our box as
+```
+Box[E]:{ read  .get: E  }
+Boxs:{ #[E](e: E): mut Box[E] -> {e} }
+```
+We would get a type error: read .get method can only capture generic E as read E.
+We can fix this error as follows:
+```
+Box[E]:{ read  .get: read E  }
+Boxs:{ #[E](e: E): mut Box[E] -> {e} }
+```
+By writing `read E` we override the RC originally provided with E and we return the value always as `read`.
+This error is trying to protect us from a dangerous and confusing situation.
+If that code were allowed, we could write the following:
+
+Block#
+  .val[mut Animal] bunny = {Animals(Points(1,2))}
+  .val[read Box[mut Animal]] boxed = Boxs#(bunny)
+  .do {boxed.get.run(5)}
+
+Here we would be able to make our bunny run by accessing the bunny through the read Box.
+With the fixed version we would get
+  Error: mut method Animal.run can no be called on a read Animal.
+
+In Fearless, read references ensure a deep property:
+All ROG seen from a read reference is read (or imm). Other mut aliases may exists but they can not be accessed by simply extracting information from the read object itself.
+Thus, we can pass a read reference to our data to user code, and they will not be able to mutate our data, but only to read it.
+Similarly, imm references are deep too.
+The whole ROG from an imm reference is imm. The type system guarantees that there are no mut references to any objecting in that ROG.
+
+Sadly, the fixed code is now very restricive, and we would get the same error 
+also for a `mut Box[mut Animal]`.
+
+Not only that, but a `read Box[Num]` will give out `read Num` instead of `imm Num`, this would be useless because most number methods require an imm receiver.
+The first prolem is easy to fix. We just declare two different getters, a mut and a read one.
+The second problem is harder: our method should return `E` when `E` is immutable, and `read E` in all the other cases.
+Since is a very common issue with generic containers, Fearless has an extra keyword `read/imm` that can be applied to a generic argument to get this result.
+Here is the full code for the usable box type:
+
+```
+Box[E]:{ 
+  read .get: read/imm E
+  mut  .expose: E
+  }
+Boxs:{ #[E](e: E): mut Box[E] -> {.get->e, .expose->e} }
+```
+When implementing a method, the type is inferred, so we do not need to repeat the full type of `.get/.expose`.
+ 
+That is, in Fearless the structure of a type is as follows, where Ts is a sequence of types:
+
+RC ::= imm|mut|read|iso
+T  ::= RC D[Ts] | X | RC X | read/imm X
+
+There are four kinds of types:
+- A type can be a concrete type: an RC, a type name D and a sequence of types instantiating the generic arguments. `imm` is the default RC if RC is omitted.
+- A type can be just a type variable X
+- A type can be an RC and a type variable X. This types combines the D[Ts] part of the concrete type that will eventually instantiate X with the provided RC.
+- A read/imm type variable X. This types combines the D[Ts] part of the concrete type that will eventually instantiate X with `read` if X is not instantiated with an `imm` concrete type.
+
+...
+Next? Promotions?
+
+
+
+
+# Projects 
+
+A Fearless project is a folder containing files with extension *.fear.
+Those files can be at top level or inside folders.
+The organization of files in folders is for the benefit of the programmers and
+have no impact on the semantic of fearless.
+
+
+
+
+
+type name
+  simple type name
+  fully qualified type name
+
+type: R X | X | R D[Ts]
+
+type declaration D....
+a type declaration defines a family of types
+types are the most fundamental concept in Fearless
+
+
+Then show body using block, ref.
+
+finally show the first main?
+
+
+
+
+We first show a Point type, where all the instances are immutable, and then we show an Animal type, allowing for both mutable and immutable instances.
+We will rely on Nat and HasStr; they are types declared in the Fearless standard library. Nat represents unsigned 64 bit ints and HasStr is the common supertype for all the types that can be trivially converted into strings.
+
+Those are 
+
+Point:HasStr{
+  .x:Nat,
+  .y:Nat,
+  .sum(other:Point):Point->
+    Points#(this.x+other.x,this.y+other.y)
+  .str->
+    "Point["+this.x+", "+this.y+"]"
+  }
+Points:{#(x:Nat,y:Nat):Point->{.x->x,.y->y,}}

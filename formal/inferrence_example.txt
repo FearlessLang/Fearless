@@ -5,7 +5,7 @@ A:{
       .map{n -> n * 10}
       .filter{n -> n > 10}
       .toList
-      .get(0).match{ .some(n) -> n, .none -> Error.str(“oh noes”) },
+      .get(0).match{ .some(n) -> n, .none -> Error.msg(“oh noes”) },
   }
 //0
 {}:List #({}:List #({}:1,{}:2):infer,{}:List#({}:3):infer):infer.iter:infer

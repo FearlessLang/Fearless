@@ -38,7 +38,7 @@ LList[E]:NoMutHyg[E],Sealed,Iterable[recMdf E]{
     .elem(_,t) -> t,
     },
   lent .iter -> Block
-    .var[mut Ref[recMdf LList[recMdf E]]] cur={ Ref#this }
+    .let[mut Ref[recMdf LList[recMdf E]]] cur={ Ref#this }
     .return{{ .next -> cur.swap(cur*.tail).head }},
   }
 LListMatch[E,L,R]:{ mut .elem(head: mdf E, tail: mdf L): mdf R, mut .empty: mdf R }

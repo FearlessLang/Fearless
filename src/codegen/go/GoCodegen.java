@@ -4,11 +4,7 @@ import codegen.MIR;
 import codegen.optimisations.OptimisationBuilder;
 import id.Id;
 import id.Mdf;
-import magic.Magic;
-import utils.Bug;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,7 +17,7 @@ public class GoCodegen {
   private final MIR.Program p;
 
   public GoCodegen(MIR.Program p) {
-    this.p = new OptimisationBuilder(new MagicImpls(null, p.p()))
+    this.p = new OptimisationBuilder(new GoMagicImpls(null, p.p()))
       .withBoolIfOptimisation()
       .run(p);
   }

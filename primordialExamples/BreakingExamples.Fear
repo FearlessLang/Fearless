@@ -23,16 +23,16 @@ Box[E]:{
 }
 Main:{
   _ -> Block
-    .var[mut Foo] fooM = {Foo}
-    .var[imm Foo] fooI = {Foo}
-    .var[imm Box[imm Foo]] ibif = { .getRM -> fooI, .getM -> fooI }
-    .var[mut Box[mut Foo]] mbmf = { .getRM -> fooM, .getM -> fooM }
+    .let[mut Foo] fooM = {Foo}
+    .let[imm Foo] fooI = {Foo}
+    .let[imm Box[imm Foo]] ibif = { .getRM -> fooI, .getM -> fooI }
+    .let[mut Box[mut Foo]] mbmf = { .getRM -> fooM, .getM -> fooM }
     // One of these two is invalid (hopefully #2):
-    .var[mut Box[imm Foo]] mbif1 = { .getRM -> fooI, .getM -> fooI }
-    .var[mut Box[imm Foo]] mbif2 = { .getRM -> fooM, .getM -> fooI }
+    .let[mut Box[imm Foo]] mbif1 = { .getRM -> fooI, .getM -> fooI }
+    .let[mut Box[imm Foo]] mbif2 = { .getRM -> fooM, .getM -> fooI }
     // I expect this to be invalid because mut _ |- recMdf = mut and imm is
     // not a sub-type of mut:
-    .var[mut Box[mut Foo]] idk = { .getRM -> fooI, .getM -> fooM }
+    .let[mut Box[mut Foo]] idk = { .getRM -> fooI, .getM -> fooM }
     .return{}
 }
 

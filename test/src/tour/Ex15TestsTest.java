@@ -11,6 +11,7 @@ public class Ex15TestsTest {
   @Test void runTests() { run("""
     package test
     alias base.test.Main as TestMain,
+    alias base.Void as Void, alias base.caps.FIO as FIO,
     
     Test: TestMain{_, runner -> runner
       .test("Empty test", {sys -> Void})
@@ -22,6 +23,8 @@ public class Ex15TestsTest {
   @Test void runTestsWithSuite() { run("""
     package test
     alias base.test.Main as TestMain,
+    alias base.Void as Void, alias base.caps.FIO as FIO,
+
     
     Test: TestMain{_, runner -> runner
       .test("Empty test", {sys -> Void})
@@ -103,14 +106,14 @@ public class Ex15TestsTest {
         .test("non-Printing test", {sys -> Void})
         .suite("nested", {suite' -> suite'
           .test("test1", {sys -> Void})
-          .test("test2", {sys -> Error.str "sad"})
+          .test("test2", {sys -> Error.msg "sad"})
           .suite("more nested", {suite'' -> suite''
             .test("test3", {sys -> Void})
             .test("test4", {sys -> Void})
             .suite("more nested", {suite3 -> suite3
               .test("test5", {sys -> Void})
               .suite("more nested", {suite4 -> suite4
-                .test("test6", {sys -> Error.str "another one"})
+                .test("test6", {sys -> Error.msg "another one"})
                 .suite("more nested", {suite5 -> suite5
                   .test("test7", {sys -> Void})
                   .suite("more nested", {suite6 -> suite6

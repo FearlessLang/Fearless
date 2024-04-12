@@ -18,6 +18,6 @@ Error:{
 
 //Example
 Try#{
-  .try->Error.str("ohNo")
+  .try->Error.msg("ohNo")
   .catch(i)->Debug#(i.info) 
   }

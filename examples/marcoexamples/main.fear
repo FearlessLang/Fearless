@@ -12,7 +12,7 @@ Logic:{
     FPerson#("The Wizard in the tower", 456u)
     ),
   .list2: mut List[mut Person] -> Block#
-    .var myList = { this.peopleList }
+    .let myList = { this.peopleList }
     .do{ myList.add(FPerson#("Eve", 21u)) }
     .return{ myList },
   .list4: List[mut Person] -> this.list2,
@@ -29,7 +29,7 @@ Person:{
   }
 FPerson:F[Str, UInt, mut Person]{
   name, age -> Block#
-    .var _age = { Ref#[UInt](age) }
+    .let _age = { Ref#[UInt](age) }
     .return{{
       .name -> name,
       .age -> _age*,

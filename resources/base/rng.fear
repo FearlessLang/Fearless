@@ -10,8 +10,8 @@ alias base.Ref as Ref, alias base.RefImm as RefImm,
 /// parameters from musl (https://git.musl-libc.org/cgit/musl/tree/src/prng/rand.c)
 /// We actually only take the highest half of the bits because the low order bits have poor randomness
 FRandom: F[UInt, mut Random]{seed -> Block#
-  .if {seed == 0u} .error {FInfo.str "Seed may not be zero"}
-  .var prev = {Ref#seed}
+  .if {seed == 0u} .error {FInfo.msg "Seed may not be zero"}
+  .let prev = {Ref.ofImm(seed)}
   .return {{
     .uint -> Block#
       .do {prev := ((prev.get) * 6364136223846793005u + 1u >> 33u)}

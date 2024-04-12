@@ -13,9 +13,9 @@ Opt[T]:Extensible[Opt[T]]{
   read .match[R](m: mut OptMatch[read T, R]): R -> m.empty,
   imm  .match[R](m: mut OptMatch[imm T, R]): R -> m.empty,
 
-  mut  !: T -> this.match[T](mut OptMatch[T, T]{ .some(x) -> x, .empty -> Error.str "Opt was empty" }),
-  read !: read T -> this.match[read T](mut OptMatch[read T, read T]{ .some(x) -> x, .empty -> Error.str "Opt was empty" }),
-  imm  !: imm T -> this.match[imm T](mut OptMatch[imm T, imm T]{ .some(x) -> x, .empty -> Error.str "Opt was empty" }),
+  mut  !: T -> this.match[T](mut OptMatch[T, T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  read !: read T -> this.match[read T](mut OptMatch[read T, read T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
+  imm  !: imm T -> this.match[imm T](mut OptMatch[imm T, imm T]{ .some(x) -> x, .empty -> Error.msg "Opt was empty" }),
 
   mut .map[R](f: mut OptMap[T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),
   read .map[R](f: mut OptMap[read T, R]): mut Opt[R] -> this.match[mut Opt[R]](f),

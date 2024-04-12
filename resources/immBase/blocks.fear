@@ -1,9 +1,9 @@
 package base
 
-Info:{}
 ReturnStmt[R:imm]:{ #: R }
 Condition:{ #: Bool }
-VarContinuation[X:imm,R:imm]:{ #(x: X, self: Block[R]): R }
+//VarContinuation[X:imm,R:imm]:{ #(x: X, self: Block[R]): R }
+Continuation[T:imm,C:imm,R:imm]: {#(x: T, self: C): R}
 ControlFlow: {
   .continue: ControlFlow[Void] -> {m -> m.continue},
   .break: ControlFlow[Void] -> {m -> m.break},
@@ -31,7 +31,7 @@ Block[R:imm]: Sealed{
   .assert(p: Condition): Block[R] -> Assert!(p#, AssertCont[Block[R]]{this}),
   .assert(p: Condition, failMsg: Str): Block[R] ->
     Assert!(p#, failMsg, AssertCont[Block[R]]{this}),
-  .var[X:imm](x: ReturnStmt[X], cont: VarContinuation[X, R]): R -> cont#(x#, this),
+  .let[X:imm](x: ReturnStmt[X], cont: Continuation[X, Block[R], R]): R -> cont#(x#, this),
   .if(p: Condition): BlockIf[R] -> p# ? { 'cond
     .then -> { 't
       .return(a) -> _DecidedBlock#(a#),
@@ -55,6 +55,6 @@ _DecidedBlock:{
   #[R:imm](res: R): mut Block[R] -> { 'self
     .return(_) -> res,
     .do(_) -> self,
-    .var(_, _) -> res,
+    .let(_, _) -> res,
     }
   }

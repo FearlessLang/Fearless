@@ -10,18 +10,17 @@ public class ImmJavaCodegen extends JavaCodegen {
   public ImmJavaCodegen(MIR.Program p) { super(p); }
 
   @Override public String visitProgram(Id.DecId entry) {
-    assert this.p == p;
     var entryName = getName(entry);
     var init = """
       static void main(String[] args){
         %s base.Main_0 entry = %s._$self;
+          rt.NativeRuntime.println(entry.$35$imm$(FAux.LAUNCH_ARGS).utf8());
         try {
-          System.out.println(entry.$35$imm$(FAux.LAUNCH_ARGS));
         } catch (StackOverflowError e) {
           System.err.println("Program crashed with: Stack overflowed");
           System.exit(1);
         } catch (Throwable t) {
-          System.err.println("Program crashed with: "+t.getLocalizedMessage());
+          System.err.println("Program crashed with: "+t.getMessage());
           System.exit(1);
         }
       }

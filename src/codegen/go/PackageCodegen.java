@@ -33,7 +33,7 @@ public class PackageCodegen implements MIRVisitor<String> {
 
   protected final MIR.Program p;
   private final MIR.Package pkg;
-  private final MagicImpls magic;
+  private final GoMagicImpls magic;
 
   private final HashMap<Id.DecId, String> freshStructs = new HashMap<>();
   private final HashSet<String> imports = new HashSet<>();
@@ -42,7 +42,7 @@ public class PackageCodegen implements MIRVisitor<String> {
   public PackageCodegen(MIR.Program p, MIR.Package pkg, Map<MIR.FName, MIR.Fun> funMap) {
     this.p = p;
     this.pkg = pkg;
-    this.magic = new MagicImpls(this, p.p());
+    this.magic = new GoMagicImpls(this, p.p());
     this.funMap = funMap;
   }
 

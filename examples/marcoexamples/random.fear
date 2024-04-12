@@ -15,8 +15,8 @@ B1:{
 
 B2:{
   #(io: IO): ... -> Block#
-    .var file1 = { FFile.reader("foo.txt")#io }
-    .var file2 = { FFile.writer("arr.txt")#io }
+    .let file1 = { FFile.reader("foo.txt")#io }
+    .let file2 = { FFile.writer("arr.txt")#io }
     .return { C.process(file1, file2) }
   }
 

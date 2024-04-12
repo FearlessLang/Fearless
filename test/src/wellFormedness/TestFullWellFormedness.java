@@ -337,6 +337,15 @@ public class TestFullWellFormedness {
 //    Break: {#: L -> L{x -> L{y -> x}}#(L{y -> y})}
 //    """); }
 
+  @Test void lambdaImplementingItself() { fail("""
+    In position [###]/Dummy0.fear:2:0
+    [E8 cyclicImplRelation]
+    Implements relations must be acyclic. There is a cycle on the trait test.A/0.
+    """, """
+    package test
+    A: A{}
+    """); }
+
   @Property void recMdfOnlyOnRecMdf(@ForAll("methMdfs") Mdf mdf) {
     var code = String.format("""
     package test

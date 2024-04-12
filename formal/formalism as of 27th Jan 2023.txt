@@ -28,18 +28,18 @@ Block
 
 IfStream[C]:{
   .return[R](r:F[R],cont:F[Void,Stream[C],R]):R
-  .var[R](x:F[T],cont:F[T,Stream[C],R]):R
+  .let[R](x:F[T],cont:F[T,Stream[C],R]):R
   }
 IfThenStream[C]:IfStream[C]{
   .inner:Stream[C]
   .return[R](r:F[R],cont:F[Void,Stream[C],R]):R->r#
-  .var[R](x:F[T],cont:F[T,Stream[C],R]):R->cont#(x#,this.inner)
+  .let[R](x:F[T],cont:F[T,Stream[C],R]):R->cont#(x#,this.inner)
   }
 
 IfElseStream[C]:IfStream[C]{
   .inner:Stream[C]
   .return[R](r:F[R],cont:F[Void,Stream[C],R]):R->cont#(Void,this.inner)
-//  .var[R](x:F[T],cont:F[T,Stream[C],R]):R->cont#(x#,this.inner) ??
+//  .let[R](x:F[T],cont:F[T,Stream[C],R]):R->cont#(x#,this.inner) ??
   }
 
 

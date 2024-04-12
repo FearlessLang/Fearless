@@ -1,7 +1,7 @@
 package base.test
 
 ResultPrinters: F[mut IO, mut ResultPrinter]{io -> mut ResultPrinter: ResultReporter{#(results) -> Block#
-  .var[Str] resultsMsg = {results.flow.map{suite -> _TextUtils.suite(suite, 1)}#(Flow.str "\n\n")}
+  .let[Str] resultsMsg = {results.flow.map{suite -> _TextUtils.suite(suite, 1)}#(Flow.str "\n\n")}
   .do {io.printlnErr("# Test Results\n" + resultsMsg)}
   .return {Void}
   }}

@@ -13,20 +13,20 @@ _System:Sealed,System{ _System }
 
 //System[R]:{
 ////  mut .use[C](c: FCap[Auth, C], cont: lent UseCapCont[C, mdf Auth, R]): R -> Do.hyg
-////    .var[mut C] cap = { c.lift(this._auth)# }
-////    .var[mdf R] res = { cont#(cap, this) }
+////    .let[mut C] cap = { c.lift(this._auth)# }
+////    .let[mdf R] res = { cont#(cap, this) }
 ////    .do{ c.close(cap) }
 ////    .return{ res },
 //  mut .block: mut Block[mdf R] -> {},
 //  mut .return(ret: mut ReturnStmt[mdf R]): mdf R -> ret#,
 ////  lent .share[RR](): iso System[mdf RR, Auth] -> Do.hyg[mut System[mdf RR, Auth]]
-////    .var[F[lent Auth]] auth = { this.auth }
+////    .let[F[lent Auth]] auth = { this.auth }
 ////    .return{{ auth }},
 ////  lent .share[RR, C](c: FCap[Auth, C]): iso System[mdf RR, C] -> Do.hyg[mut System[mdf RR, C]]
-////    .var[F[lent C]] auth = { c.lift(this.auth) }
+////    .let[F[lent C]] auth = { c.lift(this.auth) }
 ////    .return{{ auth }},
 ////  lent .use2[RR, C](c: FCap2[Auth, NS], cont: lent UseCapCont[C, mdf Auth, mdf R]): mdf R -> Do.hyg[mut System[mdf RR, C]]
-////      .var[F[lent C]] auth = { c.lift(this._auth) }
+////      .let[F[lent C]] auth = { c.lift(this._auth) }
 ////      .return{{ auth }},
 //  }
 //SystemIO[R]:System[R,IO]{}
