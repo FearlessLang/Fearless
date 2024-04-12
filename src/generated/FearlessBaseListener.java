@@ -1,4 +1,4 @@
-// Generated from /Users/nick/Programming/PhD/fearless/antlrGrammars/Fearless.g4 by ANTLR 4.12.0
+// Generated from /home/nick/Programming/uni/fearless/antlrGrammars/Fearless.g4 by ANTLR 4.12.0
 package generated;
 
 import org.antlr.v4.runtime.ParserRuleContext;
