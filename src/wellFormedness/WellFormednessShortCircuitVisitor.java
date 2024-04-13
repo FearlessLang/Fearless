@@ -32,6 +32,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
 
   @Override public Optional<CompileError> visitLambda(E.Lambda e) {
     return ShortCircuitVisitor.visitAll(e.its(), it->noPrivateTraitOutsidePkg(it.name()))
+      .or(()->validLambdaMdf(e))
       .or(()->noSealedOutsidePkg(e))
       .or(()->noImplInlineDec(e))
       .or(()->noFreeGensInLambda(e))
@@ -158,5 +159,10 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
     }
     if (invalidBounds.isEmpty()) { return Optional.empty(); }
     throw Fail.invalidLambdaNameMdfBounds(invalidBounds).pos(e.pos());
+  }
+
+  private Optional<CompileError> validLambdaMdf(E.Lambda e) {
+    if (e.mdf().is(Mdf.readImm, Mdf.lent, Mdf.readOnly)) { return Optional.of(Fail.invalidLambdaMdf(e.mdf())); }
+    return Optional.empty();
   }
 }

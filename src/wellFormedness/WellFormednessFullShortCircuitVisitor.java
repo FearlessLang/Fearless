@@ -85,6 +85,7 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
         noExplicitThis(List.of(x))
         .or(()->noShadowingVar(List.of(x)))
       )
+      .or(()->validLambdaMdf(e))
       .or(()->noImplInlineDec(e))
       .or(()->hasNonDisjointMs(e))
       .or(()->super.visitLambda(e))
@@ -207,6 +208,13 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
     });
   }
 
+  private Optional<CompileError> validLambdaMdf(E.Lambda e) {
+    return e.mdf().flatMap(mdf->{
+      if (mdf.is(Mdf.readImm, Mdf.lent, Mdf.readOnly)) { return Optional.of(Fail.invalidLambdaMdf(mdf)); }
+      return Optional.empty();
+    });
+  }
+
   private Optional<CompileError> noRecMdfInNonRecMdf(E.Sig s, Id.MethName name) {
     if (s.mdf().isRecMdf()) { return Optional.empty(); }
     return new FullShortCircuitVisitor<CompileError>(){
@@ -250,19 +258,3 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
     return Optional.of(Fail.conflictingDecls(conflicts));
   }
 }
-
-/*
-//TODO: move it in a better place
-For the standard library
-we need an input format
-
-precompiled Opt
-package base
-Opt[X]{
-  .match(..):T->this
-  }
-
-HasId:{  .same[X](mut X x, read X y):Bool Native["java{ return x==y; }"]
-
-Native:{ .get[T](name: Str): T }
- */
