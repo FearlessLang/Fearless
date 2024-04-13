@@ -282,6 +282,10 @@ public class Fail{
     return of(conflictingMsg("The following package names are reserved for use in the Fearless standard library", taggedConflicts));
   }
 
+  public static CompileError lambdaImplementsGeneric(astFull.T t) {
+    return of("A lambda may not implement a generic type parameter '%s'".formatted(t));
+  }
+
   private static String aVsAn(Mdf mdf) {
     if (mdf.isImm()) { return "an "+mdf; }
     return "a "+mdf;
@@ -349,7 +353,8 @@ enum ErrorCode {
   invalidLambdaNameMdfBounds,
   mismatchedMethodGens,
   syntaxError,
-  specialPackageConflict;
+  specialPackageConflict,
+  lambdaImplementsGeneric;
   private static final ErrorCode[] values = values();
   int code() {
     return this.ordinal() + 1;

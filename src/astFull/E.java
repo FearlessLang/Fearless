@@ -1,5 +1,6 @@
 package astFull;
 
+import failure.Fail;
 import files.HasPos;
 import files.Pos;
 import id.Id;
@@ -51,6 +52,9 @@ public sealed interface E extends HasPos {
 
     @Override public Lambda withT(T t) {
       var mdf = Optional.ofNullable(t.isInfer() ? null:t.mdf());
+      if (!t.isInfer() && t.match(gx->true, it->false)) {
+        throw Fail.lambdaImplementsGeneric(t).pos(pos);
+      }
       Optional<Id.IT<T>> it = Optional.ofNullable(t.isInfer() ? null : t.match(gx->null, iti->iti));
       return new Lambda(name, mdf, its, selfName, meths, it, pos);
     }

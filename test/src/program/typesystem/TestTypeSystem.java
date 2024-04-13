@@ -1871,4 +1871,13 @@ public class TestTypeSystem {
     B[X]: A[X,Default]
     Break:{ #(b: B[Foo]): A[Foo,Default] -> b }
     """); }
+
+  @Test void noImpossibleLambda() {fail("""
+    In position file:///home/nick/Programming/uni/fearless/Dummy0.fear:2:15
+    [E61 lambdaImplementsGeneric]
+    A lambda may not implement a generic type parameter 'X'
+    """, """
+    package test
+    A[X]: {#: X -> {}}
+    """);}
 }
