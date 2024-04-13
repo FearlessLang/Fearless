@@ -186,7 +186,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
   default Optional<Supplier<? extends CompileError>> mOkIsoPromotion(String selfName, T selfT, E.Meth m, E.Sig sig) {
     Function<T, T> mdfTransform = t->{
       if (t.mdf().isMut()) { return t.withMdf(Mdf.lent); }
-      if (t.mdf().isRead()) { return t.withMdf(Mdf.readOnly); }
+      if (t.mdf().is(Mdf.read, Mdf.readImm)) { return t.withMdf(Mdf.readOnly); }
       return t;
     };
     var mutAsLentG = new Gamma() {

@@ -90,9 +90,6 @@ public interface GenericBounds {
 
     if (t.mdf().isMdf()) {
       var bs = xbs.get(t.gxOrThrow());
-      if (!bounds.containsAll(bs)) {
-        System.out.println("sgsrg");
-      }
       return bounds.containsAll(bs) ? Optional.empty() : errMsg.get();
     }
 
