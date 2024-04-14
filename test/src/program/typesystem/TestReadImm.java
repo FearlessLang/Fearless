@@ -37,6 +37,11 @@ public class TestReadImm {
     package test
     A: {#[S:imm](s: S): iso Box[S] -> Box#s}
     """, BOX); }
+  @Test void boxIsoPromotionCall() { ok("""
+    package test
+    B:{#[Y](b: iso Y): mut B -> {}}
+    A: {#[S:imm](s: S): mut B -> B#[mut Box[S]](Box#[S]s)}
+    """, BOX); }
   @Test void boxIsoPromotionWrong() { fail("""
     In position [###]/Dummy0.fear:2:33
     [E33 callTypeError]
