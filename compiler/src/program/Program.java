@@ -32,10 +32,10 @@ public interface Program {
   /** with t=C[Ts]  we do  C[Ts]<<Ms[Xs=Ts],*/
   List<NormResult> cMsOf(Mdf recvMdf, Id.IT<T> t);
   CM plainCM(CM fancyCM);
-  Set<Id.GX<ast.T>> gxsOf(Id.IT<T> t);
+  Set<Id.GX<T>> gxsOf(Id.IT<T> t);
   Program withDec(T.Dec d);
   List<ast.E.Lambda> lambdas();
-  Optional<Pos> posOf(Id.IT<ast.T> t);
+  Optional<Pos> posOf(Id.IT<T> t);
   /** Produce a clone of Program without any cached data */
   Program shallowClone();
   TypeSystemFeatures tsf();
@@ -49,10 +49,10 @@ public interface Program {
     if(m1 == m2){ return true; }
     if (m2.is(Mdf.readOnly)) { return true; }
     return switch(m1){
-      case mut -> m2.isLikeMut() || m2.isRead();
-      case imm -> m2.is(Mdf.read);
+      case mut -> m2.isLikeMut();
+      case imm -> m2.is(Mdf.read, Mdf.readImm);
       case iso -> true;
-      case readOnly, mdf, recMdf, read, lent -> false;
+      case readOnly, mdf, recMdf, read, readImm, lent -> false;
     };
   }
   default boolean isSubType(XBs xbs, astFull.T t1, astFull.T t2) { return isSubType(xbs, t1.toAstT(), t2.toAstT()); }
@@ -178,7 +178,7 @@ public interface Program {
 //    return e.accept(v);
 //  }
 
-  default Optional<Supplier<? extends CompileError>> isType(Gamma g, XBs xbs, ast.E e, ast.T expected) {
+  default Optional<Supplier<? extends CompileError>> isType(Gamma g, XBs xbs, ast.E e, T expected) {
 //    var g = Streams.zip(xs,ts).fold(Gamma::add, Gamma.empty());
     var v = ETypeSystem.of(this, g, xbs, Optional.of(expected), new ConcurrentHashMap<>(), 0);
     var res = e.accept(v);
@@ -190,7 +190,7 @@ public interface Program {
     assert !mdf.isMdf();
     if (mdf.is(Mdf.iso, Mdf.mut, Mdf.recMdf, Mdf.mdf)) { return true; }
     if (mdf.isLent() && !mMdf.isIso()) { return true; }
-    return mdf.is(Mdf.imm, Mdf.read, Mdf.readOnly) && mMdf.is(Mdf.imm, Mdf.read, Mdf.readOnly, Mdf.recMdf);
+    return mdf.is(Mdf.imm, Mdf.read, Mdf.readImm, Mdf.readOnly) && mMdf.is(Mdf.imm, Mdf.read, Mdf.readOnly, Mdf.recMdf);
   }
 
   record FullMethSig(Id.MethName name, E.Sig sig){}
@@ -450,7 +450,7 @@ public interface Program {
       .anyMatch(t2->isSubType(xbs, new T(mdf, t2), t3));
   }
 
-  default Id.IT<ast.T> liftIT(Id.IT<astFull.T>it){
+  default Id.IT<T> liftIT(Id.IT<astFull.T>it){
     var ts = it.ts().stream().map(astFull.T::toAstT).toList();
     return new Id.IT<>(it.name(), ts);
   }

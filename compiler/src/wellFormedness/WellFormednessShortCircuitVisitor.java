@@ -12,7 +12,10 @@ import magic.MagicImpls;
 import visitors.ShortCircuitVisitor;
 import visitors.ShortCircuitVisitorWithEnv;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO: Sealed and _C/_m restrictions
@@ -32,6 +35,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
 
   @Override public Optional<CompileError> visitLambda(E.Lambda e) {
     return ShortCircuitVisitor.visitAll(e.its(), it->noPrivateTraitOutsidePkg(it.name()))
+      .or(()->validLambdaMdf(e))
       .or(()->noSealedOutsidePkg(e))
       .or(()->noImplInlineDec(e))
       .or(()->noFreeGensInLambda(e))
@@ -59,22 +63,21 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
 
   @Override public Optional<CompileError> visitT(T t) {
     assert !(t.mdf().isMdf() && t.isIt());
-    return noHygInMut(t).or(()->super.visitT(t));
+    return super.visitT(t);
   }
 
   @Override public Optional<CompileError> visitIT(Id.IT<T> t) {
     return super.visitIT(t);
   }
 
-  private Optional<CompileError> noHygInMut(T t) {
-    // TODO: not sure how to implement this without NoMutHyg because how do we distinguish captures from functions at the type level
-    return Optional.empty();
-//    var fixed = TypeRename.core(p).fixMut(t);
-//    if (!fixed.equals(t)) {
-//      return Optional.of(Fail.mutCapturesHyg(t));
-//    }
-//
-//    return Optional.empty();
+  @Override public Optional<CompileError> visitMdf(Mdf mdf) {
+    if (!this.p.tsf().recMdf() && mdf.isRecMdf()) {
+      return Optional.of(CompileError.of("recMdf has been disabled in this compilation"));
+    }
+    if (!this.p.tsf().hygienics() && mdf.isHyg()) {
+      return Optional.of(CompileError.of("Hygienics have been disabled in this compilation"));
+    }
+    return super.visitMdf(mdf);
   }
 
   private Optional<CompileError> norecMdfInNonRecMdf(E.Sig s, Id.MethName name) {
@@ -159,5 +162,10 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
     }
     if (invalidBounds.isEmpty()) { return Optional.empty(); }
     throw Fail.invalidLambdaNameMdfBounds(invalidBounds).pos(e.pos());
+  }
+
+  private Optional<CompileError> validLambdaMdf(E.Lambda e) {
+    if (e.mdf().is(Mdf.readImm, Mdf.lent, Mdf.readOnly)) { return Optional.of(Fail.invalidLambdaMdf(e.mdf())); }
+    return Optional.empty();
   }
 }

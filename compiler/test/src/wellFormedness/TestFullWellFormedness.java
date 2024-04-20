@@ -346,6 +346,31 @@ public class TestFullWellFormedness {
     A: A{}
     """); }
 
+  @Test void noLentLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:22
+    [E62 invalidLambdaMdf]
+    lent is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: lent A -> lent A}
+    """); }
+  @Test void noReadOnlyLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:30
+    [E62 invalidLambdaMdf]
+    readOnly is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: readOnly A -> readOnly A}
+    """); }
+  @Test void noReadImmLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:30
+    [E62 invalidLambdaMdf]
+    read/imm is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: read/imm A -> read/imm A}
+    """); }
+
   @Property void recMdfOnlyOnRecMdf(@ForAll("methMdfs") Mdf mdf) {
     var code = String.format("""
     package test
@@ -367,6 +392,6 @@ public class TestFullWellFormedness {
   }
 
   @Provide Arbitrary<Mdf> methMdfs() {
-    return Arbitraries.of(Arrays.stream(Mdf.values()).filter(mdf->!mdf.isMdf()).toList());
+    return Arbitraries.of(Arrays.stream(Mdf.values()).filter(mdf->!mdf.isMdf() && !mdf.isReadImm()).toList());
   }
 }

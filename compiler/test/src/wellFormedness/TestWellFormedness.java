@@ -340,4 +340,29 @@ public class TestWellFormedness {
     Str:{} Bob:Str{}
     UInt:{} TwentyFour:UInt{}
     """); }
+
+  @Test void noLentLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:17
+    [E62 invalidLambdaMdf]
+    lent is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: lent A -> {}}
+    """); }
+  @Test void noReadOnlyLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:21
+    [E62 invalidLambdaMdf]
+    readOnly is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: readOnly A -> {}}
+    """); }
+  @Test void noReadImmLambdaCreation() { fail("""
+    In position [###]/Dummy0.fear:2:21
+    [E62 invalidLambdaMdf]
+    read/imm is not a valid modifier for a lambda.
+    """, """
+    package test
+    A: {#: read/imm A -> {}}
+    """); }
 }

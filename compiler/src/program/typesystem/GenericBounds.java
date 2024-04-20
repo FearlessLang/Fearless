@@ -80,8 +80,12 @@ public interface GenericBounds {
 
   static Optional<Supplier<? extends CompileError>> validGenericMdf(XBs xbs, Set<Mdf> bounds, T t) {
     Supplier<Optional<Supplier<? extends CompileError>>> errMsg = ()->Optional.of(()->Fail.invalidMdfBound(t, bounds.stream().sorted().toList()));
-    if (!t.mdf().is(Mdf.mdf, Mdf.recMdf)) {
+    if (!t.mdf().is(Mdf.mdf, Mdf.recMdf, Mdf.readImm)) {
       return bounds.contains(t.mdf()) ? Optional.empty() : errMsg.get();
+    }
+
+    if (t.mdf().isReadImm()) {
+      return bounds.containsAll(Set.of(Mdf.read, Mdf.imm)) ? Optional.empty() : errMsg.get();
     }
 
     if (t.mdf().isMdf()) {

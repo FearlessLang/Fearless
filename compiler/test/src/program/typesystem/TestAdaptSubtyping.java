@@ -2,10 +2,15 @@ package program.typesystem;
 
 import org.junit.jupiter.api.Test;
 
+import static program.typesystem.RunTypeSystem.fail;
 import static program.typesystem.RunTypeSystem.ok;
 
 public class TestAdaptSubtyping {
-  @Test void contravarianceBoxMatcher() { ok("""
+  @Test void contravarianceBoxMatcher() { fail("""
+    In position [###]/Dummy0.fear:12:41
+    [E53 xTypeError]
+    Expected 'o' to be imm test.Box[imm test.Person[]], got imm test.Box[imm test.Student[]].
+    """, """
     package test
     UInt:{} Str:{}
     Person:{ read .name: Str, read .age: UInt, }

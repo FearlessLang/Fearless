@@ -21,7 +21,7 @@ public interface XBs {
   Optional<Set<Mdf>> getO(String s);
   static XBs empty(){ return x->Optional.empty(); }
   default XBs add(String x, Set<Mdf> bounds) {
-    assert !bounds.contains(Mdf.mdf) && !bounds.contains(Mdf.recMdf);
+    assert !bounds.contains(Mdf.mdf) && !bounds.contains(Mdf.recMdf) && !bounds.contains(Mdf.readImm);
     return xi->xi.equals(x) ? Optional.of(bounds) : this.getO(xi);
   }
   default XBs addBounds(Collection<Id.GX<T>> gens, Map<Id.GX<T>, Set<Mdf>> newBounds) {

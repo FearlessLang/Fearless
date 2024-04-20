@@ -261,14 +261,17 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
 
   @Override public Mdf visitMdf(MdfContext ctx) {
     if(ctx.getText().isEmpty()){ return Mdf.imm; }
+    if (ctx.getText().equals("read/imm")) { return Mdf.readImm; }
     return Mdf.valueOf(ctx.getText());
   }
   public Mdf visitExplicitMdf(MdfContext ctx) {
     if(ctx.getText().isEmpty()){ return null; }
+    if (ctx.getText().equals("read/imm")) { return Mdf.readImm; }
     return Mdf.valueOf(ctx.getText());
   }
   public Mdf visitGenMdf(MdfContext ctx) {
     if(ctx.getText().isEmpty()){ return Mdf.mdf; }
+    if (ctx.getText().equals("read/imm")) { return Mdf.readImm; }
     return Mdf.valueOf(ctx.getText());
   }
 

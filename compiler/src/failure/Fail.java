@@ -91,6 +91,7 @@ public class Fail{
   public static CompileError missingDecl(Id.DecId d){ return of("The following trait cannot be aliased because it does not exist:\n"+d); }
 
   public static CompileError invalidMethMdf(E.Sig s, Id.MethName n){ return of(String.format("%s is not a valid modifier for a method (on the method %s).", n.mdf().orElseThrow(), n)); }
+  public static CompileError invalidLambdaMdf(Mdf mdf){ return of(String.format("%s is not a valid modifier for a lambda.", mdf)); }
   public static CompileError cannotInferSig(Id.DecId d, Id.MethName m){ return of(String.format("Could not infer the signature for %s in %s.", m, d)); }
   public static CompileError cannotInferAbsSig(Id.DecId d){ return of(String.format("Could not infer the signature for the abstract lambda in %s. There must be one abstract lambda in the trait.", d)); }
   public static CompileError traitNotFound(Id.DecId d){
@@ -276,6 +277,10 @@ public class Fail{
     return of(conflictingMsg("The following package names are reserved for use in the Fearless standard library", conflicts));
   }
 
+  public static CompileError lambdaImplementsGeneric(astFull.T t) {
+    return of("A lambda may not implement a generic type parameter '%s'".formatted(t));
+  }
+
   private static String aVsAn(Mdf mdf) {
     if (mdf.isImm()) { return "an "+mdf; }
     return "a "+mdf;
@@ -344,7 +349,10 @@ enum ErrorCode {
   mismatchedMethodGens,
   syntaxError,
   specialPackageConflict,
-  reservedPackageName;
+  reservedPackageName,
+  specialPackageConflict,
+  lambdaImplementsGeneric,
+  invalidLambdaMdf;
   private static final ErrorCode[] values = values();
   int code() {
     return this.ordinal() + 1;

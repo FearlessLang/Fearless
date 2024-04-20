@@ -11,7 +11,7 @@ alias base.Ref as Ref, alias base.RefImm as RefImm,
 /// We actually only take the highest half of the bits because the low order bits have poor randomness
 FRandom: F[UInt, mut Random]{seed -> Block#
   .if {seed == 0u} .error {FInfo.msg "Seed may not be zero"}
-  .let prev = {Ref.ofImm(seed)}
+  .let prev = {Ref#seed}
   .return {{
     .uint -> Block#
       .do {prev := ((prev.get) * 6364136223846793005u + 1u >> 33u)}
