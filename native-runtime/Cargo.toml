@@ -8,7 +8,7 @@ name = "native_rt"
 crate-type = ["cdylib"]
 
 [features]
-compiler-only = ["clap"]
+compiler-only = ["seahash"]
 runtime-only = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -19,7 +19,7 @@ jni = { version = "0.21.1" }
 unicode-segmentation = { version = "1.11.0" }
 # RT Only
 # Compiler Only
-clap = { version = "4.5.4", optional = true }
+seahash = { version = "4.1.0", optional = true, features = ["use_std"] }
 
 [profile.release]
 lto = true

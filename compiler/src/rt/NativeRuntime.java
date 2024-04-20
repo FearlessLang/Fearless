@@ -16,7 +16,7 @@ public final class NativeRuntime {
       case "aarch64", "arm64" -> "arm64";
       default -> throw new IllegalStateException("Unsupported architecture: "+System.getProperty(arch));
     };
-    var libName = System.mapLibraryName("native_rt");
+    var libName = System.mapLibraryName("native_compiler");
     var resourceLibPath = ResolveResource.artefact("/rt/libnative/"+arch+"-"+libName);
     // This is a little sad but Windows, Mac, and Linux all will refuse to dynamically link to a file that does not
     // exist in the "real" filesystem. So, we need to copy our library to load it into memory.
@@ -45,4 +45,5 @@ public final class NativeRuntime {
   public static native void println(byte[] utf8Str);
   public static native void printlnErr(byte[] utf8Str);
   public static native void printErr(byte[] utf8Str);
+  public static native long hashString(byte[] utf8Str);
 }

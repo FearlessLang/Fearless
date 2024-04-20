@@ -37,4 +37,13 @@ public class TestNativeStrings {
 		NativeRuntime.validateStringOrThrow(utf8);
 		assertEquals(1, size);
 	}
+	@Test void shouldHashConsistently() {
+		var strA = "ABC".getBytes(StandardCharsets.UTF_8);
+		assertEquals(NativeRuntime.hashString(strA), NativeRuntime.hashString(strA));
+	}
+	@Test void shouldHashDifferently() {
+		var strA = "ABC".getBytes(StandardCharsets.UTF_8);
+		var strB = "DEF".getBytes(StandardCharsets.UTF_8);
+		assertNotEquals(NativeRuntime.hashString(strA), NativeRuntime.hashString(strB));
+	}
 }
