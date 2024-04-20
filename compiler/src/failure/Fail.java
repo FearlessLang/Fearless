@@ -350,7 +350,6 @@ enum ErrorCode {
   syntaxError,
   specialPackageConflict,
   reservedPackageName,
-  specialPackageConflict,
   lambdaImplementsGeneric,
   invalidLambdaMdf;
   private static final ErrorCode[] values = values();
