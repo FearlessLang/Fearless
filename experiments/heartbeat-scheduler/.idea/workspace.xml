@@ -4,17 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="688be0b0-7328-40b2-96a9-541adfea4f35" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/GlobalTaskQueue.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/Main.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/WorkerQueue.java" afterDir="false" />
+    <list default="true" id="688be0b0-7328-40b2-96a9-541adfea4f35" name="Changes" comment="Basic heartbeat scheduler in java">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/GlobalTaskQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/GlobalTaskQueue.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/WorkerQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/WorkerQueue.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +23,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/../.." value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="MacroExpansionManager">
@@ -53,7 +52,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "heartbeat",
     "go.import.settings.migrated": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/nick/Programming/uni/fearless/experiments/heartbeat-scheduler/src",
@@ -102,12 +101,25 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1715585968543</updated>
-      <workItem from="1715585969868" duration="7818000" />
+      <workItem from="1715585969868" duration="10597000" />
     </task>
+    <task id="LOCAL-00001" summary="Basic heartbeat scheduler in java">
+      <option name="closed" value="true" />
+      <created>1715594462555</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1715594462555</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Basic heartbeat scheduler in java" />
+    <option name="LAST_COMMIT_MESSAGE" value="Basic heartbeat scheduler in java" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

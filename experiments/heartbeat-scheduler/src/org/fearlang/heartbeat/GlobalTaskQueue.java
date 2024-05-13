@@ -1,25 +1,29 @@
 package org.fearlang.heartbeat;
 
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 
 public final class GlobalTaskQueue {
   private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<>();
-  private volatile boolean isRunning = false;
   private WorkerQueue[] workers;
   private Thread worker;
+  private volatile boolean isWaiting = false;
+  private final CompletableFuture<Void> onSettled = new CompletableFuture<>();
 
   public void start() {
     this.worker = Thread.ofVirtual().name("[Heartbeat] Main loop").start(() -> {
       while (true) {
-        var task = tasks.poll();
+        var task = this.tasks.poll();
         if (task != null) {
-          this.isRunning = true;
           task.run();
         } else {
-          this.isRunning = false;
+          if (this.isWaiting) {
+            this.onSettled.complete(null);
+            return;
+          }
           LockSupport.park();
         }
       }
@@ -38,9 +42,9 @@ public final class GlobalTaskQueue {
   }
 
   public void waitForSettle() {
-    while (!this.tasks.isEmpty() || this.isRunning) {
-      Thread.onSpinWait();
-    }
-    Arrays.stream(workers).forEach(WorkerQueue::waitForSettle);
+    this.isWaiting = true;
+    LockSupport.unpark(this.worker);
+    this.onSettled.join();
+    Arrays.stream(workers).parallel().forEach(WorkerQueue::waitForSettle);
   }
 }
