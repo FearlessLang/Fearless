@@ -5,7 +5,8 @@ import java.time.Instant;
 import java.util.stream.IntStream;
 
 public class Main {
-  private static final int N = 51;
+  private static final int N = 100_000;
+//  private static final int N = 51;
   private static final GlobalTaskQueue global = new GlobalTaskQueue();
   public static void main(String[] args) {
     global.start();
@@ -27,20 +28,20 @@ public class Main {
   }
 
   private static void heartbeatMain() {
-    IntStream.range(0, N).forEach(i -> global.submitTask(() -> nonEvenTask(i)));
+    IntStream.range(0, N).forEach(i -> global.submitTask(() -> evenQuickButSaneTask(i)));
     global.waitForSettle();
 //    System.out.println(b);
   }
 
   private static void seqMain() {
-    IntStream.range(0, N).forEach(Main::nonEvenTask);
+    IntStream.range(0, N).forEach(Main::evenQuickButSaneTask);
 //    System.out.println(b);
   }
 
   private static void javaParStreamMain() {
     IntStream.range(0, N)
       .parallel()
-      .forEach(Main::nonEvenTask);
+      .forEach(Main::evenQuickButSaneTask);
 //    System.out.println(b);
   }
 
