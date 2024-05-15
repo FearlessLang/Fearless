@@ -7,11 +7,9 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 
 public final class GlobalTaskQueue {
-  private final ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Task> tasks = new ConcurrentLinkedQueue<>();
   private WorkerQueue[] workers;
   private Thread worker;
-  private volatile boolean isWaiting = false;
-  private final CompletableFuture<Void> onSettled = new CompletableFuture<>();
 
   public void start() {
     this.worker = Thread.ofVirtual().name("[Heartbeat] Main loop").start(() -> {
@@ -20,10 +18,6 @@ public final class GlobalTaskQueue {
         if (task != null) {
           task.run();
         } else {
-          if (this.isWaiting) {
-            this.onSettled.complete(null);
-            return;
-          }
           LockSupport.park();
         }
       }
@@ -36,15 +30,23 @@ public final class GlobalTaskQueue {
     });
   }
 
-  public void submitTask(Runnable task) {
+  public CompletableFuture<Void> submitTask(Task task) {
     this.tasks.add(task);
     LockSupport.unpark(this.worker);
+    return task.onComplete;
   }
 
-  public void waitForSettle() {
-    this.isWaiting = true;
-    LockSupport.unpark(this.worker);
-    this.onSettled.join();
-    Arrays.stream(workers).parallel().forEach(WorkerQueue::waitForSettle);
+  public void shutdown() {
+    Arrays.stream(workers).parallel().forEach(WorkerQueue::shutdown);
+  }
+
+  public abstract static class Task {
+    abstract void impl();
+
+    private final CompletableFuture<Void> onComplete = new CompletableFuture<>();
+    public void run() {
+      this.impl();
+      this.onComplete.complete(null);
+    }
   }
 }

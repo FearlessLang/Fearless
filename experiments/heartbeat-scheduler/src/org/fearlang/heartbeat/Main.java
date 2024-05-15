@@ -2,12 +2,17 @@ package org.fearlang.heartbeat;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 public class Main {
-  private static final int N = 100_000;
+  private static final int N = 1_000_000;
 //  private static final int N = 51;
   private static final GlobalTaskQueue global = new GlobalTaskQueue();
+  private static final ExecutorService workStealing = Executors.newWorkStealingPool();
   public static void main(String[] args) {
     global.start();
     System.out.println("HB:");
@@ -16,8 +21,12 @@ public class Main {
     System.out.println("Parallel Stream:");
     measure(Main::javaParStreamMain);
 
+    System.out.println("Java CompletableFuture:");
+    measure(Main::javaCompletableFuture);
+
     System.out.println("Seq:");
     measure(Main::seqMain);
+    global.shutdown();
   }
 
   private static void measure(Runnable task) {
@@ -28,8 +37,14 @@ public class Main {
   }
 
   private static void heartbeatMain() {
-    IntStream.range(0, N).forEach(i -> global.submitTask(() -> evenQuickButSaneTask(i)));
-    global.waitForSettle();
+    var tasks = IntStream.range(0, N)
+      .mapToObj(i -> global.submitTask(new GlobalTaskQueue.Task() {
+        @Override void impl() {
+          evenQuickButSaneTask(i);
+        }
+      }))
+      .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(tasks).join();
 //    System.out.println(b);
   }
 
@@ -43,6 +58,13 @@ public class Main {
       .parallel()
       .forEach(Main::evenQuickButSaneTask);
 //    System.out.println(b);
+  }
+
+  private static void javaCompletableFuture() {
+    var tasks = IntStream.range(0, N)
+      .mapToObj(i -> CompletableFuture.runAsync(() -> evenQuickButSaneTask(i)))
+      .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(tasks).join();
   }
 
   private static void nonEvenTask(int i) {
