@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 public class Main {
-  private static final int N = 1_000_000;
+  private static final int N = 10_000_000;
 //  private static final int N = 51;
   private static final GlobalTaskQueue global = new GlobalTaskQueue();
   private static final ExecutorService workStealing = Executors.newWorkStealingPool();

@@ -20,27 +20,27 @@ public final class WorkerQueue {
   }
 
   public void start(int index) {
-//    this.worker = Thread.ofVirtual().name("[Heartbeat] Worker "+index).start(() -> {
-//      while (true) {
-//        var task = this.tasks.poll();
-//        if (task != null) {
-//          task.run();
-//        } else {
-//          LockSupport.park();
-//        }
-//      }
-//    });
-    var singleVirtualThreadExecutor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
-    this.worker2 = new SubmissionPublisher<>(singleVirtualThreadExecutor, 1);
-    worker2.consume(GlobalTaskQueue.Task::run);
+    this.worker = Thread.ofVirtual().name("[Heartbeat] Worker "+index).start(() -> {
+      while (true) {
+        var task = this.tasks.poll();
+        if (task != null) {
+          task.run();
+        } else {
+          LockSupport.park();
+        }
+      }
+    });
+//    var singleVirtualThreadExecutor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
+//    this.worker2 = new SubmissionPublisher<>(Executors.newVirtualThreadPerTaskExecutor(), 1);
+//    worker2.consume(GlobalTaskQueue.Task::run);
 
     this.scheduler.scheduleAtFixedRate(
       () -> {
         var task = globalTasks.poll();
         if (task == null) { return; }
-        this.worker2.submit(task);
-//        tasks.add(task);
-//        LockSupport.unpark(this.worker);
+//        this.worker2.submit(task);
+        tasks.add(task);
+        LockSupport.unpark(this.worker);
       },
       this.heartbeatInterval,
       this.heartbeatInterval,

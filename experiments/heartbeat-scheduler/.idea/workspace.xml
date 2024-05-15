@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="688be0b0-7328-40b2-96a9-541adfea4f35" name="Changes" comment="Attempting the queue with a java flow instead of my hot loop">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/GlobalTaskQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/GlobalTaskQueue.java" afterDir="false" />
+    <list default="true" id="688be0b0-7328-40b2-96a9-541adfea4f35" name="Changes" comment="Attempting to optimise and losing">
       <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/org/fearlang/heartbeat/WorkerQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/org/fearlang/heartbeat/WorkerQueue.java" afterDir="false" />
     </list>
@@ -104,7 +102,7 @@
       <updated>1715585968543</updated>
       <workItem from="1715585969868" duration="10923000" />
       <workItem from="1715598022049" duration="4280000" />
-      <workItem from="1715737805307" duration="2826000" />
+      <workItem from="1715737805307" duration="2883000" />
     </task>
     <task id="LOCAL-00001" summary="Basic heartbeat scheduler in java">
       <option name="closed" value="true" />
@@ -122,7 +120,15 @@
       <option name="project" value="LOCAL" />
       <updated>1715597163024</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Attempting to optimise and losing">
+      <option name="closed" value="true" />
+      <created>1715740644420</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1715740644420</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -131,7 +137,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Basic heartbeat scheduler in java" />
     <MESSAGE value="Attempting the queue with a java flow instead of my hot loop" />
-    <option name="LAST_COMMIT_MESSAGE" value="Attempting the queue with a java flow instead of my hot loop" />
+    <MESSAGE value="Attempting to optimise and losing" />
+    <option name="LAST_COMMIT_MESSAGE" value="Attempting to optimise and losing" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
