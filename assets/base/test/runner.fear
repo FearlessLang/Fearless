@@ -1,0 +1,52 @@
+package base.test
+
+TestSuites: AppMain{
+  #(sys) -> Block#
+    .do {Block#(this.testMain(FTestRunner#sys))}
+    .return {Void},
+  .testMain(runner: mut TestRunner): List[TestResults]
+  }
+
+TestRegistry: {
+  mut #(impl: F[Void]): mut TestRegistry -> this#(Debug.identify(impl), impl),
+  mut #(title: Str, impl: mut MF[Void]): mut TestRegistry,
+  mut .suite(title: Str, impl: mut MF[TestRegistry,Void]): mut TestRegistry,
+  mut run: LList[TestResults],
+  }
+TestRunner: TestRegistry{
+  mut #(title: Str, impl: F[Void]): mut TestRunner -> this#(Debug.identify(impl), impl),
+  mut .suite(title: Str, impl: F[TestRegistry,Void]): mut TestRunner,
+  mut .withReporter(reporter: mut ResultReporter): mut TestRunner,
+  mut .run: LList[TestResults],
+  }
+
+TestRunners: F[mut System, mut TestRunner]{sys -> Block#
+  .let[mut List[Test]] tests = {List#}
+  .let[mut List[mut ResultReporter]] reporters = {List#}
+  .return{{'self
+    #(title, impl) -> base.Todo!,
+    .suite(title, registerTests) -> base.Todo!,
+    }}
+  }
+
+TestSuite: {
+  // I hope to promote this mut->mut to iso->iso
+  mut #(test: mut Test): mut TestRegistry,
+  mut .e2e(test: E2ETest)
+  }
+
+TestAssertions: {
+  .assert(b: Bool): Void,
+  .strEq(a: Str, b: Str): Void,
+  }
+
+Test: {#(test: ): Void}
+E2ETest: {#(system: mut System)}
+
+ResultReporter: {
+  mut #(results: List[TestResults]): Void,
+  }
+
+// we can have each test suite with its own isolated mutable state of tests
+// it returns its results
+// this means that each suite can run in parallel with each other

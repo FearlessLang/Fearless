@@ -1,0 +1,25 @@
+package base.test
+
+SuiteResults: {
+  .title: Str,
+  .tests: LList[TestResult]
+  }
+TestResult: {
+  .title: Str,
+  .kind: TestResultKind,
+  .info: Opt[Info] -> {},
+  }
+
+TestResultKind: Sealed{.match[R](m: mut TestResultKindMatcher[R]): R}
+FTestResultKind: {
+  .passed: TestResultKind -> {.match(m) -> m.passed},
+  .skipped: TestResultKind -> {.match(m) -> m.skipped},
+  .failed(details: Str): TestResultKind -> {.match(m) -> m.failed(details)},
+  .errored(details: Str): TestResultKind -> {.match(m) -> m.errored(details)},
+  }
+TestResultKindMatcher[R]: {
+  mut .passed: R,
+  mut .skipped: R,
+  mut .failed(details: Str): R,
+  mut .errored(details: Str): R,
+  }
