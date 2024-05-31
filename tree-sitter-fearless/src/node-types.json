@@ -1,0 +1,65 @@
+[
+  {
+    "type": "package",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "packageName",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "packageName",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "alias",
+          "named": true
+        },
+        {
+          "type": "package",
+          "named": true
+        },
+        {
+          "type": "topDec",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\n",
+    "named": false
+  },
+  {
+    "type": ".",
+    "named": false
+  },
+  {
+    "type": "alias",
+    "named": true
+  },
+  {
+    "type": "package ",
+    "named": false
+  },
+  {
+    "type": "topDec",
+    "named": true
+  }
+]
