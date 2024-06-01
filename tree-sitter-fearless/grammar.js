@@ -4,10 +4,9 @@ module.exports = grammar({
   rules: {
     source_file: $ => seq($.package, repeat($.alias), repeat($.topDec)),
 
-    // TODO: Alias
-    // XXX: Should 'alias' be put in a separate rule like in the antlr grammar?
-
     // alias  : Alias fullCN mGen As fullCN mGen Comma;
+    // TODO: Add like a from: and to: fields.
+    // XXX: Should 'alias' be put in a separate rule like in the antlr grammar?
     alias: $ => seq('alias ', $.fullCN, optional($.mGen), 'as', $.fullCN, optional($.mGen), ','),
 
     fullCN: $ => choice(
