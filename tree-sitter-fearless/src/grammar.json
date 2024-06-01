@@ -40,8 +40,12 @@
           "value": "package "
         },
         {
-          "type": "SYMBOL",
-          "name": "packageName"
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "packageName"
+          }
         },
         {
           "type": "STRING",
@@ -71,27 +75,6 @@
         {
           "type": "SYMBOL",
           "name": "_px"
-        }
-      ]
-    },
-    "_fullCN": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_px"
-              },
-              {
-                "type": "STRING",
-                "value": "."
-              }
-            ]
-          }
         }
       ]
     },
