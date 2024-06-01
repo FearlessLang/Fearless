@@ -34,6 +34,9 @@ indent_size = 4
 indent_style = tab
 indent_size = 8
 
+[test/corpus/*.txt]
+trim_trailing_whitespace = false
+
 [Makefile]
 indent_style = tab
 indent_size = 8
