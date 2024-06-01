@@ -271,35 +271,35 @@
       "members": [
         {
           "type": "STRING",
-          "value": "Mut"
+          "value": "mut"
         },
         {
           "type": "STRING",
-          "value": "ReadH"
+          "value": "readH"
         },
         {
           "type": "STRING",
-          "value": "MutH"
+          "value": "mutH"
         },
         {
           "type": "STRING",
-          "value": "ReadImm"
+          "value": "read/imm"
         },
         {
           "type": "STRING",
-          "value": "Read"
+          "value": "read"
         },
         {
           "type": "STRING",
-          "value": "Iso"
+          "value": "iso"
         },
         {
           "type": "STRING",
-          "value": "RecMdf"
+          "value": "recMdf"
         },
         {
           "type": "STRING",
-          "value": "Imm"
+          "value": "imm"
         }
       ]
     },

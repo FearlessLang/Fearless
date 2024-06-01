@@ -142,38 +142,6 @@
     "named": false
   },
   {
-    "type": "Imm",
-    "named": false
-  },
-  {
-    "type": "Iso",
-    "named": false
-  },
-  {
-    "type": "Mut",
-    "named": false
-  },
-  {
-    "type": "MutH",
-    "named": false
-  },
-  {
-    "type": "Read",
-    "named": false
-  },
-  {
-    "type": "ReadH",
-    "named": false
-  },
-  {
-    "type": "ReadImm",
-    "named": false
-  },
-  {
-    "type": "RecMdf",
-    "named": false
-  },
-  {
     "type": "[",
     "named": false
   },
@@ -190,7 +158,39 @@
     "named": false
   },
   {
+    "type": "imm",
+    "named": false
+  },
+  {
+    "type": "iso",
+    "named": false
+  },
+  {
+    "type": "mut",
+    "named": false
+  },
+  {
+    "type": "mutH",
+    "named": false
+  },
+  {
     "type": "package ",
+    "named": false
+  },
+  {
+    "type": "read",
+    "named": false
+  },
+  {
+    "type": "read/imm",
+    "named": false
+  },
+  {
+    "type": "readH",
+    "named": false
+  },
+  {
+    "type": "recMdf",
     "named": false
   },
   {

@@ -32,7 +32,7 @@ module.exports = grammar({
     // TODO: Ask what these shortnames mean and see if i can give them more descriptive names
     //       It'd make writing queries and such easier.
     _t: $ => seq(optional($.mdf), $.fullCN, optional($.mGen)),
-    mdf: $ => choice("Mut" , "ReadH" , "MutH" , "ReadImm" , "Read" , "Iso" , "RecMdf" , "Imm"),
+    mdf: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
 
     // TODO: topDec
     topDec: $ => 'topDec',
