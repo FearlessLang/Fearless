@@ -4,11 +4,15 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
           "type": "fullCN",
+          "named": true
+        },
+        {
+          "type": "mGen",
           "named": true
         }
       ]
@@ -39,6 +43,34 @@
         ]
       }
     }
+  },
+  {
+    "type": "mGen",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "fullCN",
+          "named": true
+        },
+        {
+          "type": "mGen",
+          "named": true
+        },
+        {
+          "type": "mdf",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "mdf",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "package",
@@ -98,11 +130,63 @@
     "named": false
   },
   {
+    "type": ",",
+    "named": false
+  },
+  {
     "type": ".",
     "named": false
   },
   {
+    "type": ":",
+    "named": false
+  },
+  {
+    "type": "Imm",
+    "named": false
+  },
+  {
+    "type": "Iso",
+    "named": false
+  },
+  {
+    "type": "Mut",
+    "named": false
+  },
+  {
+    "type": "MutH",
+    "named": false
+  },
+  {
+    "type": "Read",
+    "named": false
+  },
+  {
+    "type": "ReadH",
+    "named": false
+  },
+  {
+    "type": "ReadImm",
+    "named": false
+  },
+  {
+    "type": "RecMdf",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
     "type": "alias ",
+    "named": false
+  },
+  {
+    "type": "as",
     "named": false
   },
   {
