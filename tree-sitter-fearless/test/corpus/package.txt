@@ -1,0 +1,83 @@
+=============
+Basic package
+=============
+
+package myTest
+
+-------------
+
+(source_file
+  (package
+    name: (packageName)))
+
+=============
+Multi package
+=============
+
+package some.cool.test
+
+-------------
+
+(source_file
+  (package
+    name: (packageName)))
+
+================
+Valid characters
+================
+
+package ahh._cool._9.some__2123ASDaasdASD
+
+----------------
+
+(source_file
+  (package
+    name: (packageName)))
+
+===================
+Invalid start digit
+:error
+===================
+
+package 42
+
+-------------------
+
+
+==================
+Invalid start char
+:error
+==================
+
+package Scared
+
+------------------
+
+========
+Nameless
+:error
+========
+
+package 
+
+--------
+
+; ^ the single space after package is important!
+
+============
+Trailing dot
+:error
+============
+
+package invalid.
+
+------------
+
+===========
+Leading dot
+:error
+===========
+
+package .leading.dot
+
+-----------
