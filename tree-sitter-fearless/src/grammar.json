@@ -74,6 +74,27 @@
         }
       ]
     },
+    "_fullCN": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_px"
+              },
+              {
+                "type": "STRING",
+                "value": "."
+              }
+            ]
+          }
+        }
+      ]
+    },
     "_px": {
       "type": "SEQ",
       "members": [
