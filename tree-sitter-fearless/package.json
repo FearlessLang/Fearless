@@ -2,8 +2,7 @@
   "name": "tree-sitter-fearless",
   "version": "0.0.1",
   "description": "Fearless grammar for tree-sitter",
-  "repository": "github:tree-sitter/tree-sitter-fearless",
-  "license": "MIT",
+  "repository": "https://github.com/NickGeek/Fearless/tree/sofia/tree-sitter/tree-sitter-fearless",
   "main": "bindings/node",
   "types": "bindings/node",
   "keywords": [
@@ -49,5 +48,6 @@
       "scope": "source.fearless",
       "injection-regex": "^fearless$"
     }
-  ]
+  ],
+  "author": "Sofia"
 }
