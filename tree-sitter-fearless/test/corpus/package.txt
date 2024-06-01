@@ -8,7 +8,7 @@ package myTest
 
 (source_file
   (package
-    name: (packageName)))
+    name: (packagePath)))
 
 =============
 Multi package
@@ -20,7 +20,7 @@ package some.cool.test
 
 (source_file
   (package
-    name: (packageName)))
+    name: (packagePath)))
 
 ================
 Valid characters
@@ -32,7 +32,7 @@ package ahh._cool._9.some__2123ASDaasdASD
 
 (source_file
   (package
-    name: (packageName)))
+    name: (packagePath)))
 
 ===================
 Invalid start digit
