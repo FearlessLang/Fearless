@@ -1,0 +1,65 @@
+===========
+Basic alias
+===========
+
+package test
+alias base.F as F,
+
+-----------
+
+(source_file
+  (package
+    name: (packagePath))
+  (alias
+    from: (type
+      package: (packagePath)
+      name: (typeName))
+    to: (type
+      name: (typeName))))
+
+=============
+Generic alias
+=============
+
+package test
+alias base.LList[base.Str] as Path,
+
+-------------
+
+(source_file
+  (package
+    name: (packagePath))
+  (alias
+    from: (type
+      package: (packagePath)
+      name: (typeName)
+      generic: (generic_list
+        (generic
+          type: (type))))
+    to: (type
+      name: (typeName))))
+
+
+======================
+Generic alias with mdf
+======================
+
+package test
+alias base.LList[base.Str: mut] as Path,
+
+----------------------
+
+(source_file
+  (package
+    name: (packagePath))
+  (alias
+    from: (type
+      package: (packagePath)
+      name: (typeName)
+      generic: (generic_list
+        (generic
+          type: (type)
+          mdf: (mdf_list
+            (mdf)))
+    to: (type
+      name: (typeName))))
