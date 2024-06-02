@@ -2,20 +2,27 @@
   {
     "type": "alias",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "fullCN",
-          "named": true
-        },
-        {
-          "type": "mGen",
-          "named": true
-        }
-      ]
+    "fields": {
+      "from": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type",
+            "named": true
+          }
+        ]
+      },
+      "to": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "typeName",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -119,10 +126,50 @@
   {
     "type": "type",
     "named": true,
+    "fields": {
+      "generic": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "genericList",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "typeName",
+            "named": true
+          }
+        ]
+      },
+      "package": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "packagePath",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "typeName",
+    "named": true,
     "fields": {}
   },
   {
     "type": "\n",
+    "named": false
+  },
+  {
+    "type": " as ",
     "named": false
   },
   {
@@ -154,8 +201,8 @@
     "named": false
   },
   {
-    "type": "as",
-    "named": false
+    "type": "genericList",
+    "named": true
   },
   {
     "type": "imm",

@@ -1,3 +1,4 @@
+// TODO: Remove unused rules
 module.exports = grammar({
   name: 'fearless',
   inline: $ => [$.packagePathDot],
@@ -6,19 +7,26 @@ module.exports = grammar({
     source_file: $ => seq($.package, repeat($.alias), repeat($.topDec)),
 
     package: $ => seq('package ', field('name', $.packagePath), '\n'),
+
+    // FIXME: Completely fails with one.two.Tree, maybe make (pkgName.)+ the default, then add the last one in $.package?
     packagePath: $ => prec.left(seq(optional(repeat(seq($._pkgName, '.'))), $._pkgName)),
     packagePathDot: $ => alias(seq($.packagePath, '.'), $.packagePath),
 
     _pkgName: $ => seq($._idLow, repeat($._idChar)),
 
-    // alias  : Alias fullCN mGen As fullCN mGen Comma;
-    // TODO: Add like a from: and to: fields.
-    // XXX: Should 'alias' be put in a separate rule like in the antlr grammar?
-    alias: $ => seq('alias ', $.fullCN, optional($.mGen), 'as', $.fullCN, optional($.mGen), ','),
+    alias: $ => seq('alias ', field('from', $.type), ' as ', field('to', $.typeName), ','),
+    type: $ => seq(
+      optional(field('package', $.packagePathDot)),
+      field('name', $.typeName),
+      optional(field('generic', $.genericList))),
+    typeName: $ => seq($._idUp, repeat($._idChar), repeat('\'')),
+
+    // TODO: Generics, reuse mGen
+    genericList: $ => 'todo!',
 
     fullCN: $ => choice(
       // TODO: Have some sort of packagePath for the bit in []: [some.cool].package
-      seq(optional(field('package', $.packagePathDot)), field('type', alias($._fIdUp, $.type))),
+      seq(optional(field('package', $.packagePathDot)), field('type', alias($.typeName, $.type))),
       // TODO: The rest of FullCN like FStringMulti, etc
     ),
 
@@ -47,7 +55,6 @@ module.exports = grammar({
     _idLow: $ => choice(/_*[a-z]/, /_+[0-9]/),
     _idUp: $ => /_*[A-Z]/,
     _idChar: $ => /[a-zA-Z_0-9]/,
-    _fIdUp: $ => seq($._idUp, repeat($._idChar), repeat('\'')),
     _fIdLow: $ => seq($._idLow, repeat($._idChar), repeat('\'')),
   }
 });
