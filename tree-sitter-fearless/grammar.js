@@ -4,6 +4,10 @@ module.exports = grammar({
   rules: {
     source_file: $ => seq($.package, repeat($.alias), repeat($.topDec)),
 
+    package: $ => seq('package ', field('name', seq(optional($.packagePath), $._pkgName)), '\n'),
+    packagePath: $ => prec.left(repeat1(seq($._pkgName, '.'))),
+    _pkgName: $ => seq($._idLow, repeat($._idChar)),
+
     // alias  : Alias fullCN mGen As fullCN mGen Comma;
     // TODO: Add like a from: and to: fields.
     // XXX: Should 'alias' be put in a separate rule like in the antlr grammar?
@@ -36,9 +40,6 @@ module.exports = grammar({
 
     // TODO: topDec
     topDec: $ => 'topDec',
-    package: $ => seq('package ', field("name", seq(optional($.packagePath), $._pkgName)), '\n'),
-    packagePath: $ => prec.left(repeat1(seq($._pkgName, '.'))),
-    _pkgName: $ => seq($._idLow, repeat($._idChar)),
 
     _idLow: $ => choice(/_*[a-z]/, /_+[0-9]/),
     _idUp: $ => /_*[A-Z]/,
