@@ -114,8 +114,13 @@
           "type": "FIELD",
           "name": "from",
           "content": {
-            "type": "SYMBOL",
-            "name": "concreteType"
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_noMdfConcreteType"
+            },
+            "named": true,
+            "value": "concreteType"
           }
         },
         {
@@ -144,7 +149,7 @@
         }
       ]
     },
-    "concreteType": {
+    "_noMdfConcreteType": {
       "type": "SEQ",
       "members": [
         {
@@ -186,6 +191,31 @@
               "type": "BLANK"
             }
           ]
+        }
+      ]
+    },
+    "concreteType": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "mdf",
+              "content": {
+                "type": "SYMBOL",
+                "name": "mdf"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_noMdfConcreteType"
         }
       ]
     },
@@ -239,7 +269,7 @@
         }
       ]
     },
-    "_mdfGeneric": {
+    "mdf": {
       "type": "CHOICE",
       "members": [
         {
@@ -257,39 +287,6 @@
         {
           "type": "STRING",
           "value": "read/imm"
-        },
-        {
-          "type": "STRING",
-          "value": "read"
-        },
-        {
-          "type": "STRING",
-          "value": "iso"
-        },
-        {
-          "type": "STRING",
-          "value": "recMdf"
-        },
-        {
-          "type": "STRING",
-          "value": "imm"
-        }
-      ]
-    },
-    "_mdfConcrete": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "mut"
-        },
-        {
-          "type": "STRING",
-          "value": "readH"
-        },
-        {
-          "type": "STRING",
-          "value": "mutH"
         },
         {
           "type": "STRING",

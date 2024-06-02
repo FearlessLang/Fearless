@@ -13,12 +13,16 @@ module.exports = grammar({
     packagePath: $ => prec.right(repeat1(seq($._pkgName, '.'))),
     _pkgName: $ => /(_*[a-z]|_+[0-9])[a-zA-Z_0-9]*/,
 
-    alias: $ => seq('alias', ' ', field('from', $.concreteType), ' ', 'as', ' ', field('to', $.typeName), ','),
+    alias: $ => seq('alias', ' ', field('from', alias($._noMdfConcreteType, $.concreteType)), ' ', 'as', ' ', field('to', $.typeName), ','),
 
-    concreteType: $ => seq(
+    // mdf is invalid in some places, like the LHS of alias.
+    _noMdfConcreteType: $ => seq(
       optional(field('package', $.packagePath)),
       field('name', $.typeName),
-      optional(field('generic', $.concreteTypes))),
+      optional(field('generic', $.concreteTypes))
+    ),
+
+    concreteType: $ => seq(optional(field("mdf", $.mdf)), $._noMdfConcreteType),
 
     typeName: $ => /_*[A-Z][a-zA-Z_0-9]*'*/,
     concreteTypes: $ => seq('[', optional(seq($.concreteType, repeat(seq(',', $.concreteType)))), ']'),
@@ -37,11 +41,8 @@ module.exports = grammar({
           // optional($.mdf),
           // repeat(
             // seq(',', optional($.mdf))))))),
-    // TODO: Ask what these shortnames mean and see if i can give them more descriptive names
-    //       It'd make writing queries and such easier.
-    // _t: $ => seq(optional($.mdf), $.fullCN, optional($.mGen)),
-    _mdfGeneric: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
-    _mdfConcrete: $ => choice('mut' , 'readH' , 'mutH', 'read' , 'iso' , 'recMdf' , 'imm'),
+    // WARN: read/imm is only allowed in specific conditions, but I think it's probably fine for us to ignore that
+    mdf: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
 
     // TODO: topDec
     topDec: $ => 'topDec',

@@ -39,6 +39,16 @@
           }
         ]
       },
+      "mdf": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "mdf",
+            "named": true
+          }
+        ]
+      },
       "name": {
         "multiple": false,
         "required": true,
@@ -75,6 +85,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "mdf",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "package",
