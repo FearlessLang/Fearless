@@ -34,6 +34,19 @@ package ahh._cool._9.some__2123ASDaasdASD
   (package
     name: (packagePath)))
 
+================
+Space in path
+:error
+================
+
+package my .co ol. pack age
+
+----------------
+
+(source_file
+  (package
+    name: (packagePath)))
+
 ===================
 Invalid start digit
 :error
