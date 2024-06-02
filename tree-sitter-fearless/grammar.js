@@ -13,42 +13,35 @@ module.exports = grammar({
     packagePath: $ => prec.right(repeat1(seq($._pkgName, '.'))),
     _pkgName: $ => seq($._idLow, repeat($._idChar)),
 
-    alias: $ => seq('alias', ' ', field('from', $.type), ' ', 'as', ' ', field('to', $.typeName), ','),
+    alias: $ => seq('alias', ' ', field('from', $.concreteType), ' ', 'as', ' ', field('to', $.typeName), ','),
 
-    type: $ => seq(
+    concreteType: $ => seq(
       optional(field('package', $.packagePath)),
       field('name', $.typeName),
-      optional(field('generic', $.genericList))),
+      optional(field('generic', $.concreteTypes))),
 
     typeName: $ => seq($._idUp, repeat($._idChar), repeat('\'')),
-
-    // TODO: Generics, reuse mGen
-    genericList: $ => 'todo!',
-
-    fullCN: $ => choice(
-      // TODO: Have some sort of packagePath for the bit in []: [some.cool].package
-      seq(optional(field('package', $.packagePath)), field('type', alias($.typeName, $.type))),
-      // TODO: The rest of FullCN like FStringMulti, etc
-    ),
+    concreteTypes: $ => seq('[', optional(seq($.concreteType, repeat(seq(',', $.concreteType)))), ']'),
 
     // mGen   : | OS (genDecl (Comma genDecl)*)? CS;
-    mGen: $ => seq('[', optional(seq($._genDecl, repeat(seq(',', $._genDecl)))) ,']'),
+    // mGen: $ => seq('[', optional(seq($._genDecl, repeat(seq(',', $._genDecl)))) ,']'),
 
     // genDecl : t Colon (mdf (Comma mdf)*) | t;
     // TODO: Is it safe to use optional instead of the  t <stuff> | t
     // TODO: Make mdf a child of fullcn or smth like that.
-    _genDecl: $ => prec.left(seq(
-      $._t,
-      optional(
-        seq(
-          ':',
-          optional($.mdf),
-          repeat(
-            seq(',', optional($.mdf))))))),
+    // _genDecl: $ => prec.left(seq(
+      // $._t,
+      // optional(
+        // seq(
+          // ':',
+          // optional($.mdf),
+          // repeat(
+            // seq(',', optional($.mdf))))))),
     // TODO: Ask what these shortnames mean and see if i can give them more descriptive names
     //       It'd make writing queries and such easier.
-    _t: $ => seq(optional($.mdf), $.fullCN, optional($.mGen)),
-    mdf: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
+    // _t: $ => seq(optional($.mdf), $.fullCN, optional($.mGen)),
+    _mdfGeneric: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
+    _mdfConcrete: $ => choice('mut' , 'readH' , 'mutH', 'read' , 'iso' , 'recMdf' , 'imm'),
 
     // TODO: topDec
     topDec: $ => 'topDec',

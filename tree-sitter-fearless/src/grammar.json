@@ -127,7 +127,7 @@
           "name": "from",
           "content": {
             "type": "SYMBOL",
-            "name": "type"
+            "name": "concreteType"
           }
         },
         {
@@ -156,7 +156,7 @@
         }
       ]
     },
-    "type": {
+    "concreteType": {
       "type": "SEQ",
       "members": [
         {
@@ -191,7 +191,7 @@
               "name": "generic",
               "content": {
                 "type": "SYMBOL",
-                "name": "genericList"
+                "name": "concreteTypes"
               }
             },
             {
@@ -224,50 +224,7 @@
         }
       ]
     },
-    "genericList": {
-      "type": "STRING",
-      "value": "todo!"
-    },
-    "fullCN": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "FIELD",
-                  "name": "package",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "packagePath"
-                  }
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "FIELD",
-              "name": "type",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "typeName"
-                },
-                "named": true,
-                "value": "type"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "mGen": {
+    "concreteTypes": {
       "type": "SEQ",
       "members": [
         {
@@ -282,7 +239,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "_genDecl"
+                  "name": "concreteType"
                 },
                 {
                   "type": "REPEAT",
@@ -295,7 +252,7 @@
                       },
                       {
                         "type": "SYMBOL",
-                        "name": "_genDecl"
+                        "name": "concreteType"
                       }
                     ]
                   }
@@ -313,106 +270,7 @@
         }
       ]
     },
-    "_genDecl": {
-      "type": "PREC_LEFT",
-      "value": 0,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_t"
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": ":"
-                  },
-                  {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "mdf"
-                      },
-                      {
-                        "type": "BLANK"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "REPEAT",
-                    "content": {
-                      "type": "SEQ",
-                      "members": [
-                        {
-                          "type": "STRING",
-                          "value": ","
-                        },
-                        {
-                          "type": "CHOICE",
-                          "members": [
-                            {
-                              "type": "SYMBOL",
-                              "name": "mdf"
-                            },
-                            {
-                              "type": "BLANK"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "_t": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "mdf"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "fullCN"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "mGen"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        }
-      ]
-    },
-    "mdf": {
+    "_mdfGeneric": {
       "type": "CHOICE",
       "members": [
         {
@@ -430,6 +288,39 @@
         {
           "type": "STRING",
           "value": "read/imm"
+        },
+        {
+          "type": "STRING",
+          "value": "read"
+        },
+        {
+          "type": "STRING",
+          "value": "iso"
+        },
+        {
+          "type": "STRING",
+          "value": "recMdf"
+        },
+        {
+          "type": "STRING",
+          "value": "imm"
+        }
+      ]
+    },
+    "_mdfConcrete": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "mut"
+        },
+        {
+          "type": "STRING",
+          "value": "readH"
+        },
+        {
+          "type": "STRING",
+          "value": "mutH"
         },
         {
           "type": "STRING",

@@ -11,7 +11,7 @@ alias base.F as F,
   (package
     name: (packagePath))
   (alias
-    from: (type
+    from: (concreteType
       package: (packagePath)
       name: (typeName))
     to: (typeName)))
@@ -23,18 +23,30 @@ Generic alias
 package test
 alias base.LList[base.Str] as Path,
 
--------------
+======================
+Multiple generic alias
+======================
+
+package test
+alias CoolType[One, one.Two, one.two.Three] as Counter,
+
+----------------------
 
 (source_file
   (package
     name: (packagePath))
   (alias
-    from: (type
-      package: (packagePath)
+    from: (concreteType
       name: (typeName)
-      generic: (genericList
-        (generic
-          type: (type))))
+      generic: (concreteTypes
+        (concreteType
+          name: (typeName))
+        (concreteType
+          package: (packagePath)
+          name: (typeName))
+        (concreteType
+          package: (packagePath)
+          name: (typeName))))
     to: (typeName)))
 
 ===================
@@ -50,7 +62,7 @@ alias one.two.Tree as Tree,
   (package
     name: (packagePath))
   (alias
-    from: (type
+    from: (concreteType
       package: (packagePath)
       name: (typeName))
     to: (typeName)))
@@ -68,7 +80,7 @@ alias time.Was as Was,
   (package
     name: (packagePath))
   (alias
-    from: (type
+    from: (concreteType
       package: (packagePath)
       name: (typeName))
     to: (typeName)))
