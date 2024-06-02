@@ -79,7 +79,7 @@ Generic alias with mdf
 ======================
 
 package test
-alias base.LList[base.Str: mut] as Path,
+alias base.LList[mut base.Str] as Path,
 
 ----------------------
 
