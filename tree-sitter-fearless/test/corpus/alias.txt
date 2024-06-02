@@ -23,6 +23,21 @@ Generic alias
 package test
 alias base.LList[base.Str] as Path,
 
+-------------
+
+(source_file
+  (package
+    name: (packagePath))
+  (alias
+    from: (concreteType
+      package: (packagePath)
+      name: (typeName)
+      generic: (concreteTypes
+        (concreteType
+          package: (packagePath)
+          name: (typeName))))
+    to: (typeName)))
+
 ======================
 Multiple generic alias
 ======================
