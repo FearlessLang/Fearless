@@ -30,7 +30,7 @@
     "named": true,
     "fields": {
       "package": {
-        "multiple": true,
+        "multiple": false,
         "required": false,
         "types": [
           {
@@ -148,7 +148,7 @@
         ]
       },
       "package": {
-        "multiple": true,
+        "multiple": false,
         "required": false,
         "types": [
           {
@@ -165,11 +165,7 @@
     "fields": {}
   },
   {
-    "type": "\n",
-    "named": false
-  },
-  {
-    "type": " as ",
+    "type": " ",
     "named": false
   },
   {
@@ -197,7 +193,11 @@
     "named": false
   },
   {
-    "type": "alias ",
+    "type": "alias",
+    "named": false
+  },
+  {
+    "type": "as",
     "named": false
   },
   {
@@ -221,7 +221,7 @@
     "named": false
   },
   {
-    "type": "package ",
+    "type": "package",
     "named": false
   },
   {

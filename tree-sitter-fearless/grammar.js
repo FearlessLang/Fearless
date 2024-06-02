@@ -1,24 +1,25 @@
 // TODO: Remove unused rules
 module.exports = grammar({
   name: 'fearless',
-  inline: $ => [$.packagePathDot],
 
   rules: {
     source_file: $ => seq($.package, repeat($.alias), repeat($.topDec)),
 
-    package: $ => seq('package ', field('name', $.packagePath), '\n'),
+    // _fullPkgName need to be its own rule or we get a duplicate filed for some reason.
+    package: $ => seq('package', ' ', field('name', alias($._fullPkgName, $.packagePath), '\n')),
+    _fullPkgName: $ => seq($._pkgName, repeat(seq('.', $._pkgName))),
 
-    // FIXME: Completely fails with one.two.Tree, maybe make (pkgName.)+ the default, then add the last one in $.package?
-    packagePath: $ => prec.left(seq(optional(repeat(seq($._pkgName, '.'))), $._pkgName)),
-    packagePathDot: $ => alias(seq($.packagePath, '.'), $.packagePath),
-
+    // prec.left does NOT work.
+    packagePath: $ => prec.right(repeat1(seq($._pkgName, '.'))),
     _pkgName: $ => seq($._idLow, repeat($._idChar)),
 
-    alias: $ => seq('alias ', field('from', $.type), ' as ', field('to', $.typeName), ','),
+    alias: $ => seq('alias', ' ', field('from', $.type), ' ', 'as', ' ', field('to', $.typeName), ','),
+
     type: $ => seq(
-      optional(field('package', $.packagePathDot)),
+      optional(field('package', $.packagePath)),
       field('name', $.typeName),
       optional(field('generic', $.genericList))),
+
     typeName: $ => seq($._idUp, repeat($._idChar), repeat('\'')),
 
     // TODO: Generics, reuse mGen
@@ -26,7 +27,7 @@ module.exports = grammar({
 
     fullCN: $ => choice(
       // TODO: Have some sort of packagePath for the bit in []: [some.cool].package
-      seq(optional(field('package', $.packagePathDot)), field('type', alias($.typeName, $.type))),
+      seq(optional(field('package', $.packagePath)), field('type', alias($.typeName, $.type))),
       // TODO: The rest of FullCN like FStringMulti, etc
     ),
 
