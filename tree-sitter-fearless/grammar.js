@@ -11,7 +11,7 @@ module.exports = grammar({
 
     fullCN: $ => choice(
       // TODO: Have some sort of packagePath for the bit in []: [some.cool].package
-      seq(field('package', alias(repeat(seq($._px, '.')), $.packagePath)), field('type', alias($._fIdUp, $.type))),
+      seq(optional(field('package', $.packagePath)), field('type', alias($._fIdUp, $.type))),
       // TODO: The rest of FullCN like FStringMulti, etc
     ),
 
@@ -36,11 +36,10 @@ module.exports = grammar({
 
     // TODO: topDec
     topDec: $ => 'topDec',
-    // XXX: Do we want something like tree-sitter-java, where each path of the
-    //      package is its own scoped identifier?
-    package: $ => seq('package ', field("name", $.packagePath), '\n'),
-    packagePath: $ => seq(repeat(seq($._px, '.')), $._px),
-    _px: $ => seq($._idLow, repeat($._idChar)),
+    package: $ => seq('package ', field("name", seq(optional($.packagePath), $._pkgName)), '\n'),
+    packagePath: $ => prec.left(repeat1(seq($._pkgName, '.'))),
+    _pkgName: $ => seq($._idLow, repeat($._idChar)),
+
     _idLow: $ => choice(/_*[a-z]/, /_+[0-9]/),
     _idUp: $ => /_*[A-Z]/,
     _idChar: $ => /[a-zA-Z_0-9]/,

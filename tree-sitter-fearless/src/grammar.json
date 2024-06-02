@@ -80,29 +80,20 @@
           "type": "SEQ",
           "members": [
             {
-              "type": "FIELD",
-              "name": "package",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "REPEAT",
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "package",
                   "content": {
-                    "type": "SEQ",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "_px"
-                      },
-                      {
-                        "type": "STRING",
-                        "value": "."
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "packagePath"
                   }
                 },
-                "named": true,
-                "value": "packagePath"
-              }
+                {
+                  "type": "BLANK"
+                }
+              ]
             },
             {
               "type": "FIELD",
@@ -318,8 +309,25 @@
           "type": "FIELD",
           "name": "name",
           "content": {
-            "type": "SYMBOL",
-            "name": "packagePath"
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "packagePath"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_pkgName"
+              }
+            ]
           }
         },
         {
@@ -329,31 +337,26 @@
       ]
     },
     "packagePath": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_px"
-              },
-              {
-                "type": "STRING",
-                "value": "."
-              }
-            ]
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_px"
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "REPEAT1",
+        "content": {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_pkgName"
+            },
+            {
+              "type": "STRING",
+              "value": "."
+            }
+          ]
         }
-      ]
+      }
     },
-    "_px": {
+    "_pkgName": {
       "type": "SEQ",
       "members": [
         {
