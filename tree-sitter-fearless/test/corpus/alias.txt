@@ -102,7 +102,6 @@ alias time.Was as Was,
 
 ======================
 Generic alias with mdf
-:error
 ======================
 
 package test
@@ -110,3 +109,26 @@ alias base.LList[mut base.Str] as Path,
 
 ----------------------
 
+(source_file
+  (package
+    name: (packagePath))
+  (alias
+    from: (concreteType
+      package: (packagePath)
+      name: (typeName)
+      generic: (concreteTypes
+        (concreteType
+          mdf: (mdf)
+          package: (packagePath)
+          name: (typeName))))
+    to: (typeName)))
+
+======================
+Bad mdf
+:error
+======================
+
+package test
+alias mut base.LList[base.Str] as Path,
+
+----------------------
