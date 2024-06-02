@@ -43,6 +43,16 @@ package my .co ol. pack age
 
 ----------------
 
+================
+Newline in path
+:error
+================
+
+package
+cool.package
+
+----------------
+
 (source_file
   (package
     name: (packagePath)))
