@@ -96,20 +96,8 @@
       }
     },
     "_pkgName": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_idLow"
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_idChar"
-          }
-        }
-      ]
+      "type": "PATTERN",
+      "value": "(_*[a-z]|_+[0-9])[a-zA-Z_0-9]*"
     },
     "alias": {
       "type": "SEQ",
@@ -202,27 +190,8 @@
       ]
     },
     "typeName": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_idUp"
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_idChar"
-          }
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "STRING",
-            "value": "'"
-          }
-        }
-      ]
+      "type": "PATTERN",
+      "value": "_*[A-Z][a-zA-Z_0-9]*'*"
     },
     "concreteTypes": {
       "type": "SEQ",
@@ -343,50 +312,6 @@
     "topDec": {
       "type": "STRING",
       "value": "topDec"
-    },
-    "_idLow": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "PATTERN",
-          "value": "_*[a-z]"
-        },
-        {
-          "type": "PATTERN",
-          "value": "_+[0-9]"
-        }
-      ]
-    },
-    "_idUp": {
-      "type": "PATTERN",
-      "value": "_*[A-Z]"
-    },
-    "_idChar": {
-      "type": "PATTERN",
-      "value": "[a-zA-Z_0-9]"
-    },
-    "_fIdLow": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_idLow"
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_idChar"
-          }
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "STRING",
-            "value": "'"
-          }
-        }
-      ]
     }
   },
   "extras": [

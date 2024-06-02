@@ -121,16 +121,7 @@
     }
   },
   {
-    "type": "typeName",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": " ",
-    "named": false
-  },
-  {
-    "type": "'",
     "named": false
   },
   {
@@ -195,6 +186,10 @@
   },
   {
     "type": "topDec",
+    "named": true
+  },
+  {
+    "type": "typeName",
     "named": true
   }
 ]

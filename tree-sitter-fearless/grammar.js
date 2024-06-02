@@ -11,7 +11,7 @@ module.exports = grammar({
 
     // prec.left does NOT work.
     packagePath: $ => prec.right(repeat1(seq($._pkgName, '.'))),
-    _pkgName: $ => seq($._idLow, repeat($._idChar)),
+    _pkgName: $ => /(_*[a-z]|_+[0-9])[a-zA-Z_0-9]*/,
 
     alias: $ => seq('alias', ' ', field('from', $.concreteType), ' ', 'as', ' ', field('to', $.typeName), ','),
 
@@ -20,7 +20,7 @@ module.exports = grammar({
       field('name', $.typeName),
       optional(field('generic', $.concreteTypes))),
 
-    typeName: $ => seq($._idUp, repeat($._idChar), repeat('\'')),
+    typeName: $ => /_*[A-Z][a-zA-Z_0-9]*'*/,
     concreteTypes: $ => seq('[', optional(seq($.concreteType, repeat(seq(',', $.concreteType)))), ']'),
 
     // mGen   : | OS (genDecl (Comma genDecl)*)? CS;
@@ -45,10 +45,5 @@ module.exports = grammar({
 
     // TODO: topDec
     topDec: $ => 'topDec',
-
-    _idLow: $ => choice(/_*[a-z]/, /_+[0-9]/),
-    _idUp: $ => /_*[A-Z]/,
-    _idChar: $ => /[a-zA-Z_0-9]/,
-    _fIdLow: $ => seq($._idLow, repeat($._idChar), repeat('\'')),
   }
 });
