@@ -35,25 +35,8 @@
           "type": "FIELD",
           "name": "name",
           "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "packagePath"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_pkgName"
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "packagePath"
           }
         },
         {
@@ -66,21 +49,56 @@
       "type": "PREC_LEFT",
       "value": 0,
       "content": {
-        "type": "REPEAT1",
-        "content": {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_pkgName"
-            },
-            {
-              "type": "STRING",
-              "value": "."
-            }
-          ]
-        }
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_pkgName"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "."
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_pkgName"
+          }
+        ]
       }
+    },
+    "packagePathDot": {
+      "type": "ALIAS",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "packagePath"
+          },
+          {
+            "type": "STRING",
+            "value": "."
+          }
+        ]
+      },
+      "named": true,
+      "value": "packagePath"
     },
     "_pkgName": {
       "type": "SEQ",
@@ -161,7 +179,7 @@
                   "name": "package",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "packagePath"
+                    "name": "packagePathDot"
                   }
                 },
                 {
@@ -449,6 +467,8 @@
   "conflicts": [],
   "precedences": [],
   "externals": [],
-  "inline": [],
+  "inline": [
+    "packagePathDot"
+  ],
   "supertypes": []
 }

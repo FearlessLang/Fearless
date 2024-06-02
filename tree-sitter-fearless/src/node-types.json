@@ -23,7 +23,7 @@
     "named": true,
     "fields": {
       "package": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -77,8 +77,8 @@
     "named": true,
     "fields": {
       "name": {
-        "multiple": true,
-        "required": false,
+        "multiple": false,
+        "required": true,
         "types": [
           {
             "type": "packagePath",

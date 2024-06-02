@@ -1,11 +1,14 @@
 module.exports = grammar({
   name: 'fearless',
+  inline: $ => [$.packagePathDot],
 
   rules: {
     source_file: $ => seq($.package, repeat($.alias), repeat($.topDec)),
 
-    package: $ => seq('package ', field('name', seq(optional($.packagePath), $._pkgName)), '\n'),
-    packagePath: $ => prec.left(repeat1(seq($._pkgName, '.'))),
+    package: $ => seq('package ', field('name', $.packagePath), '\n'),
+    packagePath: $ => prec.left(seq(optional(repeat(seq($._pkgName, '.'))), $._pkgName)),
+    packagePathDot: $ => alias(seq($.packagePath, '.'), $.packagePath),
+
     _pkgName: $ => seq($._idLow, repeat($._idChar)),
 
     // alias  : Alias fullCN mGen As fullCN mGen Comma;
@@ -15,7 +18,7 @@ module.exports = grammar({
 
     fullCN: $ => choice(
       // TODO: Have some sort of packagePath for the bit in []: [some.cool].package
-      seq(optional(field('package', $.packagePath)), field('type', alias($._fIdUp, $.type))),
+      seq(optional(field('package', $.packagePathDot)), field('type', alias($._fIdUp, $.type))),
       // TODO: The rest of FullCN like FStringMulti, etc
     ),
 
