@@ -27,20 +27,6 @@ module.exports = grammar({
     typeName: $ => /_*[A-Z][a-zA-Z_0-9]*'*/,
     concreteTypes: $ => seq('[', optional(seq($.concreteType, repeat(seq(',', $.concreteType)))), ']'),
 
-    // mGen   : | OS (genDecl (Comma genDecl)*)? CS;
-    // mGen: $ => seq('[', optional(seq($._genDecl, repeat(seq(',', $._genDecl)))) ,']'),
-
-    // genDecl : t Colon (mdf (Comma mdf)*) | t;
-    // TODO: Is it safe to use optional instead of the  t <stuff> | t
-    // TODO: Make mdf a child of fullcn or smth like that.
-    // _genDecl: $ => prec.left(seq(
-      // $._t,
-      // optional(
-        // seq(
-          // ':',
-          // optional($.mdf),
-          // repeat(
-            // seq(',', optional($.mdf))))))),
     // WARN: read/imm is only allowed in specific conditions, but I think it's probably fine for us to ignore that
     mdf: $ => choice('mut' , 'readH' , 'mutH' , 'read/imm' , 'read' , 'iso' , 'recMdf' , 'imm'),
 
