@@ -67,5 +67,9 @@ public class Repl {
 			System.out.println("Got '%s'. TODO: Functionality".formatted(line));
 			;
 		}
+
+		// Technically not ideal to close stdin, but it brings up a leaked resource
+		// warning otherwise.
+		sc.close();
 	}
 }
