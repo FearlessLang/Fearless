@@ -18,12 +18,33 @@ public class State {
 	public State(String packageName) {
 		this.packageName = packageName;
 	}
+
+	/**
+	 * Deep copy of the state
+	 */
+	public State(State other) {
+		this(other.packageName);
+		aliases.addAll(other.aliases);
+		code.addAll(other.code);
+	}
+
+	/**
+	 * Let state decide if this is alias or code.
+	 */
+	public void add(String line, boolean currentlyValid) throws InvalidAliasException {
+		// We assume that when the state is invalid, the user can only add
+		// normal code until it's valid again.
+		if (currentlyValid && line.strip().startsWith("alias")) {
+			addAlias(line);
+		} else {
+			addCode(line);
+		}
+	}
 	
 	/**
 	 * Add a line of code to the list...
 	 */
 	public void addCode(String loc) {
-		// TODO: Keep track of last valid state
 		code.add(loc);
 	}
 
@@ -45,13 +66,6 @@ public class State {
 	}
 
 	/**
-	 * Checks that the current state can be parsed and compiled without errors.
-	 */
-	boolean isValid() {
-		throw new UnsupportedOperationException("TODO: Validity check");
-	}
-
-	/**
 	 * Converts all the held state into a single string that can be passed to
 	 * program or whatever.
 	 * @return Fearless code, not guaranteed to be vaiid
@@ -61,7 +75,10 @@ public class State {
 		return Stream.of(
 				Stream.of("package " + packageName),
 				aliases.stream(),
-				code.stream())
+				// Stream.of("REPLMain: Main { sys ->"),
+				code.stream()
+				// Stream.of("}")
+				)
 			.flatMap(Function.identity())
 			.collect(Collectors.joining("\n"));
 	}
