@@ -11,6 +11,9 @@ import java.util.*;
 import java.nio.file.Path;
 
 public class Repl {
+	private final static String GOOD_PROMPT = "fear> ";
+	private final static String BAD_PROMPT = "  ... ";
+
 	/**
 	 * Tries to compile the given state.
 	 */
@@ -77,7 +80,7 @@ public class Repl {
 		State lastGoodState = new State(state);
 
 		Scanner sc = new Scanner(System.in);
-		String prompt = "fear> ";
+		String prompt = GOOD_PROMPT;
 
 		// Hold validity in variable to avoid recompiling every time.
 		boolean valid = true;
@@ -105,14 +108,14 @@ public class Repl {
 			valid = isValid(state);
 
 			if (valid) {
-				prompt = "fear> ";
+				prompt = GOOD_PROMPT;
 
 				// TODO: Check if it ran successfully
 				// if (success) {
 				lastGoodState = new State(state);
 				// }
 			} else {
-				prompt = "  ... ";
+				prompt = BAD_PROMPT;
 			}
 		}
 
