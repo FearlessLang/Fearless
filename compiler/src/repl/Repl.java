@@ -57,6 +57,17 @@ public class Repl {
 		return cmd;
 	}
 
+	static SlashCommand slashCommand(String cmd) {
+		assert cmd.startsWith("/");
+
+		var sc = new Scanner(cmd.substring(1));
+		String word = sc.next();
+		sc.close();
+
+		// TODO: Pass in scanner instead for arguments?
+		return SlashCommand.from(word);
+	}
+
 	public static void main(String[] args) {
 		CommandLine conf = null;
 		HelpFormatter formatter = new HelpFormatter();
@@ -86,7 +97,7 @@ public class Repl {
 		boolean valid = true;
 
 		// TODO: Have some /commands
-		while (true) {
+mainloop: while (true) {
 			System.out.print(prompt);
 			String line;
 
@@ -94,7 +105,41 @@ public class Repl {
 				line = sc.nextLine();
 			} catch (NoSuchElementException e) {
 				// User pressed Ctrl D. stdin is closed.
-				break;
+				break mainloop;
+			}
+
+			// Handle slash commands.
+			if (line.startsWith("/")) {
+				switch (slashCommand(line)) {
+					case Help -> SlashCommand.printHelp();
+					case Quit -> {
+						break mainloop;
+					}
+					case Reset -> {
+						state = new State(state.packageName());
+						lastGoodState = new State(state);
+						prompt = GOOD_PROMPT;
+					}
+					case Rollback -> {
+						state = new State(lastGoodState);
+						prompt = GOOD_PROMPT;
+					}
+					case Show -> System.out.println(state.asCode());
+					case Error -> {
+						try {
+							compile(state);
+							System.out.println("No Compiler Error");
+						} catch (CompileError e) {
+							System.out.println(e);
+						}
+					}
+					default -> {
+						System.out.println("Unknown command.");
+						SlashCommand.printHelp();
+					}
+				}
+
+				continue;
 			}
 
 			try {
@@ -122,5 +167,31 @@ public class Repl {
 		// Technically not ideal to close stdin, but it brings up a leaked resource
 		// warning otherwise.
 		sc.close();
+	}
+}
+
+enum SlashCommand {
+	Unknown, Help, Show, Reset, Rollback, Error, Quit;
+
+	public static void printHelp() {
+		System.out.println("""
+				/help\tShow this help
+				/show\tPrint current state as code
+				/reset\tReset state
+				/rollback\tChange state to last known good state
+				/error\tPrint Compiler Error
+				/quit\tExit repl""");
+	}
+
+	public static SlashCommand from(String str) {
+		return switch (str) {
+			case "help" -> Help;
+			case "show" -> Show;
+			case "reset" -> Reset;
+			case "rollback" -> Rollback;
+			case "quit" -> Quit;
+			case "error" -> Error;
+			default -> Unknown;
+		};
 	}
 }
