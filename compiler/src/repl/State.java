@@ -28,6 +28,10 @@ public class State {
 		code.addAll(other.code);
 	}
 
+	public String packageName() {
+		return packageName;
+	}
+
 	/**
 	 * Let state decide if this is alias or code.
 	 */
