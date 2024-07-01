@@ -73,7 +73,7 @@ public class State {
 	public String asCode() {
 		// Merging from https://www.baeldung.com/java-merge-streams
 		return Stream.of(
-				Stream.of("package " + packageName),
+				Stream.of("package " + packageName + "\n"),
 				aliases.stream(),
 				// Stream.of("REPLMain: Main { sys ->"),
 				code.stream()
