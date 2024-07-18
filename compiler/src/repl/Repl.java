@@ -96,7 +96,6 @@ public class Repl {
 		// Hold validity in variable to avoid recompiling every time.
 		boolean valid = true;
 
-		// TODO: Have some /commands
 mainloop: while (true) {
 			if (conf.hasOption("refresh")) {
 				state = new State(state.packageName());
