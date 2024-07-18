@@ -98,6 +98,11 @@ public class Repl {
 
 		// TODO: Have some /commands
 mainloop: while (true) {
+			if (conf.hasOption("refresh")) {
+				state = new State(state.packageName());
+				lastGoodState = new State(state);
+			}
+
 			System.out.print(prompt);
 			String line;
 
