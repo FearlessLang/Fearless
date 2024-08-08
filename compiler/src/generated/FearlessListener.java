@@ -108,6 +108,36 @@ public interface FearlessListener extends ParseTreeListener {
 	 */
 	void exitBblock(FearlessParser.BblockContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FearlessParser#applier}.
+	 * @param ctx the parse tree
+	 */
+	void enterApplier(FearlessParser.ApplierContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#applier}.
+	 * @param ctx the parse tree
+	 */
+	void exitApplier(FearlessParser.ApplierContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FearlessParser#applierE}.
+	 * @param ctx the parse tree
+	 */
+	void enterApplierE(FearlessParser.ApplierEContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#applierE}.
+	 * @param ctx the parse tree
+	 */
+	void exitApplierE(FearlessParser.ApplierEContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FearlessParser#applierSingleCall}.
+	 * @param ctx the parse tree
+	 */
+	void enterApplierSingleCall(FearlessParser.ApplierSingleCallContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#applierSingleCall}.
+	 * @param ctx the parse tree
+	 */
+	void exitApplierSingleCall(FearlessParser.ApplierSingleCallContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FearlessParser#t}.
 	 * @param ctx the parse tree
 	 */

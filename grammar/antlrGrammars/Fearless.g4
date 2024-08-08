@@ -26,6 +26,7 @@ CR:')';
 
 Comma:',';
 Colon:':';
+DoubleColon:'::';
 Arrow:'->';
 
 Underscore:'_';
@@ -76,7 +77,13 @@ genDecl : t Colon (mdf (Comma mdf)*) | t;
 mGen   : | OS (genDecl (Comma genDecl)*)? CS;
 lambda : mdf topDec | mdf block;
 block  : (t (Comma t)*)? OC bblock CC | t;
-bblock : | SelfX? singleM  | SelfX? (meth (Comma meth)*)? Comma?;
+bblock : | SelfX? singleM  | SelfX? (meth (Comma meth)*)? Comma? | applier;
+// Basic implementation of the {::} sugar. The parser will need to make sure that this is only used as the
+// receiver of a method call, and that the method call is the first expression in the literal. This approach
+// does not support dotless method call expansion with arguments, but that is a feature that can be added later.
+applier : DoubleColon | applierE | applierSingleCall;
+applierE : DoubleColon pOp* callOp*;
+applierSingleCall : DoubleColon X pOp* callOp*;
 
 t      : mdf fullCN mGen; //we recognize if fullCN is an X after parsing
 singleM: (x (Comma x)*)? Arrow e | e;

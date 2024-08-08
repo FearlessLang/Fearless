@@ -71,6 +71,24 @@ public interface FearlessVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBblock(FearlessParser.BblockContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FearlessParser#applier}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitApplier(FearlessParser.ApplierContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FearlessParser#applierE}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitApplierE(FearlessParser.ApplierEContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FearlessParser#applierSingleCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitApplierSingleCall(FearlessParser.ApplierSingleCallContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FearlessParser#t}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

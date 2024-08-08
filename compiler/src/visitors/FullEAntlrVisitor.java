@@ -27,6 +27,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
+
 @SuppressWarnings("serial")
 class ParserFailed extends RuntimeException{}
 
@@ -60,6 +62,7 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
   @Override public Object visitMGen(MGenContext ctx) { throw Bug.unreachable(); }
 
   @Override public Object visitBblock(BblockContext ctx){ throw Bug.unreachable(); }
+
   @Override public Object visitPOp(POpContext ctx){ throw Bug.unreachable(); }
   @Override public T.Dec visitTopDec(TopDecContext ctx) { throw Bug.unreachable(); }
   @Override public Object visitNudeX(NudeXContext ctx){ throw Bug.unreachable(); }
@@ -67,6 +70,10 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
   @Override public Object visitNudeFullCN(NudeFullCNContext ctx){ throw Bug.unreachable(); }
   @Override public MethName visitM(MContext ctx){ throw Bug.unreachable(); }
   @Override public MethName visitBlock(BlockContext ctx){ throw Bug.unreachable(); }
+  @Override public Object visitApplier(ApplierContext ctx) { throw Bug.unreachable(); }
+  @Override public Object visitApplierE(ApplierEContext ctx) { throw Bug.unreachable(); }
+  @Override public Object visitApplierSingleCall(ApplierSingleCallContext ctx) { throw Bug.unreachable(); }
+
   @Override public Call visitCallOp(CallOpContext ctx) {
     check(ctx);
     return new Call(
@@ -113,7 +120,7 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     E root = visitAtomE(ctx.atomE());
     return desugar(root, ctx.pOp().stream().flatMap(pOp->fromPOp(pOp).stream()).toList());
   }
-  record Call(MethName m, Optional<List<T>> mGen, Optional<E.X> x, List<E> es, Pos pos){}
+  public record Call(MethName m, Optional<List<T>> mGen, Optional<E.X> x, List<E> es, Pos pos){}
   List<Call> fromPOp(POpContext ctx) {
     var call = new Call(
       new MethName(Optional.empty(), ctx.m().getText(),ctx.e().size()),
@@ -162,13 +169,15 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     return Optional.of(ctx.genDecl().stream().map(declCtx->{
       var t = visitT(declCtx.t(), isDecl);
       if (declCtx.mdf() == null || declCtx.mdf().isEmpty()) { return t; }
-      var gx = t.gxOrThrow();
+      if ((!(t.rt() instanceof Id.GX<T> gx))) {
+        throw Fail.concreteTypeInFormalParams(t).pos(pos(ctx));
+      }
       return new T(t.mdf(), new Id.GX<>(gx.name()));
     }).toList());
   }
   public record GenericParams(List<Id.GX<T>> gxs, Map<Id.GX<astFull.T>, Set<Mdf>> bounds) {}
   public Optional<GenericParams> visitMGenParams(MGenContext ctx){
-    var mGens = this.visitMGen(ctx, false);
+    var mGens = this.visitMGen(ctx, true);
     return mGens
       .map(ts->ts.stream()
         .map(t->t.match(
@@ -204,6 +213,7 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
         opt(ctx.roundE(),(re->this.visitE(re.e()))))
         .filter(Objects::nonNull));
   }
+
   @Override public E.Lambda visitLambda(LambdaContext ctx){
     var oldXbs = this.xbs;
     E.Lambda res;
@@ -246,17 +256,17 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     Supplier<E.Lambda.LambdaId> emptyTopName = ()->new E.Lambda.LambdaId(Id.DecId.fresh(pkg, 0), List.of(), this.xbs);
     LambdaId id= name.orElseGet(emptyTopName);
     boolean givenName= mdf.isPresent() && !id.id().isFresh();
-    var inferredOpt= Optional.<Id.IT<T>>empty();
+    var inferredType= Optional.<Id.IT<T>>empty();
     if(givenName){
       Id.IT<astFull.T> nameId= new Id.IT<>(id.id(),
         id.gens().stream().map(gx->new T(Mdf.mdf, gx)).toList());
-      inferredOpt = Optional.of(nameId);
+      inferredType = Optional.of(nameId);
     }
-    if(inferredOpt.isEmpty() && !its.isEmpty()) {
-      inferredOpt = Optional.of(its.getFirst());
+    if(inferredType.isEmpty() && !its.isEmpty()) {
+      inferredType = Optional.of(its.getFirst());
       if(mdf.isEmpty()){ mdf = Optional.of(Mdf.imm); }
     }
-    //TODO: inferredOpt may itself disappear since we have nameId in id.
+    //TODO: inferredType may itself disappear since we have nameId in id.
     var bb = ctx.bblock();
     if (bb==null || bb.children==null) {
       return new E.Lambda(
@@ -265,10 +275,11 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
         its,
         null,
         List.of(),
-        inferredOpt,
+        inferredType,
         Optional.of(pos(ctx))
       );
     }
+    if (bb.applier() != null) { return this.visitApplier(bb.applier(), id, mdf, its, inferredType); }
     var _x=bb.SelfX();
     var _n=_x==null?null:_x.getText().substring(1);
     var _ms=opt(bb.meth(),ms->ms.stream().map(this::visitMeth).toList());
@@ -276,10 +287,50 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     List<E.Meth> mms=_ms==null?List.of():_ms;
     if(mms.isEmpty()&&_singleM!=null){ mms=List.of(_singleM); }
     var meths = mms;
-    return new E.Lambda(id, mdf, its, _n, meths, inferredOpt, Optional.of(pos(ctx)));
+    return new E.Lambda(id, mdf, its, _n, meths, inferredType, Optional.of(pos(ctx)));
   }
   @Override public String visitFullCN(FullCNContext ctx) {
     return ctx.getText();
+  }
+
+  public E.Lambda visitApplier(ApplierContext ctx, LambdaId id, Optional<Mdf> mdf, List<Id.IT<T>> its, Optional<Id.IT<T>> inferredType) {
+    check(ctx);
+    var pos = Optional.of(pos(ctx));
+    E.Meth m;
+    if (ctx.applierE() != null) {
+      m = generateApplierWithCall(ctx.applierE(), pos);
+    } else if (ctx.applierSingleCall() != null) {
+      throw Bug.todo();
+    } else {
+      assert ctx.getText().equals("::") : ctx.getText();
+      m = generateApplierIdentityMeth(pos);
+    }
+    return new E.Lambda(id, mdf, its, E.X.freshName(), List.of(m), inferredType, pos);
+  }
+  private E.Meth generateApplierWithCall(ApplierEContext ctx, Optional<Pos> pos) {
+    E.X x = new E.X(T.infer);
+    E root = desugar(x, ctx.pOp().stream().flatMap(pOp->fromPOp(pOp).stream()).toList());
+    var calls = ctx.callOp();
+    var res = calls.stream()
+      .flatMap(callOpCtx->{
+        var head = new Call(
+          new MethName(Optional.empty(), callOpCtx.m().getText(),1),
+          visitMGen(callOpCtx.mGen(), true),
+          Optional.ofNullable(callOpCtx.x()).map(this::visitX),
+          List.of(visitAtomE(callOpCtx.postE().atomE())),
+          pos(callOpCtx)
+        );
+        return Stream.concat(Stream.of(head), callOpCtx.postE().pOp().stream().flatMap(pOp->fromPOp(pOp).stream()));
+      })
+      .toList();
+
+    var methExpr = desugar(root, res);
+
+    return new E.Meth(Optional.empty(), Optional.empty(), List.of(x.name()), Optional.of(methExpr), pos);
+  }
+  private E.Meth generateApplierIdentityMeth(Optional<Pos> pos) {
+    var x = new E.X(T.infer);
+    return new E.Meth(Optional.empty(), Optional.empty(), List.of(x.name()), Optional.of(x), pos);
   }
 
   @Override public Mdf visitMdf(MdfContext ctx) {
@@ -333,6 +384,15 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     var _xs = opt(ctx.x(), xs->xs.stream()
       .map(this::visitX).map(E.X::name).toList());
     _xs = _xs==null?List.of():_xs;
+//    if (ctx.e().postE().atomE().applier() != null) {
+//      var applier = ctx.e().postE().atomE().applier();
+//      System.out.println(applier.getText());
+//      if (!_xs.isEmpty()) {
+//        throw Fail.syntaxError("The applier sugar '{::...}' can only be used in literals with no explicit arguments.").pos(pos(ctx));
+//      }
+//      _xs.add(E.X.freshName());
+//    }
+
     var body = Optional.ofNullable(ctx.e()).map(this::visitE);
     return new E.Meth(Optional.empty(), Optional.empty(), _xs, body, Optional.of(pos(ctx)));
   }

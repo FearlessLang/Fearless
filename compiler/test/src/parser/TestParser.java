@@ -256,4 +256,57 @@ Would  the interpretation (a .and b) .not  become more natural going forward?
   @Test void precedenceMCallPlus2() { same("a + b.foo()", "a + b.foo"); }
   @Test void invalidNumberSyntax() {fail("""
     """, "1.2u");}
+
+  @Test void applierId() {ok("""
+    [-infer-][]{'fear1$[-]([fear0$]):[-]->fear0$:infer}
+    """, """
+    {::}
+    """);}
+  @Test void applierCall() {ok("""
+    a:infer.foo/1[-]([[-infer-][]{'fear1$[-]([fear0$]):[-]->fear0$:infer}]):infer
+    """, """
+    a.foo{::}
+    """);}
+  @Test void applierWithCall() {ok("""
+    a:infer.foo/1[-]([[-infer-][]{'fear1$[-]([fear0$]):[-]->fear0$:infer.age/0[-]([]):infer}]):infer
+    """, """
+    a.foo{::.age}
+    """);}
+  @Test void applierWithSelfCall() {ok("""
+    """, """
+    a.foo{::age}
+    """);}
+  @Test void applierWithCallSingleArg() {ok("""
+    """, """
+    a.foo{::.foo(5)}
+    """);}
+  @Test void applierWithInvalidSelfCall() {fail("""
+    """, """
+    a.foo{::age(bar, baz)}
+    """);}
+  @Test void applierWithSelfCallChain() {ok("""
+    """, """
+    a.foo{::age .foo(bar, baz)}
+    """);}
+  @Test void applierWithSymbolCall() {ok("""
+    a:infer.foo/1[-]([[-infer-][]{'fear1$[-]([fear0$]):[-]->fear0$:infer#/0[-]([]):infer}]):infer
+    """, """
+    a.foo{:: #}
+    """);}
+  @Test void applierWithSymbolCallAndSubCall() {ok("""
+    """, """
+    a.foo{:: # + 5}
+    """);}
+  @Test void applierWithSymbolCallAndArg() {ok("""
+    """, """
+    a.foo{:: #(5)}
+    """);}
+  @Test void applierWithSymbolCallAndTwoArgs() {ok("""
+    """, """
+    a.foo{:: #(5,6)}
+    """);}
+  @Test void applierWithCallChain() {ok("""
+    """, """
+    a.foo{::age + 5}
+    """);}
 }
