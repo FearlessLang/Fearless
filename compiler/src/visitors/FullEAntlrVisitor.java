@@ -384,14 +384,6 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     var _xs = opt(ctx.x(), xs->xs.stream()
       .map(this::visitX).map(E.X::name).toList());
     _xs = _xs==null?List.of():_xs;
-//    if (ctx.e().postE().atomE().applier() != null) {
-//      var applier = ctx.e().postE().atomE().applier();
-//      System.out.println(applier.getText());
-//      if (!_xs.isEmpty()) {
-//        throw Fail.syntaxError("The applier sugar '{::...}' can only be used in literals with no explicit arguments.").pos(pos(ctx));
-//      }
-//      _xs.add(E.X.freshName());
-//    }
 
     var body = Optional.ofNullable(ctx.e()).map(this::visitE);
     return new E.Meth(Optional.empty(), Optional.empty(), _xs, body, Optional.of(pos(ctx)));
