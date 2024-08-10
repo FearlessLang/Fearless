@@ -1118,7 +1118,7 @@ Info:Sealed{
   .map: Map[Str, Info],
   .list: List[Info],
   }
-FInfo: {
+Infos: {
   .str(str: Str): Info -> {
     .str -> str,
     .list -> List#,
@@ -1303,7 +1303,7 @@ EmptyFlow[E]: Flow[E]{
   .size -> 0u,
   }
 
-TerminalOnInfiniteError: { #: Info -> FInfo.msg "Terminal operators cannot be called on infinite flows. Use an operation like .limit(5u) to bound the flow." }
+TerminalOnInfiniteError: { #: Info -> Infos.msg "Terminal operators cannot be called on infinite flows. Use an operation like .limit(5u) to bound the flow." }
 
 //---File flows\operators.fear
 package base.flows
@@ -1473,7 +1473,7 @@ alias base.Ref as Ref, alias base.Count as Count,
 alias base.Opt as Opt,
 alias base.Let as Let,
 alias base.List as List,
-alias base.Error as Error, alias base.FInfo as FInfo, alias base.Info as Info,
+alias base.Error as Error, alias base.Infos as Infos, alias base.Info as Info,
 alias base.Ordering as Ordering,
 alias base.Magic as Magic,
 alias base.IsoPod as IsoPod,

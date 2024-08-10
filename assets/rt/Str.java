@@ -71,13 +71,13 @@ public interface Str extends base.Str_0 {
 
 	@Override default Str substring$imm(long start_m$, long end_m$) {
 		if (start_m$ > end_m$) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("Start index must be less than end index")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("Start index must be less than end index")));
 		}
 		if (start_m$ < 0) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("Start index must be greater than or equal to 0")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("Start index must be greater than or equal to 0")));
 		}
 		if (end_m$ > this.size$imm()) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("End index must be less than the size of the string")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("End index must be less than the size of the string")));
 		}
 		return new SubStr(this, (int) start_m$, (int) end_m$);
 	}

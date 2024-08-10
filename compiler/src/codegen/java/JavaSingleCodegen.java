@@ -27,7 +27,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   protected final MIR.Program p;
   protected final Map<MIR.FName, MIR.Fun> funMap;
   private final JavaMagicImpls magic;
-  public final HashMap<Id.DecId, String> freshRecords= new HashMap<>();
+  public final HashMap<DecId, String> freshRecords= new HashMap<>();
   public final StringIds id= new StringIds();
   private String pkg;
   public JavaSingleCodegen(MIR.Program p) {
@@ -37,7 +37,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       .flatMap(pkg->pkg.funs().stream())
       .collect(Collectors.toMap(MIR.Fun::name, f->f));
   }
-  public boolean isLiteral(Id.DecId d) {
+  public boolean isLiteral(DecId d) {
     return id.getLiteral(p.p(), d).isPresent();
   }
   public String extendsStr(MIR.TypeDef def,String fullName){
@@ -104,7 +104,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       if (canSkip) {
         return visitMeth(deleMeth, Unreachable, Map.of());
       }
-      var d = new MethExprKind.Delegator(meth.sig(), deleMeth.sig());
+      var d = new Delegator(meth.sig(), deleMeth.sig());
       var delegator = visitMeth(deleMeth, d, Map.of());
       var delegate = visitMeth(meth, Delegate, Map.of());
       return delegator+"\n"+delegate+"\n";
@@ -124,7 +124,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     var cast = mustCast ? "("+getTName(meth.sig().rt(),true)+")" : "";
 
     var realExpr = switch (kind) {
-      case MethExprKind.Kind k -> switch (k.kind()) {
+      case Kind k -> switch (k.kind()) {
         case RealExpr, Delegate -> "return %s %s.%s(%s);".formatted(
           cast,
           id.getFullName(meth.origin()),
@@ -198,6 +198,11 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       }
       case MIR.Block.BlockStmt.Var var -> "var %s = %s;\n"
         .formatted(id.varName(var.name()), var.value().accept(this, true));
+      case MIR.Block.BlockStmt.Error error ->
+        "var doRes%s = rt.Error.throwFearlessError(%s);\n".formatted(
+          doIdx.update(n->n + 1),
+          error.e().accept(this, true)
+        );
     };
   }
 
@@ -340,6 +345,6 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   public String getTName(MIR.MT t, boolean isRet) {
     return new TypeIds(magic,id).getTName(t,isRet);
   }
-  public String visitProgram(Id.DecId entry){ throw Bug.unreachable(); }
+  public String visitProgram(DecId entry){ throw Bug.unreachable(); }
   public String visitPackage(MIR.Package pkg){ throw Bug.unreachable(); }
 }

@@ -53,6 +53,44 @@ public class TestJavaOptimisations {
     ForceGen: {#: Void -> {}}
     """);}
 
+  @Test void blockIf() { ok("""
+    package test;
+    public interface Test_0 extends base.Main_0{
+    Test_0 $self = new Test_0Impl();
+    base.Void_0 $hash$imm(base.caps.System_0 fear[###]$_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear[###]$_m$, test.Test_0 $this) {
+      var n_m$ = 5L;
+    var doRes1 = test.ForceGen_0.$self.$hash$imm();
+    return base.Void_0.$self;
+    }
+    }
+    """, "/test/Test_0.java", """
+    package test
+    alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
+    alias base.Infos as Infos, alias base.True as True, alias base.False as False,
+    Test:base.Main {_ -> Block#
+     .if {False} .return {Void}
+     .if {True} .return {Void}
+     .return {Void}
+     }
+    ForceGen: {#: Void -> {}}
+    """);}
+
+  @Test void blockVarDoErrRet() { ok("""
+    """, "/test/Test_0.java", """
+    package test
+    alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
+    alias base.Infos as Infos, alias base.True as True, alias base.False as False,
+    Test:base.Main {_ -> Block#
+     .let[Int] n = {+5}
+     .do {ForceGen#}
+     .if {False} .error {Infos.msg "safe"}
+     .if {True} .error {Infos.msg "oh no"}
+     .return {Void}
+     }
+    ForceGen: {#: Void -> {}}
+    """);}
+
   @Test void blockRet() { ok("""
     package test;
     public interface Test_0 extends base.Main_0{
@@ -175,12 +213,12 @@ public class TestJavaOptimisations {
     Test_0 $self = new Test_0Impl();
     base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
     static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
-      return rt.IO.$self.println$mut(((rt.Str)rt.dataParallel.DataParallelFlowK.$self.fromOp$imm(str$3297469917561599766$str$.$self._flow$imm(), base.Opt_1.$self).map$mut(test.Fear[###]_0.$self).join$mut(str$14492805990617963705$str$.$self)));
+      return rt.IO.$self.println$mut(((rt.Str)rt.flows.FlowCreator.fromFlow(rt.flows.dataParallel.DataParallelFlowK.$self, str$3297469917561599766$str$.$self.flow$imm()).map$mut(test.Fear[###]$_0.$self).join$mut(str$14492805990617963705$str$.$self)));
     }
     }
     """, "/test/Test_0.java", """
     package test
-    Test: Main{sys -> FIO#sys.println("Hello".flow
+    Test: Main{sys -> UnrestrictedIO#sys.println("Hello".flow
       .map{ch -> ch == "H" ? {.then -> "J", .else -> ch}}
       .join ""
       )}

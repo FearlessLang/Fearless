@@ -84,13 +84,13 @@ public class BlockOptimisation implements
         } else if (mCall.name().equals(new Id.MethName(".let", 2))) {
           var variable = this.visitReturn(mCall.args().getFirst());
           var continuationCall = this.visitVarContinuation(mCall.args().get(1));
-          if (variable.isEmpty() || continuationCall.isEmpty()) { yield FlattenStatus.INVALID; }
+          if (variable.isEmpty() || continuationCall.isEmpty()) {yield FlattenStatus.INVALID;}
           var continuation = this.visitFluentCall(
             continuationCall.get().continuationCall(),
             List.of(MIR.Block.BlockStmt.Return.class, MIR.Block.BlockStmt.Do.class), // TODO: and .error when we have that
             Optional.of(continuationCall.get().selfVar())
           );
-          if (continuation.isEmpty()) { yield FlattenStatus.INVALID; }
+          if (continuation.isEmpty()) {yield FlattenStatus.INVALID;}
           stmts.offerFirst(new MIR.Block.BlockStmt.Var(continuationCall.get().var().name(), variable.get()));
           continuation.get().stmts().forEach(stmts::offerLast);
         } else {

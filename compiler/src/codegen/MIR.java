@@ -170,6 +170,9 @@ public sealed interface MIR {
         @Override public E e() { return value; }
         @Override public Var withE(E e) { return new Var(name, e); }
       }
+      record Error(E e) implements BlockStmt {
+        @Override public Error withE(E e) { return new Error(e); }
+      }
     }
 
     public Block withStmts(Collection<BlockStmt> stmts) {

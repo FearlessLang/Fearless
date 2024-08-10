@@ -6,7 +6,7 @@ Info:Sealed{
   .list: LList[Info],
   .str: Str -> _InfoToJson#this,
   }
-FInfo: {
+Infos: {
   .msg(msg: Str): Info -> {
     .msg -> msg,
     .list -> {},
