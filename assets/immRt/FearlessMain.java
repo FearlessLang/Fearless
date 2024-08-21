@@ -24,6 +24,7 @@ public class FearlessMain {
     assert myMain != null;
 
     var userArgs = buildArgList(args, 1);
+    var shutdownVPF = rt.VPF.start();
     try {
       NativeRuntime.println(myMain.$hash$imm(userArgs).utf8());
     } catch (StackOverflowError e) {
@@ -32,6 +33,8 @@ public class FearlessMain {
     catch (Throwable t) {
       var msg = t.getMessage() == null ? t.getCause() : t.getMessage();
       fatal("Program crashed with: "+msg);
+    } finally {
+      shutdownVPF.run();
     }
   }
   public static Main_0 getMain(String mainName) throws NoSuchFieldException, SecurityException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, ClassCastException {

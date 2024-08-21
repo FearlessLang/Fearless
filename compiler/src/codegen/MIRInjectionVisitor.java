@@ -199,6 +199,7 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
       MIR.MT.of(tst.t()),
       MIR.MT.of(((CM.CoreCM) tst.original()).m().sig().ret()),
       tst.original().mdf(),
+      e.callId(),
       getVariants(recvRes.e(), e)
     );
 
@@ -293,7 +294,7 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
     }
 
     if (vpfOptimisation.shouldPromote(e)) {
-      return EnumSet.of(MIR.MCall.CallVariant.VPFPromotable);
+      return EnumSet.of(MIR.MCall.CallVariant.Standard, MIR.MCall.CallVariant.VPFPromotable);
     }
 
     return EnumSet.of(MIR.MCall.CallVariant.Standard);

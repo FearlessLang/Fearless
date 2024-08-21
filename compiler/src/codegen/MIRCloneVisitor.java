@@ -85,6 +85,7 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
       this.visitMT(call.t()),
       this.visitMT(call.originalRet()),
       call.mdf(),
+      call.callId(),
       this.visitCallVariant(call.variant())
     );
   }

@@ -30,6 +30,8 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   public final HashMap<Id.DecId, String> freshRecords= new HashMap<>();
   public final StringIds id= new StringIds();
   private String pkg;
+  private static ScopedValue<MIR.Fun> currentFun = ScopedValue.newInstance();
+
   public JavaSingleCodegen(MIR.Program p) {
     magic= new JavaMagicImpls(this, t->getTName(t,false), p.p());
     this.p = p;
@@ -149,15 +151,19 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   public String visitFun(MIR.Fun fun) {
-    var name = getFName(fun.name());
-    var args = seq(fun.args(),this::typePair,", ");
-    var body = fun.body().accept(this, true);
-    var ret = fun.body() instanceof MIR.Block ? "" : "return ";
-    return """
-      static %s %s(%s) {
-        %s%s;
-      }
-      """.formatted(getTName(fun.ret(),true), name, args, ret, body);
+    return ScopedValue
+      .where(currentFun, fun)
+      .get(()->{
+        var name = getFName(fun.name());
+        var args = seq(fun.args(),this::typePair,", ");
+        var body = fun.body().accept(this, true);
+        var ret = fun.body() instanceof MIR.Block ? "" : "return ";
+        return """
+        static %s %s(%s) {
+          %s%s;
+        }
+        """.formatted(getTName(fun.ret(),true), name, args, ret, body);
+      });
   }
   @Override public String visitBlockExpr(MIR.Block expr, boolean checkMagic) {
     var res = new StringBuilder();
@@ -276,6 +282,10 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   @Override public String visitMCall(MIR.MCall call, boolean checkMagic) {
+    if (call.variant().contains(MIR.MCall.CallVariant.VPFPromotable)) {
+      return visitVPFCall(call);
+    }
+
     var mustCast = !call.t().equals(call.originalRet());
     var cast = mustCast ? "(("+getTName(call.t(),false)+")" : "";
 
@@ -290,11 +300,65 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
         .call(call.name(), call.args(), call.variant(), call.t());
       if (impl.isPresent()) { return cast+impl.get()+(mustCast ? ")" : ""); }
     }
+
     var start = cast
       +call.recv().accept(this, checkMagic)
       +"."+id.getMName(call.mdf(), call.name())+"(";
     var args = seq(call.args(),a->a.accept(this, checkMagic),",");
     return start+args+")"+(mustCast ? ")" : "");
+  }
+
+  private String visitVPFCall(MIR.MCall call) {
+    // TODO: this is too low level, instead we need a new MIR construct for the promoted method
+    // TODO: we also need a MIR element for a VPFArg, then we can use magic as-is basically
+    assert call.variant().contains(MIR.MCall.CallVariant.VPFPromotable);
+
+    var seqVariants = EnumSet.copyOf(call.variant());
+    seqVariants.remove(MIR.MCall.CallVariant.VPFPromotable);
+    if (seqVariants.isEmpty()) { seqVariants.add(MIR.MCall.CallVariant.Standard); }
+    var seqCall = call.withVariants(seqVariants);
+
+    // Make a fallback method for the non-promoted version
+    var fun = currentFun.get();
+    var promotedName = "seq$"+call.callId()+"$"+getFName(fun.name())+"$vpf$";
+    var captures = fun.args();
+    var promotedId = new DecId(this.pkg+"."+promotedName, 0);
+    if (!freshRecords.containsKey(promotedId)) {
+      // For each method call arg, we need to spawn it
+      var args = IntStream.range(0, call.args().size())
+        .mapToObj(i->JavaVPFArg.of(i, call.args().get(i)))
+        .toList();
+      var assignments = seq(args, arg->arg.assignment(this), "\n");
+
+      var mustCast = !call.t().equals(call.originalRet());
+      var cast = mustCast ? "(("+getTName(call.t(),false)+")" : "";
+      var joinAll = cast
+        +call.recv().accept(this, true)
+        +"."+id.getMName(call.mdf(), call.name())+"("+seq(args, arg->arg.fetch(this), ",")+")"+(mustCast ? ")" : "");
+
+      this.freshRecords.put(promotedId, """
+      interface %s {
+        static %s of(%s) {
+          %s
+          return %s;
+        }
+      }
+      """.formatted(
+          promotedName,
+          getTName(call.t(),true),
+          seq(captures, this::typePair, ", "),
+          assignments,
+          joinAll
+        )
+      );
+    }
+
+    return "rt.VPF.shouldSpawn() ? %s.of(%s) : %s"
+      .formatted(
+        promotedName,
+        seq(captures, x->id.varName(x.name()), ","),
+        this.visitMCall(seqCall, true)
+      );
   }
 
   @Override public String visitBoolExpr(MIR.BoolExpr expr, boolean checkMagic) {

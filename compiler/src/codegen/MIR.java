@@ -98,20 +98,21 @@ public sealed interface MIR {
       return v.visitX(this, checkMagic);
     }
   }
-  record MCall(E recv, Id.MethName name, List<? extends E> args, MT t, MT originalRet, Mdf mdf, EnumSet<CallVariant> variant) implements E {
+  record MCall(E recv, Id.MethName name, List<? extends E> args, MT t, MT originalRet, Mdf mdf, long callId, EnumSet<CallVariant> variant) implements E {
     public MCall(E recv, Id.MethName name, List<? extends E> args, MT t, Mdf mdf, EnumSet<CallVariant> variant) {
-      this(recv, name, args, t, t, mdf, variant);
+      assert !variant.contains(CallVariant.VPFPromotable);
+      this(recv, name, args, t, t, mdf, -1, variant);
     }
 
     public MCall withRecv(E recv) {
-      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+      return new MCall(recv, name, args, t, originalRet, mdf, callId, variant);
     }
 
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitMCall(this, checkMagic);
     }
     public MCall withVariants(EnumSet<CallVariant> variant) {
-      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+      return new MCall(recv, name, args, t, originalRet, mdf, callId, variant);
     }
 
     public enum CallVariant {

@@ -7,8 +7,6 @@ import program.TypeTable;
 import program.typesystem.KindingJudgement;
 import program.typesystem.TsT;
 import utils.Streams;
-import visitors.CloneVisitor;
-import visitors.ShortCircuitVisitor;
 import visitors.Visitor;
 
 import java.util.Map;
