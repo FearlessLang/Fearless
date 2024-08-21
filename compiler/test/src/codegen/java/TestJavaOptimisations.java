@@ -185,4 +185,15 @@ public class TestJavaOptimisations {
       .join ""
       )}
     """, Base.mutBaseAliases);}
+
+  @Test void vpfOpt() { ok("""
+    """, "/test/Fib_0.java", """
+    package test
+    Fib: {
+      #(n: Nat): Nat -> Block#
+        .if {n <= 1} .return {n}
+        .return {Fib#(n - 1) + (Fib#(n - 2))},
+      }
+    Test:Main {sys -> sys.io.println(Fib#40 .str)}
+    """, Base.mutBaseAliases); }
 }

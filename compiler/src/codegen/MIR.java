@@ -118,11 +118,12 @@ public sealed interface MIR {
       Standard,
       PipelineParallelFlow,
       DataParallelFlow,
-      SafeMutSourceFlow;
+      SafeMutSourceFlow,
+      VPFPromotable;
 
       public boolean isStandard() { return this == Standard; }
     }
-    public boolean canParallelise() {
+    public boolean canFlowParallelise() {
       return variant.contains(CallVariant.PipelineParallelFlow) || variant.contains(CallVariant.DataParallelFlow);
     }
   }
@@ -185,7 +186,6 @@ public sealed interface MIR {
   }
 
   record StaticCall(E original, FName fun, List<E> args, Optional<MT> castTo) implements E {
-
     @Override public MT t() {
       return original.t();
     }

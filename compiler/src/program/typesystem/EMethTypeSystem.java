@@ -140,7 +140,7 @@ public interface EMethTypeSystem extends ETypeSystem {
     Mdf mdf = multi.recvMdfs().get(i);
     List<T> ts= multi.tss().stream().map(tsj->tsj.get(i)).toList();
     T ret= multi.rets().get(i);
-    TsT tst = new TsT(mdf, ts, ret, selected);
+    TsT tst = new TsT(xbs(), mdf, ts, ret, selected);
     resolvedCalls().put(e.callId(), tst);
     return FailOr.res(ret);
   }

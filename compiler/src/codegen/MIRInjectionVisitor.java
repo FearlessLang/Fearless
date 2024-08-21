@@ -3,6 +3,7 @@ package codegen;
 import ast.E;
 import ast.Program;
 import ast.T;
+import codegen.optimisations.VPFOptimisation;
 import id.Id;
 import id.Mdf;
 import magic.Magic;
@@ -23,6 +24,7 @@ import static program.TypeTable.filterByMdf;
 public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, MIRInjectionVisitor.Res<? extends MIR.E>> {
   private final Program p;
   private final ConcurrentHashMap<Long, TsT> resolvedCalls;
+  private final VPFOptimisation vpfOptimisation;
   private final Collection<String> cached;
 
   public record Res<EE extends MIR.E>(EE e, List<MIR.TypeDef> defs, List<MIR.Fun> funs) {
@@ -54,6 +56,7 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
   public MIRInjectionVisitor(Collection<String>cached, Program p, ConcurrentHashMap<Long, TsT> resolvedCalls) {
     this.p = p;
     this.resolvedCalls = resolvedCalls;
+    this.vpfOptimisation = new VPFOptimisation(p, resolvedCalls);
     this.cached = cached;//TODO: clean up mearless so that can work
     //on partial programs
   }
@@ -287,6 +290,10 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
     }
     if (recvIT.name().equals(Magic.FlowK) && e.name().name().equals(".range")) {
       return EnumSet.of(MIR.MCall.CallVariant.DataParallelFlow, MIR.MCall.CallVariant.PipelineParallelFlow, MIR.MCall.CallVariant.SafeMutSourceFlow);
+    }
+
+    if (vpfOptimisation.shouldPromote(e)) {
+      return EnumSet.of(MIR.MCall.CallVariant.VPFPromotable);
     }
 
     return EnumSet.of(MIR.MCall.CallVariant.Standard);
