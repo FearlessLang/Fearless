@@ -353,7 +353,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       );
     }
 
-    return "rt.VPF.shouldSpawn() ? %s.of(%s) : %s"
+    return "(rt.VPF.shouldSpawn() ? %s.of(%s) : %s)"
       .formatted(
         promotedName,
         seq(captures, x->id.varName(x.name()), ","),
