@@ -40,7 +40,15 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
     return new MIR.Fun(
       fun.name(),
       fun.args().stream().map(x->(MIR.X)this.visitX(x, true)).toList(),
-      this.visitMT(fun.ret()), fun.body().accept(this, true));
+      this.visitMT(fun.ret()), fun.body().accept(this, true),
+      fun.promoted().stream().map(this::visitVPFPromotedCall).toList()
+    );
+  }
+  default MIR.VPFPromotedCall visitVPFPromotedCall(MIR.VPFPromotedCall call) {
+    return new MIR.VPFPromotedCall(
+      (MIR.MCall) this.visitMCall(call.call(), true),
+      call.args().stream().map(arg->(MIR.VPFArg)arg.accept(this, true)).toList()
+    );
   }
 
   default MIR.MT visitMT(MIR.MT t) {
@@ -97,5 +105,16 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
       expr.then(),
       expr.else_()
     );
+  }
+
+  @Override default MIR.VPFArg visitPlainVPFArg(MIR.VPFArg.Plain plain, boolean checkMagic) {
+    return new MIR.VPFArg.Plain(plain.i(), plain.e().accept(this, checkMagic));
+  }
+  @Override default MIR.VPFArg visitSpawnVPFArg(MIR.VPFArg.Spawn spawn, boolean checkMagic) {
+    MIR.E callClone = this.visitMCall(spawn.call(), checkMagic);
+    if (!(callClone instanceof MIR.MCall call)) {
+      return new MIR.VPFArg.Plain(spawn.i(), callClone);
+    }
+    return new MIR.VPFArg.Spawn(spawn.i(), call);
   }
 }

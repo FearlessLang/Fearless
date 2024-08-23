@@ -103,6 +103,7 @@ public class BlockOptimisation implements
       }
       case MIR.BoolExpr _ -> throw Bug.todo();
       case MIR.X x -> self.filter(x::equals).map(_->FlattenStatus.FLATTENED).orElse(FlattenStatus.INVALID);
+      case MIR.VPFArg vpfArg -> flatten(vpfArg.e(), stmts, self);
       case MIR.CreateObj ignored -> FlattenStatus.INVALID;
       case MIR.StaticCall ignored -> throw Bug.unreachable();
       case MIR.Block ignored -> throw Bug.unreachable();

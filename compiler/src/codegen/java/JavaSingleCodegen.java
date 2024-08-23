@@ -77,7 +77,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       .orElse("");
     var leastSpecific = ParentWalker.leastSpecificSigs(p, def);
     var sigs = seq(def.sigs(),sig->visitSig(sig, leastSpecific),"\n");
-    var staticFuns = seq(funs,this::visitFun,"\n");    
+    var staticFuns = seq(funs,this::visitFun,"\n");
     return "public interface "+shortName+impls+"{\n"
       + singletonGet + sigs + staticFuns + "}";
   }
@@ -158,13 +158,49 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
         var args = seq(fun.args(),this::typePair,", ");
         var body = fun.body().accept(this, true);
         var ret = fun.body() instanceof MIR.Block ? "" : "return ";
+        var promotedCalls = seq(fun.promoted(),this::visitVPFPromotedCall,"\n");
         return """
         static %s %s(%s) {
           %s%s;
         }
-        """.formatted(getTName(fun.ret(),true), name, args, ret, body);
+        %s
+        """.formatted(getTName(fun.ret(),true), name, args, ret, body, promotedCalls);
       });
   }
+
+  public String visitVPFPromotedCall(MIR.VPFPromotedCall promoted) {
+    var fun = currentFun.get();
+    var name = getPromotedCallName(promoted.call(), fun.name());
+//    var decId = new DecId(this.pkg+"."+name, 0);
+//    if (freshRecords.containsKey(decId)) { return; }
+    var captures = fun.args();
+    var assignments = seq(promoted.args(), arg->JavaVPFArg.assignment(this, arg), "\n");
+    var promotedCall = promoted.call()
+      .withArgs(promoted.args())
+      .withVariants(EnumSet.of(MIR.MCall.CallVariant.Standard));
+    var call = this.visitMCall(promotedCall, true);
+    var res = """
+      static %s %s(%s) {
+        %s
+        return %s;
+      }
+    """.formatted(
+      getTName(promoted.call().t(),true),
+      name,
+      seq(captures, this::typePair, ", "),
+      assignments,
+      call
+    );
+    return res;
+  }
+
+  @Override public String visitPlainVPFArg(MIR.VPFArg.Plain plain, boolean checkMagic) {
+    return "arg"+plain.i();
+  }
+  @Override public String visitSpawnVPFArg(MIR.VPFArg.Spawn spawn, boolean checkMagic) {
+    return "rt.VPF.join(arg%s)".formatted(spawn.i());
+  }
+
   @Override public String visitBlockExpr(MIR.Block expr, boolean checkMagic) {
     var res = new StringBuilder();
     var stmts = new ArrayDeque<>(expr.stmts());
@@ -283,7 +319,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
 
   @Override public String visitMCall(MIR.MCall call, boolean checkMagic) {
     if (call.variant().contains(MIR.MCall.CallVariant.VPFPromotable)) {
-      return visitVPFCall(call);
+      return visitVPFCallExpr(call);
     }
 
     var mustCast = !call.t().equals(call.originalRet());
@@ -308,9 +344,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     return start+args+")"+(mustCast ? ")" : "");
   }
 
-  private String visitVPFCall(MIR.MCall call) {
-    // TODO: this is too low level, instead we need a new MIR construct for the promoted method
-    // TODO: we also need a MIR element for a VPFArg, then we can use magic as-is basically
+  private String visitVPFCallExpr(MIR.MCall call) {
     assert call.variant().contains(MIR.MCall.CallVariant.VPFPromotable);
 
     var seqVariants = EnumSet.copyOf(call.variant());
@@ -320,40 +354,10 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
 
     // Make a fallback method for the non-promoted version
     var fun = currentFun.get();
-    var promotedName = "seq$"+call.callId()+"$"+getFName(fun.name())+"$vpf$";
+    var promotedName = getPromotedCallName(call, fun.name());
     var captures = fun.args();
-    var promotedId = new DecId(this.pkg+"."+promotedName, 0);
-    if (!freshRecords.containsKey(promotedId)) {
-      // For each method call arg, we need to spawn it
-      var args = IntStream.range(0, call.args().size())
-        .mapToObj(i->JavaVPFArg.of(i, call.args().get(i)))
-        .toList();
-      var assignments = seq(args, arg->arg.assignment(this), "\n");
 
-      var mustCast = !call.t().equals(call.originalRet());
-      var cast = mustCast ? "(("+getTName(call.t(),false)+")" : "";
-      var joinAll = cast
-        +call.recv().accept(this, true)
-        +"."+id.getMName(call.mdf(), call.name())+"("+seq(args, arg->arg.fetch(this), ",")+")"+(mustCast ? ")" : "");
-
-      this.freshRecords.put(promotedId, """
-      interface %s {
-        static %s of(%s) {
-          %s
-          return %s;
-        }
-      }
-      """.formatted(
-          promotedName,
-          getTName(call.t(),true),
-          seq(captures, this::typePair, ", "),
-          assignments,
-          joinAll
-        )
-      );
-    }
-
-    return "(rt.VPF.shouldSpawn() ? %s.of(%s) : %s)"
+    return "(rt.VPF.shouldSpawn() ? %s(%s) : %s)"
       .formatted(
         promotedName,
         seq(captures, x->id.varName(x.name()), ","),
@@ -400,6 +404,9 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     return
       //id.getFullName(name.d()).replace(".","$")+"$"+
       id.getMName(name.mdf(), name.m())+"$fun";
+  }
+  public String getPromotedCallName(MIR.MCall call, MIR.FName fName) {
+    return "seq$"+call.callId()+"$"+getFName(fName)+"$vpf$";
   }
   public String getTName(MIR.MT t, boolean isRet) {
     return new TypeIds(magic,id).getTName(t,isRet);

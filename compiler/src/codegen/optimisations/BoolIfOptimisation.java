@@ -6,14 +6,15 @@ import id.Id;
 import magic.Magic;
 import magic.MagicImpls;
 import program.typesystem.XBs;
-import utils.Streams;
+import utils.Mapper;
+import utils.Push;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Inlines all boolean `.if` and `?` method calls as ternaries if the ThenElse/1 argument is a literal and does not
@@ -22,6 +23,8 @@ import java.util.stream.Stream;
 public class BoolIfOptimisation implements MIRCloneVisitor {
   private final MagicImpls<?> magic;
   private Map<MIR.FName, MIR.Fun> funs;
+  private Map<MIR.FName, List<MIR.VPFPromotedCall>> newVPFPromotions;
+  private MIR.Fun currentFun;
   public BoolIfOptimisation(MagicImpls<?> magic) {
     this.magic = magic;
   }
@@ -39,7 +42,16 @@ public class BoolIfOptimisation implements MIRCloneVisitor {
     return MIRCloneVisitor.super.visitMCall(call, checkMagic);
   }
 
+  @Override public MIR.Fun visitFun(MIR.Fun fun) {
+    this.currentFun = fun;
+    this.newVPFPromotions = new HashMap<>();
+    var transformed = MIRCloneVisitor.super.visitFun(fun);
+    return transformed.withPromoted(Push.of(transformed.promoted(), this.newVPFPromotions.getOrDefault(fun.name(), List.of())));
+  }
+
   private Optional<MIR.BoolExpr> boolIfOptimisation(MIR.MCall original) {
+    assert this.currentFun != null;
+
     // We need to make sure that this is a canonical ThenElse literal (i.e. no extra methods and the lambda is made inline here)
     // The restriction about the lambda being created inline here allows us to assume any captures are present
     assert original.args().size() == 1;
@@ -57,8 +69,18 @@ public class BoolIfOptimisation implements MIRCloneVisitor {
       return Optional.empty();
     }
 
+    // Bring up any promoted method calls
+    var thenF = this.funs.get(then.fName().orElseThrow());
+    var elseF = this.funs.get(else_.fName().orElseThrow());
+    thenF.promoted().forEach(this::generateVPFPromotions);
+    elseF.promoted().forEach(this::generateVPFPromotions);
+
     // This optimisation is shallow, it will only inline one level of a .if
     // If there is a nested .if, that nested if could also be optimised, but it will not be inlined into this one.
-    return Optional.of(new MIR.BoolExpr(original, original.recv(), then.fName().orElseThrow(), else_.fName().orElseThrow()));
+    return Optional.of(new MIR.BoolExpr(original, original.recv(), thenF.name(), elseF.name()));
+  }
+
+  private void generateVPFPromotions(MIR.VPFPromotedCall original) {
+    this.newVPFPromotions.put(this.currentFun.name(), Push.of(this.currentFun.promoted(), original));
   }
 }

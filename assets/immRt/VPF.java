@@ -7,7 +7,7 @@ public final class VPF {
 
   private static final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
   private static volatile boolean heartbeat = false;
-  private static final long HEARTBEAT_INTERVAL = 2000;
+  private static final long HEARTBEAT_INTERVAL = 3000;
 
   public static Runnable start() {
     var scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -40,10 +40,4 @@ public final class VPF {
       }
     }
   }
-
-//  private static void beat() {
-//    if (!isFlowRunning) {
-//      heartbeat = true;
-//    }
-//  }
 }

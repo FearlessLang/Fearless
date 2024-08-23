@@ -17,6 +17,7 @@ import visitors.CtxVisitor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static program.TypeTable.filterByMdf;
@@ -27,18 +28,20 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
   private final VPFOptimisation vpfOptimisation;
   private final Collection<String> cached;
 
-  public record Res<EE extends MIR.E>(EE e, List<MIR.TypeDef> defs, List<MIR.Fun> funs) {
-    public TopLevelRes mergeAsTopLevel(Res<?> other) {
-      return new TopLevelRes(Push.of(defs(), other.defs()), Push.of(funs(), other.funs()));
-    }
-  }
+  public record Res<EE extends MIR.E>(EE e, List<MIR.TypeDef> defs, List<MIR.Fun> funs, List<MIR.VPFPromotedCall> promoted) {}
   public record TopLevelRes(List<MIR.TypeDef> defs, List<MIR.Fun> funs) {
     public static TopLevelRes EMPTY = new TopLevelRes(List.of(), List.of());
     public TopLevelRes merge(TopLevelRes other) {
-      return new TopLevelRes(Push.of(defs(), other.defs()), Push.of(funs(), other.funs()));
+      return new TopLevelRes(
+        Push.of(defs(), other.defs()),
+        Push.of(funs(), other.funs())
+      );
     }
     public TopLevelRes mergeAsTopLevel(Res<?> other) {
-      return new TopLevelRes(Push.of(defs(), other.defs()), Push.of(funs(), other.funs()));
+      return new TopLevelRes(
+        Push.of(defs(), other.defs()),
+        Push.of(funs(), other.funs())
+      );
     }
   }
 
@@ -74,14 +77,18 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
 
   public MIR.Package visitPackage(String pkg, List<T.Dec> ds) {
     var allTDefs = new ArrayList<MIR.TypeDef>(ds.size());
-    var allFuns = new ArrayList<MIR.Fun>(ds.size());
+    var allFuns = new ArrayList<MIR.Fun>();
     ds.stream()
       .map(d->visitTopDec(d.withLambda(d.lambda().withMdf(Mdf.mut)), Ctx.EMPTY))
       .forEach(res->{
         allTDefs.addAll(res.defs());
         allFuns.addAll(res.funs());
       });
-    return new MIR.Package(pkg, Mapper.of(defs->allTDefs.forEach(def->defs.put(def.name(), def))), Collections.unmodifiableList(allFuns));
+    return new MIR.Package(
+      pkg,
+      Mapper.of(defs->allTDefs.forEach(def->defs.put(def.name(), def))),
+      Collections.unmodifiableList(allFuns)
+    );
   }
 
   public TopLevelRes visitTopDec(T.Dec dec, Ctx ctx) {
@@ -166,7 +173,7 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
 
     var rawBody = cm.m().body().orElseThrow();
     var bodyRes = rawBody.accept(this, mCtx);
-    var fun = new MIR.Fun(new MIR.FName(cm, captures.contains(x)), args, sig.rt(), bodyRes.e());
+    var fun = new MIR.Fun(new MIR.FName(cm, captures.contains(x)), args, sig.rt(), bodyRes.e(), bodyRes.promoted());
     return new TopLevelRes(bodyRes.defs(), Push.of(bodyRes.funs(), fun));
   }
   public MIR.Meth visitMeth(CM.CoreCM cm, MIR.Sig sig) {
@@ -191,6 +198,10 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
     var args = e.es().stream().map(ei->ei.accept(this, ctx)).toList();
     var topLevel = Stream.concat(Stream.of(recvRes), args.stream())
       .reduce(TopLevelRes.EMPTY, TopLevelRes::mergeAsTopLevel, TopLevelRes::merge);
+    List<MIR.VPFPromotedCall> vpfPromotions = Stream.concat(
+      recvRes.promoted().stream(),
+      args.stream().flatMap(arg->arg.promoted().stream())
+    ).toList();
 
     var call = new MIR.MCall(
       recvRes.e(),
@@ -203,11 +214,19 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
       getVariants(recvRes.e(), e)
     );
 
-    return new Res<>(call, topLevel.defs(), topLevel.funs());
+    List<MIR.VPFPromotedCall> promoted = List.of();
+    if (call.variant().contains(MIR.MCall.CallVariant.VPFPromotable)) {
+      var vpfArgs = IntStream.range(0, args.size())
+        .mapToObj(i->MIR.VPFArg.of(i, args.get(i).e()))
+        .toList();
+      promoted = List.of(new MIR.VPFPromotedCall(call, vpfArgs));
+    }
+
+    return new Res<>(call, topLevel.defs(), topLevel.funs(), Push.of(vpfPromotions, promoted));
   }
 
   @Override public Res<MIR.X> visitX(E.X e, Ctx ctx) {
-    return new Res<>(visitX(e.name(), ctx), List.of(), List.of());
+    return new Res<>(visitX(e.name(), ctx), List.of(), List.of(), List.of());
   }
   public MIR.X visitX(String x, Ctx ctx) {
     var fullX = ctx.xXs.get(x);
@@ -230,12 +249,12 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
         List.of(),
         MIR.createCapturesSet()
       );
-      return new Res<>(k, List.of(), List.of());
+      return new Res<>(k, List.of(), List.of(), List.of());
     }
 
     var k = constr(e, ctx);
     var topLevel = visitTopDec(dec, ctx);
-    return new Res<>(k, topLevel.defs(), topLevel.funs());
+    return new Res<>(k, topLevel.defs(), topLevel.funs(), List.of());
   }
 
   private Optional<T.Dec> getTransparentSource(T.Dec d) {
