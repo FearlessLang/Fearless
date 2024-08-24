@@ -1,4 +1,5 @@
 pub mod strings;
 #[cfg(feature = "compiler-only")]
 pub mod compiler;
-mod vpf;
+#[cfg(feature = "runtime-only")]
+pub mod vpf;
