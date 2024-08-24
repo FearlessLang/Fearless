@@ -4,18 +4,22 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class VPF {
-  private static final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+  private static ExecutorService executor;
   private static volatile boolean heartbeat = false;
-  private static final long HEARTBEAT_INTERVAL = 3000;
   private static final AtomicLong running = new AtomicLong(0);
-  private static final long MAX_TASKS = Runtime.getRuntime().availableProcessors() * 8000L;
+  private static final long MAX_TASKS = Runtime.getRuntime().availableProcessors() * 1000L;
 
-  public static Runnable start() {
+  public static Runnable start(int heartbeatInterval) {
+    assert running.get() == 0;
+    VPF.executor = Executors.newVirtualThreadPerTaskExecutor();
     var scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
-    scheduleExecutor.scheduleAtFixedRate(VPF::beat, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.NANOSECONDS);
+    if (heartbeatInterval > 0) {
+      scheduleExecutor.scheduleAtFixedRate(VPF::beat, heartbeatInterval, heartbeatInterval, TimeUnit.NANOSECONDS);
+    }
     return () -> {
       scheduleExecutor.shutdown();
-      executor.shutdown();
+      VPF.executor.shutdown();
+      heartbeat = false;
     };
   }
   public static boolean shouldSpawn() {
