@@ -10,6 +10,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import rt.NativeRuntime;
 import utils.Box;
 import utils.Bug;
+import utils.DistinctBy;
 import utils.Streams;
 import visitors.MIRVisitor;
 
@@ -158,7 +159,9 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
         var args = seq(fun.args(),this::typePair,", ");
         var body = fun.body().accept(this, true);
         var ret = fun.body() instanceof MIR.Block ? "" : "return ";
-        var promotedCalls = seq(fun.promoted(),this::visitVPFPromotedCall,"\n");
+        var promoted = fun.promoted().stream()
+          .gather(DistinctBy.of(call->getPromotedCallName(call.call(), fun.name())));
+        var promotedCalls = seq(promoted,this::visitVPFPromotedCall,"\n");
         return """
         static %s %s(%s) {
           %s%s;
@@ -173,14 +176,17 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     var name = getPromotedCallName(promoted.call(), fun.name());
 //    var decId = new DecId(this.pkg+"."+name, 0);
 //    if (freshRecords.containsKey(decId)) { return; }
-    var captures = fun.args();
+    var captures = promoted.captures();
+    var recv = JavaVPFArg.assignment(this, promoted.recv())+"\n";
     var assignments = seq(promoted.args(), arg->JavaVPFArg.assignment(this, arg), "\n");
     var promotedCall = promoted.call()
+      .withRecv(promoted.recv())
       .withArgs(promoted.args())
       .withVariants(EnumSet.of(MIR.MCall.CallVariant.Standard));
     var call = this.visitMCall(promotedCall, true);
     var res = """
       static %s %s(%s) {
+        %s
         %s
         return %s;
       }
@@ -188,6 +194,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
       getTName(promoted.call().t(),true),
       name,
       seq(captures, this::typePair, ", "),
+      recv,
       assignments,
       call
     );
@@ -195,10 +202,10 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   @Override public String visitPlainVPFArg(MIR.VPFArg.Plain plain, boolean checkMagic) {
-    return "arg"+plain.i();
+    return JavaVPFArg.argName(plain.i());
   }
   @Override public String visitSpawnVPFArg(MIR.VPFArg.Spawn spawn, boolean checkMagic) {
-    return "rt.VPF.join(arg%s)".formatted(spawn.i());
+    return "rt.VPF.join(%s)".formatted(JavaVPFArg.argName(spawn.i()));
   }
 
   @Override public String visitBlockExpr(MIR.Block expr, boolean checkMagic) {
@@ -355,7 +362,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     // Make a fallback method for the non-promoted version
     var fun = currentFun.get();
     var promotedName = getPromotedCallName(call, fun.name());
-    var captures = fun.args();
+    var captures = fun.promoted().stream().filter(c->c.call().callId() == call.callId()).findFirst().orElseThrow().captures();
 
     return "(rt.VPF.shouldSpawn() ? %s(%s) : %s)"
       .formatted(

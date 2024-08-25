@@ -47,7 +47,11 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
   default MIR.VPFPromotedCall visitVPFPromotedCall(MIR.VPFPromotedCall call) {
     return new MIR.VPFPromotedCall(
       (MIR.MCall) this.visitMCall(call.call(), true),
-      call.args().stream().map(arg->(MIR.VPFArg)arg.accept(this, true)).toList()
+      (MIR.VPFArg) call.recv().accept(this, true),
+      call.args().stream().map(arg->(MIR.VPFArg)arg.accept(this, true)).toList(),
+      call.captures().stream()
+        .map(x -> (MIR.X) this.visitX(x, true))
+        .toList()
     );
   }
 

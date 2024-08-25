@@ -138,9 +138,12 @@ public class BlockOptimisation implements
     if (k.meths().size() != 1) { return Optional.empty(); }
     var m = k.meths().getFirst();
     assert m.sig().name().equals(new Id.MethName("#", 2));
+
     var bodyF = this.funs.get(m.fName().orElseThrow());
+    // TODO: handle VPF promotions (need var name in scope-- not just fun captures)
     bodyF.promoted().forEach(this::generateVPFPromotions);
     var body = (MIR.MCall) bodyF.body();
+
     return Optional.of(new VarContinuation(m.sig().xs().getFirst(), m.sig().xs().get(1), body));
   }
 

@@ -204,7 +204,7 @@ public sealed interface MIR {
     }
   }
 
-  record VPFPromotedCall(MIR.MCall call, List<VPFArg> args) {}
+  record VPFPromotedCall(MIR.MCall call, VPFArg recv, List<VPFArg> args, List<X> captures) {}
   sealed interface VPFArg extends E  {
     E e();
     static VPFArg of(int i, MIR.E e) {

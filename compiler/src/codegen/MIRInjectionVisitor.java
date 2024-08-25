@@ -219,7 +219,8 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
       var vpfArgs = IntStream.range(0, args.size())
         .mapToObj(i->MIR.VPFArg.of(i, args.get(i).e()))
         .toList();
-      promoted = List.of(new MIR.VPFPromotedCall(call, vpfArgs));
+      var captures = captures(e, ctx);
+      promoted = List.of(new MIR.VPFPromotedCall(call, MIR.VPFArg.of(-1, call.recv()), vpfArgs, List.copyOf(captures)));
     }
 
     return new Res<>(call, topLevel.defs(), topLevel.funs(), Push.of(vpfPromotions, promoted));
@@ -329,9 +330,9 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
     fv.visitMeth(m);
     return Collections.unmodifiableSortedSet(fv.res());
   }
-  private SortedSet<MIR.X> captures(E.Lambda e, Ctx ctx) {
+  private SortedSet<MIR.X> captures(E e, Ctx ctx) {
     var fv = new FreeVariables();
-    fv.visitLambda(e);
+    e.accept(fv);
     return Collections.unmodifiableSortedSet(fv.res().stream()
         .map(x->visitX(x, ctx))
         .collect(Collectors.toCollection(MIR::createCapturesSet)));
