@@ -24,7 +24,8 @@ public class FearlessMain {
     assert myMain != null;
 
     var userArgs = buildArgList(args, 1);
-    var shutdownVPF = rt.VPF.start(rt.ConfigureVPF.getHeartbeatInterval());
+//    var shutdownVPF = rt.VPF.start(rt.ConfigureVPF.getHeartbeatInterval());
+    var shutdownVPF = rt.VPF.start(3000);
     try {
       NativeRuntime.println(myMain.$hash$imm(userArgs).utf8());
     } catch (StackOverflowError e) {

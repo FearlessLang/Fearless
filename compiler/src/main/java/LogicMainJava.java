@@ -1,12 +1,5 @@
 package main.java;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
-
 import ast.Program;
 import codegen.MIR;
 import codegen.MIRInjectionVisitor;
@@ -15,9 +8,15 @@ import codegen.java.JavaMagicImpls;
 import codegen.java.JavaProgram;
 import codegen.optimisations.OptimisationBuilder;
 import main.CompilerFrontEnd.Verbosity;
-import main.InputOutput;
 import main.FullLogicMain;
+import main.InputOutput;
 import program.typesystem.TsT;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public interface LogicMainJava extends FullLogicMain<JavaProgram> {
   @Override default void cachePackageTypes(ast.Program program) {
