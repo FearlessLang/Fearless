@@ -154,11 +154,12 @@ public class Program implements program.Program{
   public astFull.Program inferSignatures(){
     var is=new InferSignatures(this);
     for (int i : Range.of(is.decs)){
+      this.reset();
       var di = is.inferSignatures(is.decs.get(i));
       is.updateDec(di,i);
     }
-    this.reset();
     for (int i : Range.of(is.inlineDecs)){
+      this.reset();
       var di = is.inferInlineSignatures(is.inlineDecs.get(i));
       is.updateInlineDec(di,i);
     }
