@@ -69,7 +69,7 @@ public class HtmlDocgen {
         trait.lambda(),
         0
       ).stream()
-      .filter(cm->!cm.name().name().startsWith("_"))
+      .filter(cm->!cm.name().name().startsWith("._"))
       .map(cm->visitMeth(trait, cm))
       .collect(Collectors.joining("\n"));
 
@@ -79,11 +79,13 @@ public class HtmlDocgen {
 
   public String visitMeth(T.Dec parent, CM cm) {
     var gens = cm.sig().gens().stream().map(Id.GX::name).collect(Collectors.joining(","));
+    if (!gens.isEmpty()) { gens = "["+gens+"]"; }
     var args = Streams.zip(cm.xs(), cm.sig().ts())
       .map((x,t)->"%s: %s".formatted(x, formatT(t)))
       .collect(Collectors.joining(", "));
+    if (!args.isEmpty()) { args = "("+args+")"; }
     var body = cm.isAbs() ? "," : " -> …,";
-    var sig = "%s%s[%s](%s): %s%s".formatted(
+    var sig = "%s%s%s%s: %s%s".formatted(
       formatMdf(cm.mdf()),
       cm.name().name(),
       gens,
@@ -110,7 +112,11 @@ public class HtmlDocgen {
   private static String formatT(T t) {
     var body = t.rt().match(
       Id.GX::name,
-      it->it.name().name()+"["+it.ts().stream().map(HtmlDocgen::formatT).collect(Collectors.joining(","))+"]"
+      it->{
+        var gens = it.ts().stream().map(HtmlDocgen::formatT).collect(Collectors.joining(","));
+        if (!gens.isEmpty()) { gens = "["+gens+"]"; }
+        return it.name().name()+gens;
+      }
     );
     return formatMdf(t.mdf())+body;
   }

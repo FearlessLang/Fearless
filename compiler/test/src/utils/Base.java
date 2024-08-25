@@ -103,6 +103,7 @@ public interface Base {
     
     alias base.LList as LList,
     alias base.List as List,
+    alias base.ListProxys as ListProxys,
     alias base.Collection as Collection,
     
     alias base.As as As,

@@ -8,6 +8,9 @@ import failure.Fail;
 import id.Id;
 import id.Mdf;
 import magic.Magic;
+import program.CM;
+import program.TypeTable;
+import program.typesystem.XBs;
 import utils.Bug;
 import visitors.ShortCircuitVisitor;
 import visitors.ShortCircuitVisitorWithEnv;
@@ -41,6 +44,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
       .or(()->validLambdaMdf(e))
       .or(()->noSealedOutsidePkg(e))
       .or(()->noImplInlineDec(e))
+      .or(()->noAbsMethods(e))
       .or(()->noFreeGensInLambda(e))
       .or(()->validBoundsForLambdaGens(e))
       .or(()->super.visitLambda(e))
@@ -183,6 +187,26 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
 
   private Optional<CompileError> validLambdaMdf(E.Lambda e) {
     if (e.mdf().is(Mdf.readImm, Mdf.mutH, Mdf.readH)) { return Optional.of(Fail.invalidLambdaMdf(e.mdf())); }
+    return Optional.empty();
+  }
+
+  private Optional<CompileError> noAbsMethods(E.Lambda e) {
+    // Ignore top-level
+    if (e.mdf().isMdf()) { return Optional.empty(); }
+
+    var implMs = e.meths().stream()
+      .filter(m->!m.isAbs())
+      .map(E.Meth::name)
+      .collect(Collectors.toSet());
+    var unimplemented = p.meths(XBs.empty().addBounds(e.id().gens(), e.id().bounds()), e.mdf(), e, 0).stream()
+      .filter(CM::isAbs)
+      .filter(m->TypeTable.filterByMdf(e.mdf(), m.mdf()))
+      .map(CM::name)
+      .filter(name->!implMs.contains(name))
+      .toList();
+    if (!unimplemented.isEmpty()) {
+      return Optional.of(Fail.noUnimplementedMethods(unimplemented));
+    }
     return Optional.empty();
   }
 }

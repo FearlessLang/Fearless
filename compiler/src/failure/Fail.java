@@ -336,6 +336,13 @@ public class Fail{
     return of(STR."Expected \{formalParams.size()} generic type arguments, got \{actualArgs}.");
   }
 
+  public static CompileError noUnimplementedMethods(List<Id.MethName> unimplemented) {
+    var unimplementedList = unimplemented.stream()
+      .map(m->m.mdf().orElseThrow()+" "+m)
+      .collect(Collectors.joining(", "));
+    return of("Literals must implement all callable methods. The following methods are unimplemented: "+unimplementedList+".");
+  }
+
   private static String aVsAn(Mdf mdf) {
     if (mdf.isImm()) { return "an "+mdf; }
     return "a "+mdf;
@@ -412,7 +419,8 @@ enum ErrorCode {
   invalidMethodArgumentTypes,
   crossPackageDeclaration,
   genericMismatch,
-  inferImplementsFailed;
+  inferImplementsFailed,
+  noUnimplementedMethods;
   private static final ErrorCode[] values = values();
   int code() {
     return this.ordinal() + 1;

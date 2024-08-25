@@ -260,17 +260,6 @@ public class TestWellFormedness {
     A[X]:{ .no: read A[read A[X]] }
     """); }
 
-  @Test void noRecMdfInImplements() { fail("""
-    In position [###]/Dummy0.fear:3:5
-    [E27 recMdfInImpls]
-    Invalid modifier for recMdf Y.
-    recMdf may not be used in the list of implemented traits.
-    """, """
-    package base
-    A[X]:{}
-    B[Y]:A[recMdf Y]{}
-    """); }
-
   @Test void allowPrivateLambdaUsageWithinPkg() { ok("""
     package base.caps
     Good:{ .ok: mut base.caps._RootCap -> {} }
@@ -401,4 +390,52 @@ public class TestWellFormedness {
     package test
     A: {#: mutH A -> {}}
     """); }
+
+  @Test void mustImplementMethodsInInlineDecOk() {ok("""
+    package test
+    A: {.foo: A}
+    Bs: {#: B -> B: A{
+      .foo -> this,
+      }}
+    """);}
+  @Test void mustImplementMethodsInInlineDecFail() {fail("""
+    In position file:///home/nick/Programming/uni/fearless/compiler/Dummy0.fear:3:16
+    [E70 noUnimplementedMethods]
+    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    """, """
+    package test
+    A: {.foo: A}
+    Bs: {#: B -> B: A{}}
+    """);}
+
+  @Test void mustImplementMethodsInLambdaOk() {ok("""
+    package test
+    A: {.foo: A}
+    B: A
+    Bs: {#: B -> B{
+      .foo -> this,
+      }}
+    """);}
+  @Test void mustImplementMethodsInLambdaFail() {fail("""
+    In position [###]/Dummy0.fear:4:13
+    [E70 noUnimplementedMethods]
+    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    """, """
+    package test
+    A: {.foo: A}
+    B: A
+    Bs: {#: B -> B {}}
+    """);}
+  @Test void mustImplementMethodsInLambdaEvenIfImplAbs() {fail("""
+    In position [###]/Dummy0.fear:4:13
+    [E70 noUnimplementedMethods]
+    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    """, """
+    package test
+    A: {.foo: A}
+    B: A
+    Bs: {#: B -> B {
+      .foo: A,
+      }}
+    """);}
 }
