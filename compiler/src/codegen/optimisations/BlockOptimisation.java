@@ -140,7 +140,6 @@ public class BlockOptimisation implements
     assert m.sig().name().equals(new Id.MethName("#", 2));
 
     var bodyF = this.funs.get(m.fName().orElseThrow());
-    // TODO: handle VPF promotions (need var name in scope-- not just fun captures)
     bodyF.promoted().forEach(this::generateVPFPromotions);
     var body = (MIR.MCall) bodyF.body();
 
