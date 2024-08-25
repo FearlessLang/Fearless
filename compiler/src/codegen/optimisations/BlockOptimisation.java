@@ -6,6 +6,7 @@ import id.Id;
 import magic.Magic;
 import magic.MagicImpls;
 import utils.Bug;
+import utils.Push;
 
 import java.util.*;
 import java.util.function.Function;
@@ -18,6 +19,8 @@ public class BlockOptimisation implements
 {
   private final MagicImpls<?> magic;
   private Map<MIR.FName, MIR.Fun> funs;
+  private Map<MIR.FName, List<MIR.VPFPromotedCall>> newVPFPromotions;
+  private MIR.Fun currentFun;
   public BlockOptimisation(MagicImpls<?> magic) {
     this.magic = magic;
   }
@@ -28,14 +31,21 @@ public class BlockOptimisation implements
   }
 
   @Override public MIR.Fun visitFun(MIR.Fun fun) {
-    if (!(fun.body() instanceof MIR.MCall call)) { return MIRCloneVisitor.super.visitFun(fun); }
+    this.newVPFPromotions = new HashMap<>();
+    this.currentFun = fun;
+    if (!(fun.body() instanceof MIR.MCall call)) {
+      var res = MIRCloneVisitor.super.visitFun(fun);
+      return res.withPromoted(Push.of(res.promoted(), this.newVPFPromotions.getOrDefault(fun.name(), List.of())));
+    }
     var isBlock = this.magic.isMagic(Magic.Block, call.recv());
     if (!isBlock) {
-      return MIRCloneVisitor.super.visitFun(fun);
+      var res = MIRCloneVisitor.super.visitFun(fun);
+      return res.withPromoted(Push.of(res.promoted(), this.newVPFPromotions.getOrDefault(fun.name(), List.of())));
     }
-    return this.visitFluentCall(call, List.of(MIR.Block.BlockStmt.Return.class), Optional.empty())
+    var res = this.visitFluentCall(call, List.of(MIR.Block.BlockStmt.Return.class), Optional.empty())
       .map(fun::withBody)
       .orElse(MIRCloneVisitor.super.visitFun(fun));
+    return res.withPromoted(Push.of(res.promoted(), this.newVPFPromotions.getOrDefault(fun.name(), List.of())));
   }
 
   @Override public Optional<MIR.Block> visitFluentCall(
@@ -116,7 +126,9 @@ public class BlockOptimisation implements
     if (k.meths().size() != 1) { return Optional.empty(); }
     var m = k.meths().getFirst();
     assert m.sig().name().equals(new Id.MethName("#", 0));
-    var body = this.funs.get(m.fName().orElseThrow()).body();
+    var bodyF = this.funs.get(m.fName().orElseThrow());
+    bodyF.promoted().forEach(this::generateVPFPromotions);
+    var body = bodyF.body();
     return Optional.of(body);
   }
   private record VarContinuation(MIR.X var, MIR.X selfVar, MIR.MCall continuationCall) {}
@@ -126,7 +138,13 @@ public class BlockOptimisation implements
     if (k.meths().size() != 1) { return Optional.empty(); }
     var m = k.meths().getFirst();
     assert m.sig().name().equals(new Id.MethName("#", 2));
-    var body = (MIR.MCall) this.funs.get(m.fName().orElseThrow()).body();
+    var bodyF = this.funs.get(m.fName().orElseThrow());
+    bodyF.promoted().forEach(this::generateVPFPromotions);
+    var body = (MIR.MCall) bodyF.body();
     return Optional.of(new VarContinuation(m.sig().xs().getFirst(), m.sig().xs().get(1), body));
+  }
+
+  private void generateVPFPromotions(MIR.VPFPromotedCall original) {
+    this.newVPFPromotions.put(this.currentFun.name(), Push.of(this.currentFun.promoted(), original));
   }
 }
