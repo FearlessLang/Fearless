@@ -30,9 +30,9 @@ public final class MutStr implements Str {
     return immStr.graphemes();
   }
 
-  @Override public Bool_0 isEmpty$imm() {
+  @Override public Bool_0 isEmpty$read() {
     for (var str : buffer) {
-      if (str.isEmpty$imm() == False_0.$self) {
+      if (str.isEmpty$read() == False_0.$self) {
         return False_0.$self;
       }
     }

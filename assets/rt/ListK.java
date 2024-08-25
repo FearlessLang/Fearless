@@ -51,6 +51,15 @@ public interface ListK extends base.List_0 {
     return new ListImpl<>(res);
   }
 
+  @Override default List_1 withCapacity$imm(long n) {
+    if (n > Integer.MAX_VALUE) {
+      rt.Error.throwFearlessError(base.Infos_0.$self.msg$imm(
+        rt.Str.fromJavaStr("Lists may not have a capacity greater than "+Integer.MAX_VALUE)
+      ));
+    }
+    return new ListImpl<>(new ArrayList<>((int) n));
+  }
+
   record ListImpl<E>(java.util.List<E> inner) implements base.List_1 {
     @Override public FlowOp_1 _flowimm$imm(long start_m$, long end_m$) {
       return List_1._flowimm$imm$fun(start_m$, end_m$, this);

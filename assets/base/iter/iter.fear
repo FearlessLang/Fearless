@@ -43,8 +43,10 @@ Iter[E]:{
   mut .list: mut List[E] -> this.fold(List#[E], { acc, e -> Block#(acc.add(e), acc) }),
   mut .llist: mut LList[E] -> this.fold(mut LList[E], { acc, e -> acc +[] e }),
   mut .str(toStr: mut IterMapper[E, Str], joining: Str): Str -> this.map(toStr)
-    .fold[Str]("", mut IterFolder[Str, Str]{ acc, e -> acc.size == 0 ? { .then -> acc + e,
-                                                                          .else -> acc + joining + e }}),
+    .fold[mut Str](mut "", mut IterFolder[Str, mut Str]{acc, e -> acc.isEmpty ? {
+      .then -> acc.append(e),
+      .else -> acc.append(joining).append(e) }
+      }).str,
 //  Flow.fromOp{'op
 //    .step(sink) -> this.next.match{
 //      .some(x) -> sink#x,

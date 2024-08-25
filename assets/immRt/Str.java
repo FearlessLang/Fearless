@@ -53,7 +53,7 @@ public interface Str extends base.Str_0 {
 	@Override default base.Void_0 assertEq$imm(Str message$, Str other$) {
 		return _StrHelpers_0.$self.assertEq$imm(message$, this, other$);
 	}
-	@Override default base.Bool_0 isEmpty$imm() {
+	@Override default base.Bool_0 isEmpty$read() {
 		return this.utf8().length == 0 ? True_0.$self : False_0.$self;
 	}
 }

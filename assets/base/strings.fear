@@ -1,7 +1,7 @@
 package base
 Str: Sealed,Stringable,base.flows.Joinable[Str],ToHash{
+  read .isEmpty: Bool,
   .size: Nat,
-  .isEmpty: Bool,
   +(other: read Stringable): Str,
   ==(other: Str): Bool,
   !=(other: Str): Bool,

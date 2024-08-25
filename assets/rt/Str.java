@@ -58,26 +58,26 @@ public interface Str extends base.Str_0 {
 	@Override default base.Void_0 assertEq$imm(Str other$, Str message$) {
 		return _StrHelpers_0.$self.assertEq$imm(this, other$, message$);
 	}
-	@Override default base.Bool_0 isEmpty$imm() {
+	@Override default base.Bool_0 isEmpty$read() {
 		return this.utf8().length == 0 ? True_0.$self : False_0.$self;
 	}
 	@Override default Str join$imm(Flow_1 flow_m$) {
 		return (Str) flow_m$.fold$mut(new MutStr(EMPTY), (_acc, _str) -> {
 			var acc = (MutStr) _acc;
 			var str = (Str) _str;
-			return acc.isEmpty$imm() == True_0.$self ? acc.append$mut(str) : acc.append$mut(this).append$mut(str);
+			return acc.isEmpty$read() == True_0.$self ? acc.append$mut(str) : acc.append$mut(this).append$mut(str);
 		});
 	}
 
 	@Override default Str substring$imm(long start_m$, long end_m$) {
 		if (start_m$ > end_m$) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("Start index must be less than end index")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("Start index must be less than end index")));
 		}
 		if (start_m$ < 0) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("Start index must be greater than or equal to 0")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("Start index must be greater than or equal to 0")));
 		}
 		if (end_m$ > this.size$imm()) {
-			throw new FearlessError(base.FInfo_0.$self.msg$imm(fromJavaStr("End index must be less than the size of the string")));
+			throw new FearlessError(base.Infos_0.$self.msg$imm(fromJavaStr("End index must be less than the size of the string")));
 		}
 		return new SubStr(this, (int) start_m$, (int) end_m$);
 	}
@@ -166,7 +166,7 @@ public interface Str extends base.Str_0 {
 		@Override public Long size$imm() {
 			return this.size;
 		}
-		@Override public Bool_0 isEmpty$imm() {
+		@Override public Bool_0 isEmpty$read() {
 			return UTF8.length == 0 ? True_0.$self : False_0.$self;
 		}
 	}

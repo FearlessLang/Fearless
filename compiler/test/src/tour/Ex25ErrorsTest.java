@@ -40,9 +40,9 @@ public class Ex25ErrorsTest {
     """, "", 0), """
     package test
     Test:Main{s ->
-      UnrestrictedIO#s.println(Try#[Str]{Error!(FInfo.list(List#(
-        FInfo.msg "big",
-        FInfo.list(List#(FInfo.msg "oof"))
+      UnrestrictedIO#s.println(Try#[Str]{Error!(Infos.list(List#(
+        Infos.msg "big",
+        Infos.list(List#(Infos.msg "oof"))
       )))}.resMatch{
         .ok(res) -> res,
         .err(err) -> err.str,

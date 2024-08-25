@@ -2,7 +2,7 @@ package base.rng
 alias base.Block as Block,
 alias base.Nat as Nat, alias base.Float as Float,
 alias base.F as F,
-alias base.FInfo as FInfo,
+alias base.Infos as Infos,
 alias base.Sealed as Sealed,
 alias base.Var as Var, alias base.VarImm as VarImm,
 
@@ -10,7 +10,7 @@ alias base.Var as Var, alias base.VarImm as VarImm,
 /// parameters from musl (https://git.musl-libc.org/cgit/musl/tree/src/prng/rand.c)
 /// We actually only take the highest half of the bits because the low order bits have poor randomness
 FRandom: F[Nat, mut Random]{seed -> Block#
-  .if {seed == 0} .error {FInfo.msg "Seed may not be zero"}
+  .if {seed == 0} .error {Infos.msg "Seed may not be zero"}
   .let prev = {Var#seed}
   .return {{
     .nat -> Block#

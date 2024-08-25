@@ -28,7 +28,7 @@ Info: Sealed,_InfoToJson{
   .list: List[Info],
   .str: Str -> _InfoToJson#this,
   }
-FInfo: {
+Infos: {
   .msg(msg: Str): Info -> {
     .msg -> msg,
     .list -> List#,

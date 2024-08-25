@@ -168,6 +168,7 @@ List: Sealed{
   #[E](e1: E, e2: E, e3: E): mut List[E] -> Magic!,
   #[E](e1: E, e2: E, e3: E, e4: E): mut List[E] -> Magic!,
   .fromLList[E](list: mut LList[E]): mut List[E] -> Magic!,
+  .withCapacity[E](capacity: Nat): mut List[E] -> Magic!,
   }
 List[E]: Collection,Sealed{
   mut  .get(i: Nat): E,
@@ -259,14 +260,4 @@ List[E]: Collection,Sealed{
     .var -> Count.nat(0),
     .in(cursor) -> { .next -> this.tryGet(cursor++) }
     },
-  }
-
-/// A list that can be appended to, then iterated over. Elements cannot be removed from this list.
-/// After the list is built, it may no longer be modified. This data structure is equivalent to
-/// Java's SpinedBuffer.
-AppendList[E]: Collection{
-  mut  .get(i: Nat): mut Opt[E],
-  read .get(i: Nat): mut Opt[read E],
-  imm  .get(i: Nat): iso Opt[imm E],
-  mut .append(e: E): Void,
   }
