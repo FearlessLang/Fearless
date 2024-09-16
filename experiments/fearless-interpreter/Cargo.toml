@@ -1,0 +1,11 @@
+[package]
+name = "fearless-interpreter"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+capnp = "0.19.7"
+
+[profile.release]
+lto = true
+debug = "none"

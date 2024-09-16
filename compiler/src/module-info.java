@@ -10,4 +10,6 @@ module FearlessCompiler {
   requires org.apache.commons.text;
   requires org.apache.commons.lang3;
   requires commons.cli;
+  requires mearless;
+  requires runtime;
 }

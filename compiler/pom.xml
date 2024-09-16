@@ -22,6 +22,18 @@
     </pluginRepositories>
     <dependencies>
         <dependency>
+            <groupId>org.fearlang</groupId>
+            <artifactId>mearless</artifactId>
+            <version>1</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/../mearless/target/mearless-0.1-SNAPSHOT.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.capnproto</groupId>
+            <artifactId>runtime</artifactId>
+            <version>0.1.16</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>1.10.0</version>
