@@ -1,22 +1,43 @@
+use std::fs;
+use std::ops::Index;
 use capnp::message::{ReaderOptions, TypedReader};
+use anyhow::Result;
+use crate::interp::Program;
 
 mod proto;
 mod schema_capnp;
+mod interp;
+mod state;
 
-fn main() {
-    let f = std::fs::read("/tmp/test.fear.pkg.mearless").unwrap();
-    let reader = capnp::serialize::read_message_from_flat_slice(
-        &mut &*f,
-        ReaderOptions::new()
-    ).unwrap();
-    let reader = TypedReader::<_, schema_capnp::package::Owned>::new(reader);
-    let pkg_reader = reader.get().unwrap();
-    let pkg_name = std::str::from_utf8(pkg_reader.get_name().unwrap().0).unwrap();
-    pkg_reader.get_defs().unwrap().iter().for_each(|def| {
-        let name = def.get_name().unwrap();
-        let def_name = std::str::from_utf8(name.get_name().unwrap().0).unwrap();
-        let arity = name.get_gens();
-        println!("def: {}/{}", def_name, arity);
-    });
-    println!("Hello, world! {}", pkg_name);
+#[global_allocator]
+static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+fn main() -> Result<()> {
+	let paths = ["/tmp/test.fear.pkg.mearless"];
+	let raw = paths.iter()
+		.map(|path| Ok(fs::read(path)?))
+		.collect::<Result<Vec<_>>>()?;
+
+	let readers = raw.iter()
+		.map(|raw_pkg| -> Result<_> {
+			let msg_reader = capnp::serialize::read_message(
+				raw_pkg.as_slice(),
+				ReaderOptions::new()
+			)?;
+			Ok(TypedReader::<_, schema_capnp::package::Owned>::new(msg_reader))
+		})
+		.collect::<Result<Vec<_>>>()?;
+	
+	let mut p = Program::new(raw);
+	for reader in readers {
+		let r = reader.get()?;
+		p.load_package()?;
+	}
+
+	let mut program = interp::Program::new(raw);
+	program.load_package(0).unwrap();
+	// for i in 0..len {
+	// }
+	// println!("Hello, world! {:?}", program);
+	Ok(())
 }
