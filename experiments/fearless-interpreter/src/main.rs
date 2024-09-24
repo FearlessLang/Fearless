@@ -1,3 +1,4 @@
+use hashbrown::HashMap;
 use std::fs;
 use std::ops::Index;
 use capnp::message::{ReaderOptions, TypedReader};
@@ -13,7 +14,7 @@ mod state;
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn main() -> Result<()> {
-	let paths = ["/tmp/test.fear.pkg.mearless"];
+	let paths = ["/tmp/test.fear.pkg.mearless", "/tmp/base.fear.pkg.mearless"];
 	let raw = paths.iter()
 		.map(|path| Ok(fs::read(path)?))
 		.collect::<Result<Vec<_>>>()?;
@@ -24,20 +25,21 @@ fn main() -> Result<()> {
 				raw_pkg.as_slice(),
 				ReaderOptions::new()
 			)?;
-			Ok(TypedReader::<_, schema_capnp::package::Owned>::new(msg_reader))
+			let reader = TypedReader::<_, schema_capnp::package::Owned>::new(msg_reader);
+			Ok((reader.get()?.get_name()?.to_string()?, reader))
 		})
-		.collect::<Result<Vec<_>>>()?;
+		.collect::<Result<HashMap<_, _>>>()?;
 	
-	let mut p = Program::new(raw);
-	for reader in readers {
-		let r = reader.get()?;
-		p.load_package()?;
-	}
+	let program = Program::new(readers);
+	// for reader in readers {
+	// 	// let r = reader.get()?;
+	// 	// p.load_package(r)?;
+	// }
 
-	let mut program = interp::Program::new(raw);
-	program.load_package(0).unwrap();
+	// let mut program = Program::new();
+	// program.load_package().unwrap();
 	// for i in 0..len {
 	// }
-	// println!("Hello, world! {:?}", program);
+	println!("{:?}", program.package_names().collect::<Vec<_>>());
 	Ok(())
 }
