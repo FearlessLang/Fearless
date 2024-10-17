@@ -3,7 +3,7 @@ use crate::schema_capnp;
 use capnp::message::TypedReader;
 use capnp::serialize::OwnedSegments;
 use hashbrown::HashMap;
-use crate::state::{AstDecId, ExplicitDecId};
+use crate::state::{AstDecId, DecId, ExplicitDecId};
 
 pub struct Program {
 	raw: HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>,
@@ -58,6 +58,8 @@ impl Program {
 		}
 		(type_defs, method_defs)
 	}
+
+	fn call<R: Into<ExplicitDecId>, >(recv: )
 }
 
 // #[repr(transparent)]
