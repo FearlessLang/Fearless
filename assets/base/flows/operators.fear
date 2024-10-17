@@ -147,3 +147,50 @@ _FlatMap: {
       .split -> upstream.split.map{right -> this#(sinkFactory, right, f)},
       }}
   }
+
+// TODO: I'm still not 100% sure .with/1 is safe in parallel
+_With: {
+  #[A,B](sinkFactory: _Sink, upstream: mut FlowOp[A], other: mut FlowOp[B]): mut FlowOp[mut Pair[A,B]] -> Block#
+    .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
+    .let[mut Var[mut Opt[mut _Sink[A]]]] sink = {Var#{}}
+    .return{{'op
+      .step(downstream) -> sink.get.match{
+        .some(sink') -> upstream.step(sink'),
+        .empty -> Block#(
+          sink := (Opts#(sinkFactory#[A]{
+            .stop -> Block#(isRunning := False, downstream.stop),
+            #(e) -> Block#
+              .return {other.step{
+                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stop},
+                .stop -> op.stop,
+                .pushError(info) -> downstream.pushError(info),
+                }},
+            .pushError(info) -> downstream.pushError(info),
+            })),
+          upstream.step(sink.get!)
+          )
+        },
+      .forRemaining(downstream) -> sink.get.match{
+        .some(sink') -> upstream.forRemaining(sink'),
+        .empty -> Block#(
+          sink := (Opts#(sinkFactory#[A]{
+            .stop -> Block#(isRunning := False, downstream.stop),
+            #(e) -> Block#
+              .return {other.step{
+                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stop},
+                .stop -> op.stop,
+                .pushError(info) -> downstream.pushError(info),
+                }},
+            .pushError(info) -> downstream.pushError(info),
+            })),
+          upstream.forRemaining(sink.get!)
+          )
+        },
+      .stop -> upstream.stop,
+      .isRunning -> isRunning*,
+      .split -> Block#
+        .if {upstream.canSplit.not} .return {{}}
+        .if {other.canSplit.not} .return {{}}
+        .return {Opts#(this#(sinkFactory, upstream.split!, other.split!))},
+      }}
+  }

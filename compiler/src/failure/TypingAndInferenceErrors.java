@@ -60,16 +60,16 @@ public record TypingAndInferenceErrors(Program p, URI fileName) {
     var sigs = (MultiSig) rawError.attributes.get("sigs");
     var e = (E.MCall) rawError.attributes.get("mCall");
     List<String> argTypesWithImpls = addImplsToArgTypes(argTypes);
-    var msg= STR."Method \{e.name()} called in position \{e.posOrUnknown()} can not be called with current parameters of types:\n\{argTypesWithImpls}";
+    var msg= "Method " + e.name() + " called in position " + e.posOrUnknown() + " can not be called with current parameters of types:\n" + argTypesWithImpls;
     return of(msg+"\n"+sigs);
   }
   private List<String> addImplsToArgTypes(List<T> argTypes) {
     return argTypes.stream()
       .map(t->t.<String>match(
         _ -> t.toString(),
-        it -> STR."\{t} (\{p.of(it.name()).lambda().its().stream()
-          .map(iti->iti.name().toString())
-          .collect(Collectors.joining(", "))})"
+        it -> t + " (" + p.of(it.name()).lambda().its().stream()
+          .map(iti -> iti.name().toString())
+          .collect(Collectors.joining(", ")) + ")"
       ))
       .toList();
   }

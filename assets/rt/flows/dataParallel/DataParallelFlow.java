@@ -55,6 +55,10 @@ public final class DataParallelFlow implements Flow_1 {
     return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size$mut()).limit$mut(n_m$);
   }
 
+  public Flow_1 with$mut(Flow_1 other_m$) {
+    return $this.fromOp$imm(_With_0.$self.$hash$imm(_Sink_0.$self, source_m$, other_m$.unwrapOp$mut(null)), Opt_1.$self);
+  }
+
   public Opt_1 first$mut() {
     return _SeqFlow_0.$self.fromOp$imm(source_m$, size_m$).first$mut();
   }

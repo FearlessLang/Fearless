@@ -14,11 +14,8 @@ LexString: Actor[mut _LexerCtx,Str,Token]{downstream, ctx, e -> Block#
     ctx.mode(_LexerModes.stringEscape),
     ActorRes.continue
     )}
-  .if {ctx.isChar(e)} .return {Block#(
-    ctx.write(e),
-    ActorRes.continue
-    )}
   .do {ctx.write(e)}
+  .if {ctx.isChar(e)} .return {ActorRes.continue}
   .do {downstream#(Tokens.unknownFragment(ctx.line.get, ctx.col.get, ctx.str))}
   .return {ActorRes.stop}
   }

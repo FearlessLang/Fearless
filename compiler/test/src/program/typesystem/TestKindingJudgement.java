@@ -37,6 +37,20 @@ public class TestKindingJudgement {
     var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
     Assertions.assertEquals(expected, actual);
   }
+  private static void contains(XBs xbs, String t, Set<Mdf> expected, String... content) {
+    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var coreT = fullT.toAstT();
+    var p = toProgram(content);
+    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
+    Assertions.assertTrue(actual.contains(expected));
+  }
+  private static void notContains(XBs xbs, String t, Set<Mdf> expected, String... content) {
+    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var coreT = fullT.toAstT();
+    var p = toProgram(content);
+    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
+    Assertions.assertFalse(actual.contains(expected));
+  }
   private static void fail(String expectedErr, XBs xbs, String t, Set<Mdf> expected, String... content) {
     var fullT = new Parser(Parser.dummy, t).parseFullT();
     var coreT = fullT.toAstT();
@@ -255,4 +269,99 @@ public class TestKindingJudgement {
       B: {}
       """
   );}
+
+  @Test void shouldExtractReadImmFromReadImmXBoundedToBeMut() {contains(
+    XBs.empty().add("X", Set.of(mut)),
+    "read/imm X",
+    Set.of(
+      read, imm
+    ));}
+  @Test void shouldExtractReadFromReadImmXBoundedToBeMut() {contains(
+    XBs.empty().add("X", Set.of(mut)),
+    "read/imm X",
+    Set.of(
+      read
+    ));}
+  @Test void shouldNotExtractImmFromReadImmXBoundedToBeMut() {notContains(
+    XBs.empty().add("X", Set.of(mut)),
+    "read/imm X",
+    Set.of(
+      imm
+    ));}
+
+  @Test void shouldExtractReadImmFromReadImmXBoundedToBeImm() {contains(
+    XBs.empty().add("X", Set.of(imm)),
+    "read/imm X",
+    Set.of(
+      read, imm
+    ));}
+  @Test void shouldNotExtractReadFromReadImmXBoundedToBeImm() {notContains(
+    XBs.empty().add("X", Set.of(imm)),
+    "read/imm X",
+    Set.of(
+      read
+    ));}
+  @Test void shouldExtractImmFromReadImmXBoundedToBeImm() {contains(
+    XBs.empty().add("X", Set.of(imm)),
+    "read/imm X",
+    Set.of(
+      imm
+    ));}
+
+  @Test void shouldExtractReadImmFromReadImmXBoundedToBeIso() {contains(
+    XBs.empty().add("X", Set.of(iso)),
+    "read/imm X",
+    Set.of(
+      read, imm
+    ));}
+  @Test void shouldNotExtractReadFromReadImmXBoundedToBeIso() {notContains(
+    XBs.empty().add("X", Set.of(iso)),
+    "read/imm X",
+    Set.of(
+      read
+    ));}
+  @Test void shouldExtractImmFromReadImmXBoundedToBeIso() {contains(
+    XBs.empty().add("X", Set.of(iso)),
+    "read/imm X",
+    Set.of(
+      imm
+    ));}
+
+  @Test void shouldExtractReadImmFromReadImmXBoundedToBeImmOrIso() {contains(
+    XBs.empty().add("X", Set.of(imm, iso)),
+    "read/imm X",
+    Set.of(
+      read, imm
+    ));}
+  @Test void shouldNotExtractReadFromReadImmXBoundedToBeImmOrIso() {notContains(
+    XBs.empty().add("X", Set.of(imm, iso)),
+    "read/imm X",
+    Set.of(
+      read
+    ));}
+  @Test void shouldExtractImmFromReadImmXBoundedToBeImmOrIso() {contains(
+    XBs.empty().add("X", Set.of(imm, iso)),
+    "read/imm X",
+    Set.of(
+      imm
+    ));}
+
+  @Test void shouldExtractReadImmFromReadImmXBoundedToBeMutOrIso() {contains(
+    XBs.empty().add("X", Set.of(mut, iso)),
+    "read/imm X",
+    Set.of(
+      read, imm
+    ));}
+  @Test void shouldNotExtractReadFromReadImmXBoundedToBeMutOrIso() {notContains(
+    XBs.empty().add("X", Set.of(mut, iso)),
+    "read/imm X",
+    Set.of(
+      read
+    ));}
+  @Test void shouldNotExtractImmFromReadImmXBoundedToBeMutOrIso() {notContains(
+    XBs.empty().add("X", Set.of(mut, iso)),
+    "read/imm X",
+    Set.of(
+      imm
+    ));}
 }

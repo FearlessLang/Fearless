@@ -336,4 +336,16 @@ Many maps are on Str or Int types
       .return {sys.io.println(sum1.str + " vs. "+ (sum2.str))}
       }
     """, Base.mutBaseAliases);}
+
+  @Test void offsetLookup() {ok(new Res(), """
+    package test
+    Test:Main {sys -> Block#
+      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4)}
+      .let[Nat] a = {l.get(5 .offset -2)}
+      .let[Nat] b = {l.get(1 .offset +1)}
+      .do {4 .assertEq(a)}
+      .do {3 .assertEq(b)}
+      .return {{}}
+      }
+    """, Base.mutBaseAliases);}
 }

@@ -7,11 +7,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-public record ResolveResource(Path assetRoot, Path artefactRoot, Path testsRoot, FileSystem virtualFs) {
+public record ResolveResource(Path assetRoot, Path artefactRoot, Optional<Path> testsRoot, FileSystem virtualFs) {
   static private final ResolveResource instance= 
     ResolveResource.infer();
     //ResolveResource.of(Paths.get("C:/")
@@ -22,34 +22,36 @@ public record ResolveResource(Path assetRoot, Path artefactRoot, Path testsRoot,
     assert Files.exists(assetRoot):assetRoot;
     assert Files.exists(artefactRoot):artefactRoot;
   }
-  static ResolveResource of(Path p) {
-    return new ResolveResource(p.resolve("assets"), p.resolve("artefacts"), p.resolve("compiler-tests"), null);
-  }
+
   static ResolveResource infer() {
     var url= ResolveResource.class.getResource("/base");
-    var testResourceUrl= ResolveResource.class.getResource("/.compiler-tests");
+    var testResourceUrl= Optional.ofNullable(ResolveResource.class.getResource("/.compiler-tests"));
     if(url==null) {
       // We're running with a working dir of the Fearless Compiler project, likely in something like Eclipse.
       var root = Path.of("").toAbsolutePath().getParent();
       return new ResolveResource(
         root.resolve("assets"),
         root.resolve("artefacts"),
-        root.resolve("compiler-tests"),
+        Optional.of(root.resolve("compiler-tests")),
         null
       );
     }
-    assert testResourceUrl != null;
 
     URI resourcesUri; try { resourcesUri= url.toURI();}
     catch (URISyntaxException e) { throw Bug.of(e); }
-    URI testResourceUri; try { testResourceUri= testResourceUrl.toURI();}
-    catch (URISyntaxException e) { throw Bug.of(e); }
+    Optional<URI> testResourceUri= testResourceUrl.map(testResourceUrl_ -> {
+      try {
+        return testResourceUrl_.toURI();
+      } catch (URISyntaxException e) {
+        throw Bug.of(e);
+      }
+    });
 
     var inBundle = resourcesUri.getScheme().equals("jar") || resourcesUri.getScheme().equals("resource");
     if (!inBundle){
       // We're running in an IDE/build tool that uses an output/build dir as the working dir. Likely IntelliJ or Maven.
       var resourcesRoot= Path.of(resourcesUri).getParent();
-      var testResourcesRoot= Path.of(testResourceUri).getParent();
+      var testResourcesRoot= testResourceUri.map(uri->Path.of(uri).getParent());
       return new ResolveResource(resourcesRoot, resourcesRoot, testResourcesRoot, null);
     }
     // We're in a JAR or AOT Application Image.
@@ -66,7 +68,7 @@ public record ResolveResource(Path assetRoot, Path artefactRoot, Path testsRoot,
     return of(instance.artefactRoot, relativePath);
   }
   static public Path test(String relativePath) {
-    return of(instance.testsRoot, relativePath);
+    return of(instance.testsRoot.orElseThrow(), relativePath);
   }
   static private Path of(Path root, String relativePath) {
     assert relativePath.startsWith("/");

@@ -147,6 +147,10 @@ public record GoMagicImpls(PackageCodegen gen, ast.Program p) implements magic.M
     };
   }
 
+  @Override public MagicTrait<MIR.E, Res> byte_(MIR.E e) {
+    throw Bug.todo("Byte magic for Go");
+  }
+
   @Override public MagicTrait<MIR.E, Res> str(MIR.E e) {
     var name = e.t().name().orElseThrow();
     return new MagicTrait<>() {

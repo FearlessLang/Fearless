@@ -19,16 +19,21 @@ Str: Sealed,Stringable,base.flows.Joinable[Str],ToHash{
 
   // Conversions
   .float: mut Action[Float],
+  .utf8: List[Byte],
   }
 
 Stringable: {
   read .str: Str,
   }
 
-UTF16: {
+UTF16: Sealed{
   .fromCodePoint(codePoint: Nat): Str -> Magic!,
   .isSurrogate(codePoint: Nat): Bool -> codePoint >= 55296 && (codePoint < 57344),
   .fromSurrogatePair(high: Nat, low: Nat): Str -> Magic!,
+  }
+
+UTF8: Sealed{
+  .fromBytes(utf8Bytes: List[Byte]): mut Action[Str] -> Magic!,
   }
 
 SimpleStr: Str
@@ -54,6 +59,7 @@ _StrInstance: Str{
   .join(_) -> Magic!,
   .hash(h) -> Magic!,
   .float -> Magic!,
+  .utf8 -> Magic!,
   }
 
 _StrHelpers: {

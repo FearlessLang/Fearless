@@ -43,8 +43,9 @@ _NonTerminalOps[E]: {
   mut .filter(predicate: read F[E, Bool]): mut Flow[E],
   mut .map[R](f: read F[E, R]): mut Flow[R],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
-//  mut .chain(other: mut Flow[R]): mut Flow[R], // TODO: maybe
-
+  /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
+  /// flows stop.
+  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
   mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
 
@@ -105,6 +106,7 @@ _FlowExtensions: {
 
 EmptyFlow[E]: Flow[E]{
   .filter(p) -> this,
+  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> mut EmptyFlow[imm R],
@@ -136,3 +138,5 @@ _Enumerateds: {#[E:imm](i: Nat, e: E): Enumerated[E] -> Enumerated[E:imm]: {
   .i: Nat -> i,
   .e: E -> e,
   }}
+
+Pair[A,B]: {mut .a: A, mut .b: B}

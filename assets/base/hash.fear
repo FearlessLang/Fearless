@@ -11,7 +11,7 @@ Hasher: {
   mut .nat(x: read Nat): mut Hasher,
   mut .int(x: read Int): mut Hasher,
   mut .float(x: read Float): mut Hasher,
-//  mut .byte(x: read Byte): Hasher, // TODO: bytes
+  mut .byte(x: read Byte): mut Hasher,
   mut .str(x: read Str): mut Hasher,
   }
 
@@ -21,6 +21,6 @@ CheapHash: Hasher{
   .nat(x) -> Magic!,
   .int(x) -> Magic!,
   .float(x) -> Magic!,
-//  .byte(x) -> Magic!,
+  .byte(x) -> Magic!,
   .str(x) -> Magic!,
   }

@@ -10,9 +10,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface ParentWalker {
-  /**
-   * Walks through every trait in an inheritance chain, starting from the most concrete.
-   */
+  /// Walks through every trait in an inheritance chain, starting from the most concrete.
   static Stream<MIR.TypeDef> of(MIR.Program p, MIR.TypeDef root) {
     var spliterator = Spliterators.spliteratorUnknownSize(new Iterator<MIR.TypeDef>() {
       private final Deque<MIR.TypeDef> q = new ArrayDeque<>();
@@ -33,13 +31,8 @@ public interface ParentWalker {
     return StreamSupport.stream(spliterator, false);
   }
 
-  /**
-   * 
-   * @param p
-   * @param root
-   * @return the most generic signature of all the super
-   *  signatures for a give type (root)
-   */
+  /// @return the most generic signature of all the super
+  ///  signatures for a give type (root)
   static Map<Id.MethName, MIR.Sig> leastSpecificSigs(MIR.Program p, MIR.TypeDef root) {
     // TODO: write tests to check how this works when multiple candidates at the same level exist
     return ParentWalker.of(p, root)

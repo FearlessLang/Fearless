@@ -1,6 +1,5 @@
 package codegen.java;
 
-import ast.T;
 import codegen.FlowSelector;
 import codegen.MIR;
 import failure.Fail;
@@ -54,6 +53,9 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName(".float", 0))) {
           return "("+"(double)"+instantiate().orElseThrow()+")";
         }
+        if (m.equals(new Id.MethName(".byte", 0))) {
+          return "("+"(byte)"+instantiate().orElseThrow()+")";
+        }
         if (m.equals(new Id.MethName(".str", 0))) {
           return "rt.Str.fromJavaStr(Long.toString("+instantiate().orElseThrow()+"))";
         }
@@ -88,13 +90,12 @@ public record JavaMagicImpls(
           return "base._IntAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+", "+args.get(1).accept(gen, true)+", null)";
         }
         if (m.equals(new Id.MethName(".hash", 1))) {
-          return STR."\{args.getFirst().accept(gen, true)}.int$mut(\{instantiate().orElseThrow()})";
+          return args.getFirst().accept(gen, true) + ".int$mut(" + instantiate().orElseThrow() + ")";
         }
-        throw Bug.unreachable();
+        throw Bug.of("Expected magic to exist for: "+m);
       }
     };
   }
-
   @Override public MagicTrait<MIR.E,String> nat(MIR.E e) {
     var name = e.t().name().orElseThrow();
     return new MagicTrait<>() {
@@ -121,6 +122,9 @@ public record JavaMagicImpls(
         }
         if (m.equals(new Id.MethName(".float", 0))) {
           return "("+"(double)"+instantiate().orElseThrow()+")";
+        }
+        if (m.equals(new Id.MethName(".byte", 0))) {
+          return "("+"(byte)"+instantiate().orElseThrow()+")";
         }
         if (m.equals(new Id.MethName(".str", 0))) {
           return "rt.Str.fromJavaStr(Long.toUnsignedString("+instantiate().orElseThrow()+"))";
@@ -156,9 +160,12 @@ public record JavaMagicImpls(
           return "base._NatAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+", "+args.get(1).accept(gen, true)+", null)";
         }
         if (m.equals(new Id.MethName(".hash", 1))) {
-          return STR."\{args.getFirst().accept(gen, true)}.int$mut(\{instantiate().orElseThrow()})";
+          return args.getFirst().accept(gen, true) + ".int$mut(" + instantiate().orElseThrow() + ")";
         }
-        throw Bug.unreachable();
+        if (m.equals(new Id.MethName(".offset", 1))) {
+          return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true);
+        }
+        throw Bug.of("Expected magic to exist for: "+m);
       }
     };
   }
@@ -185,6 +192,9 @@ public record JavaMagicImpls(
         }
         if (m.equals(new Id.MethName(".float", 0))) {
           return instantiate().orElseThrow();
+        }
+        if (m.equals(new Id.MethName(".byte", 0))) {
+          return "("+"(byte)"+instantiate().orElseThrow()+")";
         }
         if (m.equals(new Id.MethName(".str", 0))) {
           return "rt.Str.fromTrustedUtf8(rt.Str.wrap(rt.NativeRuntime.floatToStr("+instantiate().orElseThrow()+")))";
@@ -218,9 +228,86 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName(".isPosInfinity", 0))) { return "("+instantiate().orElseThrow()+" == Double.POSITIVE_INFINITY)?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName(".isNegInfinity", 0))) { return "("+instantiate().orElseThrow()+" == Double.NEGATIVE_INFINITY)?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName(".hash", 1))) {
-          return STR."\{args.getFirst().accept(gen, true)}.int$mut(\{instantiate().orElseThrow()})";
+          return args.getFirst().accept(gen, true) + ".int$mut(" + instantiate().orElseThrow() + ")";
         }
-        throw Bug.unreachable();
+        throw Bug.of("Expected magic to exist for: "+m);
+      }
+    };
+  }
+  @Override public MagicTrait<MIR.E,String> byte_(MIR.E e) {
+    var name = e.t().name().orElseThrow();
+    return new MagicTrait<>() {
+      @Override public Optional<String> instantiate() {
+        var lit = getLiteral(p, name);
+        try {
+          // Parse bytes as a long because Fearless bytes are u8 (unsigned), Java bytes are i8 (signed).
+          return lit
+            .map(lambdaName->"((byte)"+Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+")")
+            .orElseGet(()->"((byte)"+e.accept(gen, true)+")").describeConstable();
+        } catch (NumberFormatException ignored) {
+          throw Fail.invalidNum(lit.orElse(name.toString()), "Byte");
+        }
+      }
+      @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
+        return Optional.of(_call(m, args));
+      }
+      private String _call(Id.MethName m, List<? extends MIR.E> args) {
+        // _NumInstance
+        if (m.equals(new Id.MethName(".int", 0))) {
+          return "("+"(long)"+instantiate().orElseThrow()+")";
+        }
+        if (m.equals(new Id.MethName(".nat", 0))) {
+          return "("+"(long)"+instantiate().orElseThrow()+")";
+        }
+        if (m.equals(new Id.MethName(".float", 0))) {
+          return "("+"(double)"+instantiate().orElseThrow()+")";
+        }
+        if (m.equals(new Id.MethName(".byte", 0))) {
+          return instantiate().orElseThrow();
+        }
+        if (m.equals(new Id.MethName(".str", 0))) {
+          return "rt.Str.fromJavaStr(Integer.toString(Byte.toUnsignedInt(%s)))".formatted(instantiate().orElseThrow());
+        }
+        if (m.equals(new Id.MethName("+", 1))) { return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true); }
+        if (m.equals(new Id.MethName("-", 1))) { return instantiate().orElseThrow()+" - "+args.getFirst().accept(gen, true); }
+        if (m.equals(new Id.MethName("*", 1))) { return instantiate().orElseThrow()+"*"+args.getFirst().accept(gen, true); }
+        if (m.equals(new Id.MethName("/", 1))) { return "Long.divideUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")"; }
+        if (m.equals(new Id.MethName("%", 1))) { return "Long.remainderUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")"; }
+        if (m.equals(new Id.MethName("**", 1))) { return String.format("""
+          (switch (1) { default -> {
+              byte base = %s; long exp = %s; byte res = base;
+              if (exp == 0) { yield 1L; }
+              for(; exp > 1; exp--) { res *= base; }
+              yield res;
+            }})
+          """, instantiate().orElseThrow(), args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(".abs", 0))) { return instantiate().orElseThrow(); } // no-op for unsigned
+        if (m.equals(new Id.MethName(".shiftRight", 1))) { return byteToInt(instantiate().orElseThrow())+">>"+byteToInt(args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(".shiftLeft", 1))) { return byteToInt(instantiate().orElseThrow())+"<<"+byteToInt(args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(".xor", 1))) { return byteToInt(instantiate().orElseThrow())+"^"+byteToInt(args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(".bitwiseAnd", 1))) { return byteToInt(instantiate().orElseThrow())+"&"+byteToInt(args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(".bitwiseOr", 1))) { return byteToInt(instantiate().orElseThrow())+"|"+byteToInt(args.getFirst().accept(gen, true)); }
+        if (m.equals(new Id.MethName(">", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")>0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("<", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")<0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName(">=", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")>=0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("<=", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")<=0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("==", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")==0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName(".assertEq", 1))) {
+          return "base._ByteAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+", null)";
+        }
+        if (m.equals(new Id.MethName(".assertEq", 2))) {
+          return "base._ByteAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+", "+args.get(1).accept(gen, true)+", null)";
+        }
+        if (m.equals(new Id.MethName(".hash", 1))) {
+          return args.getFirst().accept(gen, true) + ".byte$mut(" + instantiate().orElseThrow() + ")";
+        }
+        if (m.equals(new Id.MethName(".offset", 1))) {
+          return "((byte)"+byteToInt(instantiate().orElseThrow())+" + "+args.getFirst().accept(gen, true)+")";
+        }
+        throw Bug.of("Expected magic to exist for: "+m);
+      }
+      private String byteToInt(String raw) {
+        return "Byte.toUnsignedInt(%s)".formatted(raw);
       }
     };
   }
@@ -234,6 +321,10 @@ public record JavaMagicImpls(
         return Optional.empty();
       }
     };
+  }
+
+  @Override public MagicTrait<MIR.E, String> utf8(MIR.E e) {
+    return "rt.UTF8.$self"::describeConstable;
   }
 
   @Override public MagicTrait<MIR.E, String> utf16(MIR.E e) {

@@ -48,17 +48,27 @@ public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean 
   }
 
   @Override public FailOr<List<Set<Mdf>>> visitReadImm(Id.GX<T> x) {
+    var res = new ArrayList<Set<Mdf>>();
+
     var case1 = holds(Set.of(Mdf.read, Mdf.imm), Mdf.readImm+" "+x);
-    if (case1.isRes()) { return case1; }
+    if (checkOnly && case1.isRes()) { return case1; }
+    case1.ifRes(res::addAll);
+
     if (new KindingJudgement(p, xbs, Set.of(Mdf.iso, Mdf.imm), checkOnly).visitX(x).isRes()) {
       var caseImm = holds(Set.of(Mdf.imm), Mdf.readImm+" "+x);
-      if (caseImm.isRes()) { return caseImm; }
+      if (checkOnly && caseImm.isRes()) { return caseImm; }
+      caseImm.ifRes(res::addAll);
     }
+
     if (new KindingJudgement(p, xbs, Set.of(Mdf.mut, Mdf.mutH, Mdf.read, Mdf.readH), checkOnly).visitX(x).isRes()) {
       var caseRead = holds(Set.of(Mdf.read), Mdf.readImm+" "+x);
-      if (caseRead.isRes()) { return caseRead; }
+      if (checkOnly && caseRead.isRes()) { return caseRead; }
+      caseRead.ifRes(res::addAll);
     }
-    return FailOr.err(()->Fail.invalidMdfBound(Mdf.readImm+" "+x, expected.stream().sorted()));
+    if (checkOnly || res.isEmpty()) {
+      return FailOr.err(()->Fail.invalidMdfBound(Mdf.readImm+" "+x, expected.stream().sorted()));
+    }
+    return FailOr.res(Collections.unmodifiableList(res));
   }
 
   private FailOr<List<Set<Mdf>>> holds(Set<Mdf> actual, String typeName) {

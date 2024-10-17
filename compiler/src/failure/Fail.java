@@ -169,7 +169,7 @@ public class Fail{
       "sigs", sigs,
       "expected", expected
     );
-    var msg= STR."Method \{e.name()} called in position \{e.posOrUnknown()} can not be called with current parameters of types: \{t1n}";
+    var msg= "Method " + e.name() + " called in position " + e.posOrUnknown() + " can not be called with current parameters of types: " + t1n;
     return of(msg+"\n"+sigs, attributes);
   }
 
@@ -191,11 +191,8 @@ public class Fail{
 //    var expected_ = expected.map(ast.T::toString).orElse("?");
     var expectedRets = expectedT.isEmpty()
       ? ""
-      : STR."\nThe expected return types were \{expectedT}, the method's return type was \{formalRet}.";
-    return of(STR."""
-    There is no possible candidate for the method call to \{name}.
-    The receiver's reference capability was \{mdf0}, the method's reference capability was \{formalMdf}.\{expectedRets}
-    """);
+      : "\nThe expected return types were " + expectedT + ", the method's return type was " + formalRet + ".";
+    return of("There is no possible candidate for the method call to " + name + ".\nThe receiver's reference capability was " + mdf0 + ", the method's reference capability was " + formalMdf + "." + expectedRets + "\n");
   }
 
   public static CompileError sealedCreation(Id.DecId sealedDec, String pkg) {
@@ -333,14 +330,14 @@ public class Fail{
   }
 
   public static CompileError genericMismatch(List<ast.T> actualArgs, List<Id.GX<ast.T>> formalParams) {
-    return of(STR."Expected \{formalParams.size()} generic type arguments, got \{actualArgs}.");
+    return of("Expected " + formalParams.size() + " generic type arguments, got " + actualArgs + ".");
   }
 
   public static CompileError noUnimplementedMethods(List<Id.MethName> unimplemented) {
     var unimplementedList = unimplemented.stream()
       .map(m->m.mdf().orElseThrow()+" "+m)
       .collect(Collectors.joining(", "));
-    return of("Literals must implement all callable methods. The following methods are unimplemented: "+unimplementedList+".");
+    return of("Object literals must implement all callable methods. The following methods are unimplemented: "+unimplementedList+".");
   }
 
   private static String aVsAn(Mdf mdf) {

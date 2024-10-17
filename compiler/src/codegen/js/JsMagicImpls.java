@@ -50,6 +50,10 @@ public record JsMagicImpls(JsCodegen gen, ast.Program p) implements magic.MagicI
     };
   }
 
+  @Override public MagicTrait<MIR.E, String> byte_(MIR.E e) {
+    throw Bug.todo("Byte magic for JS");
+  }
+
   @Override public MagicTrait<MIR.E, String> str(MIR.E e) {
     return new MagicTrait<>() {
       @Override public Optional<String> instantiate() {

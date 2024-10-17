@@ -99,7 +99,7 @@ record MultiSigBuilder(
       recvMdfs.add(recvMdf);
       rets.add(addRet);
       transformMuts(mutIdx);
-      kinds.add(STR."MutHPromPar(\{mutIdx})");
+      kinds.add("MutHPromPar(" + mutIdx + ")");
     }
   }
   void transformMuts(int toTransform) {
@@ -158,7 +158,7 @@ record MultiSigBuilder(
     assert m.isSyntaxMdf():
       "["+m+"]";
     return switch(m){
-      case mut->Mdf.iso;
+      case mut,mutH->Mdf.iso;
       case read, readH ->Mdf.imm;
       default ->m;
     };

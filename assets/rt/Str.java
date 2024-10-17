@@ -42,6 +42,10 @@ public interface Str extends base.Str_0 {
 		};
 	}
 
+	@Override default List_1 utf8$imm() {
+		return new ListK.ByteBufferListImpl(this.utf8());
+	}
+
 	@Override default Str str$read() {
 		return this;
 	}

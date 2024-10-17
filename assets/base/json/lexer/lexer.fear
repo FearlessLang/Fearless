@@ -82,7 +82,7 @@ _LexStartingToken: Actor[mut _LexerCtx,Str,Token]{downstream, ctx, e -> Block#
   .if {e == ","} .return {Block#(downstream#(Tokens.comma(ctx.line.get, ctx.col.get)), ActorRes.continue)}
   .if {e == ":"} .return {Block#(downstream#(Tokens.colon(ctx.line.get, ctx.col.get)), ActorRes.continue)}
   .do {ctx.write(e)}
-  .return {{}}
+  .return {ActorRes.continue}
   }
 
 TokenMatch[R:iso,imm,mut,mutH,read,readH]: {

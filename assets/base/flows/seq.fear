@@ -12,6 +12,7 @@ _SeqFlow: _FlowFactory{
     mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] ->
       this.fromOp(_Actor.anyRet[S,E,R](_Sink, source, state, f), {}),
     .limit(n) -> this.fromOp(_Limit#(_Sink, source, n), _LimitSize#(n, size)),
+    .with(other) -> this.fromOp(_With#(_Sink, source, other.unwrapOp(mut _UnwrapFlowToken)), {}),
 
     // terminals
     mut .first: mut Opt[E] -> Block#

@@ -20,6 +20,10 @@ public final class CheapHash implements base.CheapHash_0 {
     result = ((result << 5) - result) + Double.hashCode(x);
     return this;
   }
+  @Override public CheapHash byte$mut(byte x) {
+    result = ((result << 5) - result) + Byte.hashCode(x);
+    return this;
+  }
   @Override public CheapHash str$mut(rt.Str x) {
     result = ((result << 5) - result) + x.utf8().hashCode();
     return this;

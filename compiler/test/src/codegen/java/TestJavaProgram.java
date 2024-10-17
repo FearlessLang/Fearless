@@ -1498,4 +1498,72 @@ public class TestJavaProgram {
     Invalid string found, expected JSON.
     Unexpected 'true' when parsing a JSON object at 1:6
     """, 0), ResolveResource.test("/json/main.fear"), ResolveResource.test("/json/pkg.fear"));}
+
+  @Test void expParser() {ok(new Res("", "", 0), """
+    package test
+    alias base.Int as Num,
+    alias base.Var as Vars,
+    
+    Test: Main{_ -> {}}
+    
+    Exp: {mut .match[R:iso,imm,mut,mutH,read,readH](l: mut ExpMatch[R]): R}
+    ExpMatch[R:iso,imm,mut,mutH,read,readH]: {
+      mut .sum(left: mut Var[mut Exp], right: mut Var[mut Exp]): R,
+      mut .lit(n: Num): R,
+    }
+    Exps: {
+      .sum(left: mut Var[mut Exp], right: mut Var[mut Exp]): mut Exp -> {m -> m.sum(left, right)},
+      .lit(n: Num): mut Exp -> {m -> m.lit(n)},
+    }
+    
+    Lexer: {  mut .nextToken: Token -> Magic! }
+    Token: {.match(l: mutH Lexer, m: TokenMatch): iso Exp}
+    TokenMatch: {
+      .plus(l: mutH Lexer): iso Exp,
+      .num(l: mutH Lexer, n: Num): iso Exp,
+      .eof(l: mutH Lexer): iso Exp,
+    }
+    Tokens: { //could not implement TokenMatch
+      .plus: Token -> {l, m -> m.plus(l)},
+      .num(n: Num): Token -> {l, m -> m.num(l,n)},
+      .eof: Token -> {l, m -> m.eof(l)},
+    }
+    Parser: {//simple right associative parser
+      .parse(l: mutH Lexer): iso Exp -> l.nextToken.match(l, {
+        .plus(_)->Error.msg "cannot start with +",
+        .eof(_)->Error.msg "cannot start with EOF",
+        .num(l', n) -> this.parse(l', n),
+      }),
+      .parse(l: mutH Lexer, left: Num): iso Exp -> l.nextToken.match(l, {
+        .plus(l')->Exps.sum(Vars#[mut Exp](Exps.lit(left)),Vars#[mut Exp](this.parse(l'))),
+        .eof(_) -> Exps.lit(left),
+        .num(l', n) -> Error.msg "unexpected num",
+      })
+    }
+    """, Base.mutBaseAliases);}
+
+  // TODO: more test coverage for bytes
+  @Test void strToBytes() {ok(new Res("72,101,108,108,111,33", "", 0), """
+    package test
+    Test: Main{sys -> sys.io.println("Hello!".utf8.flow.map{b -> b.str}.join ",")}
+    """, Base.mutBaseAliases);}
+  @Test void byteEq() {ok(new Res(), """
+    package test
+    Test: Main{_ -> "Hello!".utf8.get(0).assertEq(72 .byte)}
+    """, Base.mutBaseAliases);}
+  @Test void bytesToStr() {ok(new Res("Hello!", "", 0), """
+    package test
+    alias base.UTF8 as UTF8,
+    Test: Main{sys -> sys.io.println(UTF8.fromBytes("Hello!".utf8)!)}
+    """, Base.mutBaseAliases);}
+  @Test void bytesToStrManual() {ok(new Res("AB", "", 0), """
+    package test
+    alias base.UTF8 as UTF8,
+    Test: Main{sys -> sys.io.println(UTF8.fromBytes(List#(65 .byte, 66 .byte))!)}
+    """, Base.mutBaseAliases);}
+  @Test void bytesToStrFail() {ok(new Res("", "Program crashed with: \"incomplete utf-8 byte sequence from index 0\"[###]", 1), """
+    package test
+    alias base.UTF8 as UTF8,
+    Test: Main{sys -> sys.io.println(UTF8.fromBytes(List#(-28 .byte))!)}
+    """, Base.mutBaseAliases);}
 }

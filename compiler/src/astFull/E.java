@@ -136,6 +136,9 @@ public sealed interface E extends HasPos {
       });
       return "fear" + n + "$";
     }
+    public static boolean isFresh(String name) {
+      return name.startsWith("fear") && name.endsWith("$");
+    }
     public X(T t){
       this(freshName(), t, Optional.empty());
       if (FRESH_N.get() == Integer.MAX_VALUE) { throw Bug.of("Maximum fresh identifier size reached"); }
