@@ -1,14 +1,13 @@
-use std::hint::unreachable_unchecked;
 use crate::schema_capnp;
+use crate::state::{AstDecId, DecId, ExplicitDecId};
 use capnp::message::TypedReader;
 use capnp::serialize::OwnedSegments;
 use hashbrown::HashMap;
-use crate::state::{AstDecId, DecId, ExplicitDecId};
 
 pub struct Program {
 	raw: HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>,
-	literals: HashMap<ExplicitDecId, usize>,
-	methods: HashMap<(ExplicitDecId, String), usize>,
+	literals: HashMap<ExplicitDecId<'static>, usize>,
+	methods: HashMap<(ExplicitDecId<'static>, String), usize>,
 }
 impl Program {
 	pub fn new(readers: HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>) -> Program {
@@ -27,7 +26,7 @@ impl Program {
 	// 	let pkg = self.raw.get(recv.package()).unwrap();
 	// }
 
-	fn add_types(readers: &HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>) -> (HashMap<ExplicitDecId, usize>, HashMap<(ExplicitDecId, String), usize>) {
+	fn add_types(readers: &HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>) -> (HashMap<ExplicitDecId<'static>, usize>, HashMap<(ExplicitDecId<'static>, String), usize>) {
 		let mut type_defs = HashMap::new();
 		let mut method_defs = HashMap::new();
 		for pkg_reader in readers.values() {
@@ -59,7 +58,7 @@ impl Program {
 		(type_defs, method_defs)
 	}
 
-	fn call<R: Into<ExplicitDecId>, >(recv: )
+	// fn call<R: Into<ExplicitDecId>, >(recv: )
 }
 
 // #[repr(transparent)]

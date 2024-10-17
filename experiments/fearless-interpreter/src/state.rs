@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use crate::schema_capnp;
@@ -10,19 +11,19 @@ pub trait DecId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ExplicitDecId {
-	full_name: String,
+pub struct ExplicitDecId<'a> {
+	full_name: Cow<'a, str>,
 	arity: u32,
 }
-impl<'mir> From<AstDecId<'mir>> for ExplicitDecId {
+impl<'mir> From<AstDecId<'mir>> for ExplicitDecId<'static> {
 	fn from(id: AstDecId<'mir>) -> Self {
 		Self {
-			full_name: id.full_name().to_string(),
+			full_name: id.full_name().to_string().into(),
 			arity: id.arity(),
 		}
 	}
 }
-impl DecId for ExplicitDecId {
+impl DecId for ExplicitDecId<'_> {
 	fn package(&self) -> &str {
 		self.full_name.split_once('.').unwrap().0
 	}
