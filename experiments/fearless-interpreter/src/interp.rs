@@ -1,82 +1,100 @@
-use crate::schema_capnp;
-use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
-use capnp::message::TypedReader;
-use capnp::serialize::OwnedSegments;
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+use crate::ast::{CreateObj, HasType, MCall, Program, RawType, Type, E};
 use hashbrown::HashMap;
+use std::rc::Rc;
+use anyhow::{anyhow, Context};
+use blake3::hash;
 
-pub struct Program {
-	raw: HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>,
-	literals: HashMap<ExplicitDecId<'static>, usize>,
-	methods: HashMap<(ExplicitDecId<'static>, String), usize>,
-}
-impl Program {
-	pub fn new(readers: HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>) -> Program {
-		let (type_defs, method_def) = Program::add_types(&readers);
-		println!("{:?}", type_defs);
-		Program {
-			raw: readers,
-			literals: type_defs,
-			methods: method_def,
-		}
-	}
-	pub fn package_names(&self) -> impl Iterator<Item = &String> {
-		self.raw.keys()
-	}
-	// pub fn get_expr<Recv: DecId>(&self, recv: Recv) -> schema_capnp::e::Reader {
-	// 	let pkg = self.raw.get(recv.package()).unwrap();
-	// }
-
-	fn add_types(readers: &HashMap<String, TypedReader<OwnedSegments, schema_capnp::package::Owned>>) -> (HashMap<ExplicitDecId<'static>, usize>, HashMap<(ExplicitDecId<'static>, String), usize>) {
-		let mut type_defs = HashMap::new();
-		let mut method_defs = HashMap::new();
-		for pkg_reader in readers.values() {
-			let reader = pkg_reader.get().unwrap();
-			let defs_reader = reader.get_defs().unwrap();
-			defs_reader.iter().enumerate()
-				.filter(|(_, def)| def.get_singleton_instance().has_instance())
-				.for_each(|(i, def)| {
-					let dec_id = AstDecId(def.get_name().unwrap());
-					type_defs.insert(dec_id.into(), i);
-					// match def.get_singleton_instance().which().unwrap() {
-					// 	schema_capnp::type_def::singleton_instance::Which::Instance(lit_reader) => {
-					// 		debug_assert!(lit_reader.unwrap().has_create_obj());
-					// 		// match lit_reader.unwrap().which().unwrap() {
-					// 		// 	schema_capnp::e::Which::CreateObj(create_obj_reader) => {
-					// 		// 		create_obj_reader.unwrap().get_meths().unwrap().iter().enumerate()
-					// 		// 			.for_each(|(j, meth_reader)| {
-					// 		// 				let name = meth_reader.reborrow().unwrap().to_string();
-					// 		// 				method_defs.insert((dec_id.into(), name), j);
-					// 		// 			});
-					// 		// 	},
-					// 		// }
-					// 	},
-					// 	// Safety: checked in the filter earlier
-					// 	_ => unsafe { unreachable_unchecked() },
-					// };
-				});
-		}
-		(type_defs, method_defs)
-	}
-
-	// fn call<R: Into<ExplicitDecId>, >(recv: )
+#[derive(Debug)]
+pub enum InterpreterError {
+	Fearless(Value),
+	NonDeterministic(Value),
+	Internal(anyhow::Error),
 }
 
-// #[repr(transparent)]
-// struct TypeTable<'mir> {
-// 	types: HashMap<ExplicitDecId, usize>
-// }
-// impl<'mir> TypeTable<'mir> {
-// 	fn new() -> Self {
-// 		Self {
-// 			types: HashMap::new(),
-// 		}
-// 	}
-// 	fn add(&mut self, def: schema_capnp::type_def::Reader<'mir>) -> Result<()> {
-// 		let key = state::DecId(def.get_name()?);
-// 		if self.types.contains_key(&key) {
-// 			bail!("Invalid MIR: duplicate type definition: {:?}", key);
-// 		}
-// 		self.types.insert(key, def);
-// 		Ok(())
-// 	}
-// }
+impl Display for InterpreterError {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		match self {
+			InterpreterError::Fearless(_) => todo!(),
+			InterpreterError::NonDeterministic(_) => todo!(),
+			InterpreterError::Internal(error) => error.fmt(f), 
+		}
+	}
+}
+impl Error for InterpreterError {}
+type Result<T> = std::result::Result<T, InterpreterError>;
+
+#[derive(Debug, Clone)]
+pub struct Interpreter {
+	// gamma: HashMap<u32, Value>,
+	program: Rc<Program>,
+	stack: Vec<()>,
+}
+impl Interpreter {
+	pub fn new(program: Program) -> Self {
+		Self {
+			program: Rc::new(program),
+			stack: Vec::new(),
+		}
+	}
+	pub fn eval(&mut self, expr: &E) -> Result<E> {
+		match expr {
+			E::X(_) => todo!("X"),
+			E::MCall(call) => self.eval_call(call),
+			E::CreateObj(_) => todo!("CreateObj"),
+			E::SummonObj(_) => Ok(expr.clone()),
+			E::InterpreterValue(_) => Ok(expr.clone()),
+		}
+	}
+
+	fn eval_call(&mut self, call: &MCall) -> Result<E> {
+		let recv = self.eval(&call.recv)?;
+		let args: Vec<E> = call.args.iter().map(|arg| self.eval(arg)).collect::<Result<_>>()?;
+		let recv_obj: &CreateObj = match &recv {
+			E::CreateObj(obj) => obj,
+			E::SummonObj(obj) => {
+				match self.program.lookup_by_hash(hash_from_type(obj)?) {
+					Some(def) => match &def.singleton_instance {
+						Some(obj) => obj,
+						None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
+					},
+					None =>
+						Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", hash_from_type(&obj)?, recv)))?,
+				}
+			},
+			_ => Err(InterpreterError::Internal(anyhow!("Method call on non-obj type: {:?}", recv)))?,
+		};
+		
+		todo!()
+		// match recv {
+		// 	E::Obj(obj) => {
+		// 		let method = obj.lookup_method(method)?;
+		// 		let ret = method.call(args)?;
+		// 		Ok(E::Obj(ret))
+		// 	}
+		// 	_ => todo!(),
+		// }
+	}
+}
+
+fn hash_from_type(ty: &Type) -> Result<blake3::Hash> {
+	match ty.rt {
+		RawType::Plain(ty) => Ok(ty),
+		RawType::Any => Err(InterpreterError::Internal(anyhow!("Type lookup on non-concrete type"))),
+	}
+}
+
+#[derive(Debug, Clone)]
+pub enum Value {
+	Obj(Obj),
+}
+#[derive(Debug, Clone)]
+struct Obj {
+	type_def: blake3::Hash,
+	fat_meths: HashMap<blake3::Hash, FatMeth>
+}
+#[derive(Debug, Clone)]
+struct FatMeth {
+	inner: HashMap<u32, Value>
+}

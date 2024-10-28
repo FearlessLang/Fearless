@@ -1,5 +1,5 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
-use crate::schema_capnp;
+use crate::{interp, schema_capnp};
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
 use anyhow::{anyhow, bail, Result};
@@ -7,17 +7,22 @@ use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 use std::borrow::Cow;
+use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
+use crate::interp::Value;
 
 #[derive(Debug, Clone)]
 struct ParseCtx<'mir> {
 	bindings: HashMap<&'mir [u8], u32>,
+	singletons: Rc<RefCell<HashSet<blake3::Hash>>>,
 	next_binding: u32,
 }
 impl<'mir> ParseCtx<'mir> {
 	fn new() -> Self {
 		Self {
 			bindings: Default::default(),
+			singletons: Default::default(),
 			next_binding: 0,
 		}
 	}
@@ -70,12 +75,16 @@ impl Program {
 		)?;
 		let reader = TypedReader::<_, schema_capnp::package::Owned>::new(msg_reader);
 		let reader = reader.get()?;
+		let mut ctx = ParseCtx::new();
 		for def in reader.get_defs()? {
 			let def = TypeDef::parse(def)?;
+			if def.singleton_instance.is_some() {
+				ctx.singletons.borrow_mut().insert(def.name.unique_hash());
+			}
 			self.defs.insert(def.name.unique_hash(), def);
 		}
 		for fun in reader.get_funs()? {
-			let fun = Fun::parse(fun)?;
+			let fun = Fun::parse(&mut ctx, fun)?;
 			self.funs.insert(fun.name.unique_hash, fun);
 		}
 		Ok(())
@@ -87,18 +96,24 @@ impl Program {
 	}
 	pub fn lookup<Id: DecId>(&self, id: &Id) -> Option<&TypeDef> {
 		let key = id.unique_hash();
-		self.defs.get(&key)
+		self.lookup_by_hash(key)
+	}
+	pub fn lookup_by_hash(&self, hash: blake3::Hash) -> Option<&TypeDef> {
+		self.defs.get(&hash)
 	}
 }
 
 #[derive(Debug, Clone)]
 pub struct TypeDef {
-	name: ExplicitDecId<'static>,
-	impls: HashSet<blake3::Hash>,
-	sigs: HashMap<blake3::Hash, Sig>,
-	singleton_instance: Option<CreateObj>,
+	pub(crate) name: ExplicitDecId<'static>,
+	pub(crate) impls: HashSet<blake3::Hash>,
+	pub(crate) sigs: HashMap<blake3::Hash, Sig>,
+	pub(crate) singleton_instance: Option<CreateObj>,
 }
 impl TypeDef {
+	pub fn has_singleton(&self) -> bool {
+		self.singleton_instance.is_some()
+	}
 	fn parse(reader: schema_capnp::type_def::Reader) -> Result<Self> {
 		let impls = reader.get_impls()?.iter()
 			.map(|reader| AstDecId(reader).unique_hash())
@@ -129,6 +144,14 @@ impl TypeDef {
 		})
 	}
 }
+impl HasType for TypeDef {
+	fn t(&self) -> Type {
+		Type {
+			rc: RC::Mut,
+			rt: RawType::Plain(self.name.unique_hash())
+		}
+	}
+}
 
 #[derive(Debug, Clone)]
 pub struct Fun {
@@ -138,14 +161,13 @@ pub struct Fun {
 	body: E,
 }
 impl Fun {
-	fn parse(reader: schema_capnp::fun::Reader) -> Result<Self> {
+	fn parse<'a>(ctx: &mut ParseCtx<'a>, reader: schema_capnp::fun::Reader<'a>) -> Result<Self> {
 		let name = FunName::parse(reader.get_name()?)?;
-		let mut ctx = ParseCtx::new();
 		let args = reader.get_args()?.iter()
-			.map(|reader| TypePair::parse_binding(&mut ctx, reader))
+			.map(|reader| TypePair::parse_binding(ctx, reader))
 			.collect::<Result<_>>()?;
 		let ret = Type::parse(reader.get_ret()?)?;
-		let body = E::parse(&mut ctx, reader.get_body()?)?;
+		let body = E::parse(ctx, reader.get_body()?)?;
 		Ok(Self {
 			name,
 			args,
@@ -212,9 +234,9 @@ impl<'a> MethName<'a> {
 }
 
 pub trait HasType {
-	fn t(&self) -> &Type;
+	fn t(&self) -> Type;
 }
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Type {
 	pub rc: RC,
 	pub rt: RawType
@@ -237,18 +259,18 @@ impl Hash for Type {
 		self.rt.hash(state);
 	}
 }
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub enum RawType {
 	Plain(blake3::Hash),
 	Any,
 }
 impl HasType for Type {
-	fn t(&self) -> &Type {
-		self
+	fn t(&self) -> Type {
+		*self
 	}
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub struct TypePair {
 	pub x: u32,
 	pub t: Type
@@ -268,8 +290,8 @@ impl TypePair {
 	}
 }
 impl HasType for TypePair {
-	fn t(&self) -> &Type {
-		&self.t
+	fn t(&self) -> Type {
+		self.t
 	}
 }
 
@@ -278,6 +300,8 @@ pub enum E {
 	X(TypePair),
 	MCall(MCall),
 	CreateObj(CreateObj),
+	SummonObj(Type),
+	InterpreterValue(interp::Value),
 }
 impl E {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::Reader<'ctx>) -> Result<Self> {
@@ -288,44 +312,61 @@ impl E {
 				t,
 			}),
 			schema_capnp::e::MCall(c) => E::MCall(MCall::parse(ctx, c?, t)?),
-			schema_capnp::e::CreateObj(k) => E::CreateObj(CreateObj::parse(ctx, k?, t)?),
+			schema_capnp::e::CreateObj(k) => {
+				let ty = match t.rt {
+					RawType::Plain(ty) => ty,
+					_ => bail!("Expected a plain type for CreateObj: {:?}", t),
+				};
+				if ctx.singletons.borrow().contains(&ty) {
+					E::SummonObj(t)
+				} else {
+					E::CreateObj(CreateObj::parse(ctx, k?, t)?)
+				}
+			},
 		})
 	}
 }
 impl HasType for E {
-	fn t(&self) -> &Type {
+	fn t(&self) -> Type {
 		match self {
 			E::X(x) => x.t(),
 			E::MCall(c) => c.t(),
 			E::CreateObj(k) => k.t(),
+			E::SummonObj(t) => *t,
+			E::InterpreterValue(_) => unimplemented!("Please use an interpreter-specific method for getting the type of a value in the interpreter"),
 		}
 	}
 }
 
 #[derive(Debug, Clone)]
 pub struct MCall {
-	rc: RC,
-	name: MethName<'static>,
-	args: Vec<E>,
-	return_type: Type,
+	pub recv: Box<E>,
+	pub rc: RC,
+	pub meth: blake3::Hash,
+	pub args: Vec<E>,
+	pub return_type: Type,
 }
 impl MCall {
+	pub fn new(recv: E, rc: RC, meth: blake3::Hash, args: Vec<E>, return_type: Type) -> Self {
+		Self { recv: Box::new(recv), rc, meth, args, return_type }
+	}
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::m_call::Reader<'ctx>, return_type: Type) -> Result<Self> {
-		let name = MethName::parse_owned(reader.get_name()?)?;
+		let meth = MethName::parse_hash(reader.get_name()?)?;
 		let args = reader.get_args()?.iter()
 			.map(|reader| E::parse(ctx, reader))
 			.collect::<Result<_>>()?;
 		Ok(Self {
+			recv: Box::new(E::parse(ctx, reader.get_recv()?)?),
 			rc: reader.get_rc()?,
-			name,
+			meth,
 			args,
 			return_type,
 		})
 	}
 }
 impl HasType for MCall {
-	fn t(&self) -> &Type {
-		&self.return_type
+	fn t(&self) -> Type {
+		self.return_type
 	}
 }
 
@@ -357,8 +398,8 @@ impl CreateObj {
 	}
 }
 impl HasType for CreateObj {
-	fn t(&self) -> &Type {
-		&self.ty
+	fn t(&self) -> Type {
+		self.ty
 	}
 }
 
@@ -381,8 +422,8 @@ impl Sig {
 	}
 }
 impl HasType for Sig {
-	fn t(&self) -> &Type {
-		&self.return_type
+	fn t(&self) -> Type {
+		self.return_type
 	}
 }
 
@@ -413,7 +454,7 @@ impl Meth {
 	}
 }
 impl HasType for Meth {
-	fn t(&self) -> &Type {
+	fn t(&self) -> Type {
 		self.sig.t()
 	}
 }
