@@ -1,6 +1,7 @@
 package id;
 
 import parser.Parser;
+import rt.NativeRuntime;
 import utils.Bug;
 import utils.OneOr;
 import visitors.TypeVisitor;
@@ -51,6 +52,9 @@ public class Id {
     public String shortName() {
       return OneOr.of("Malformed package", pkgRegex.matcher(name).results()).group(2);
     }
+    public byte[] uniqueHash() {
+      return NativeRuntime.uniqueHashStr(this.toString());
+    }
     @Override public String toString() {
       return String.format("%s/%d", name, gen);
     }
@@ -79,6 +83,10 @@ public class Id {
       if (o == null || getClass() != o.getClass()) return false;
       MethName methName = (MethName) o;
       return num == methName.num && Objects.equals(name, methName.name);
+    }
+    public byte[] uniqueHash() {
+      var mdf = this.mdf.map(Mdf::toString).orElse("?");
+      return NativeRuntime.uniqueHashStr(mdf+" "+name+"/"+num);
     }
     @Override public int hashCode() {
       return Objects.hash(name, num);

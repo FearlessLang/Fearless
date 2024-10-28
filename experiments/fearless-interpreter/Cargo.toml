@@ -4,11 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-capnp = "0.19.7"
+capnp = "0.20.3"
 mimalloc = { version = "0.1.43" }
-hashbrown = {  version = "0.14.5" }
+hashbrown = {  version = "0.15.0" }
 anyhow = "1.0.89"
 tokio = { version = "1.40.0", features = ["full"] }
+blake3 = "1.5.4"
+itertools = "0.13.0"
+dashmap = { version = "6.1.0" }
 
 [profile.release]
 lto = true

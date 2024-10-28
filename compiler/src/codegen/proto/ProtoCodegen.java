@@ -66,6 +66,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
 
   public void visitSig(MIR.Sig sig) {
     var builder = (Mearless.Sig.Builder) this.builder;
+    fill(builder.initName(), ()->visitMethName(sig.name()));
     fill(builder.initRt(), ()->visitMT(sig.rt()));
     var xsBuilder = builder.initXs(sig.xs().size());
     for (var i = 0; i < sig.xs().size(); i++) {
@@ -78,6 +79,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
     builder.setRc(visitMdf(name.mdf().orElseThrow()));
     builder.setName(name.name());
     builder.setArity(name.num());
+    builder.setHash(name.uniqueHash());
   }
 
   public void visitFun(MIR.Fun fun, boolean checkMagic) {
@@ -94,6 +96,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
   }
   public void visitFName(MIR.FName name) {
     var builder = (Mearless.Fun.Name.Builder) this.builder;
+    builder.setHash(name.uniqueHash());
     builder.setRc(visitMdf(name.mdf()));
     fill(builder.initD(), ()->visitDecId(name.d()));
     fill(builder.initM(), ()->visitMethName(name.m()));
@@ -194,6 +197,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
     var builder = (Mearless.DecId.Builder) this.builder;
     builder.setName(id.name());
     builder.setGens(id.gen());
+    builder.setHash(id.uniqueHash());
   }
 
   private void visitMT(MIR.MT mt) {

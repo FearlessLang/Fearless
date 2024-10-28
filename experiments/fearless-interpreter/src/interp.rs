@@ -1,5 +1,5 @@
 use crate::schema_capnp;
-use crate::state::{AstDecId, DecId, ExplicitDecId};
+use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
 use capnp::message::TypedReader;
 use capnp::serialize::OwnedSegments;
 use hashbrown::HashMap;

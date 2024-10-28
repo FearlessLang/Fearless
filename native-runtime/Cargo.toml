@@ -8,7 +8,7 @@ name = "native_rt"
 crate-type = ["cdylib"]
 
 [features]
-compiler-only = []
+compiler-only = ["blake3"]
 runtime-only = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -20,10 +20,11 @@ unicode-segmentation = { version = "1.11.0" }
 unicode-normalization = { version = "0.1.23" }
 regex = "1.10.6"
 lru = "0.12.4"
-hashbrown = "0.14.5"
+hashbrown = "0.15.0"
+seahash = { version = "4.1.0", features = ["use_std"] }
 # RT Only
 # Compiler Only
-seahash = { version = "4.1.0", features = ["use_std"] }
+blake3 = { version = "1.5.4", features = ["default"], optional = true }
 
 [profile.release]
 lto = true

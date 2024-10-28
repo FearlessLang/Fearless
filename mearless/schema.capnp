@@ -34,6 +34,7 @@ struct Fun @0xda20b7fafa989ab8 {
     m @1 :MethName;
     capturesSelf @2 :Bool;
     rc @3 :RC;
+    hash @4 :Data;
   }
 }
 
@@ -65,7 +66,15 @@ struct T @0xdbf7b6f1e0cf6cda {
 struct DecId @0xcea8d4b5671efbed {
   name @0 :Text;
   gens @1 :UInt32;
+  hash @2 :Data;
 }
+
+# struct Hash256 @0x95554ac1a8a8f090 {
+# 	a @0 :UInt64;
+# 	b @1 :UInt64;
+# 	c @2 :UInt64;
+# 	d @3 :UInt64;
+# }
 
 enum RC @0xd79bf80b86c31d5a {
   iso @0;
@@ -80,6 +89,7 @@ struct MethName {
   rc @0 :RC;
   name @1 :Text;
   arity @2 :UInt32;
+  hash @3 :Data;
 }
 
 struct E @0xd08f47af381da063 {

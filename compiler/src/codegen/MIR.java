@@ -5,6 +5,7 @@ import id.Id;
 import id.Mdf;
 import magic.Magic;
 import program.CM;
+import rt.NativeRuntime;
 import utils.Bug;
 import visitors.MIRVisitor;
 
@@ -130,6 +131,9 @@ public sealed interface MIR {
   record FName(Id.DecId d, Id.MethName m, boolean capturesSelf, Mdf mdf) {
     public FName(CM cm, boolean capturesSelf) {
       this(cm.c().name(), cm.name(), capturesSelf, cm.mdf());
+    }
+    public byte[] uniqueHash() {
+      return NativeRuntime.uniqueHashStr(this.toString());
     }
   }
 

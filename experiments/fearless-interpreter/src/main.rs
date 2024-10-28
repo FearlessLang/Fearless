@@ -1,12 +1,13 @@
+use crate::ast::Program;
 use anyhow::Result;
 use std::fs;
 use std::ops::Index;
-use crate::ast::Program;
+use crate::dec_id::ExplicitDecId;
 
 mod proto;
 mod schema_capnp;
 mod interp;
-mod state;
+mod dec_id;
 mod ast;
 
 #[global_allocator]
@@ -24,29 +25,11 @@ async fn main() -> Result<()> {
 		program
 	};
 
-	// let readers = raw.iter()
-	// 	.map(|raw_pkg| -> Result<_> {
-	// 		let msg_reader = capnp::serialize::read_message(
-	// 			raw_pkg.as_slice(),
-	// 			ReaderOptions::new()
-	// 		)?;
-	// 		let reader = TypedReader::<_, schema_capnp::package::Owned>::new(msg_reader);
-	// 		Ok((reader.get()?.get_name()?.to_string()?, reader))
-	// 	})
-	// 	.collect::<Result<HashMap<_, _>>>()?;
+	let entry: ExplicitDecId = "test.Usage/0".try_into()?;
+	println!("{:?}", entry);
+	let entry = program.lookup(&entry).unwrap();
 	
-	// let program = Program::new(readers);
-	// for reader in readers {
-	// 	// let r = reader.get()?;
-	// 	// p.load_package(r)?;
-	// }
-
-	// let mut program = Program::new();
-	// program.load_package().unwrap();
-	// for i in 0..len {
-	// }
-	
-	
-	println!("{:?}", program.pkg_names().collect::<Vec<_>>());
+	println!("{:?}", entry);
+	// println!("{:?}", program.pkg_names().collect::<Vec<_>>());
 	Ok(())
 }

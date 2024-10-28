@@ -483,7 +483,7 @@ public final class Mearless {
     }
 
     public static class Name {
-      public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)2);
+      public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)3);
       public static final class Factory extends org.capnproto.StructFactory<Builder, Reader> {
         public Factory() {
         }
@@ -550,6 +550,21 @@ public final class Mearless {
           _setShortField(1, (short)value.ordinal());
         }
 
+        public final boolean hasHash() {
+          return !_pointerFieldIsNull(2);
+        }
+        public final org.capnproto.Data.Builder getHash() {
+          return _getPointerField(org.capnproto.Data.factory, 2, null, 0, 0);
+        }
+        public final void setHash(org.capnproto.Data.Reader value) {
+          _setPointerField(org.capnproto.Data.factory, 2, value);
+        }
+        public final void setHash(byte [] value) {
+          _setPointerField(org.capnproto.Data.factory, 2, new org.capnproto.Data.Reader(value));
+        }
+        public final org.capnproto.Data.Builder initHash(int size) {
+          return _initPointerField(org.capnproto.Data.factory, 2, size);
+        }
       }
 
       public static final class Reader extends org.capnproto.StructReader {
@@ -585,6 +600,13 @@ public final class Mearless {
             case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
             default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
           }
+        }
+
+        public boolean hasHash() {
+          return !_pointerFieldIsNull(2);
+        }
+        public org.capnproto.Data.Reader getHash() {
+          return _getPointerField(org.capnproto.Data.factory, 2, null, 0, 0);
         }
 
       }
@@ -1045,7 +1067,7 @@ public final class Mearless {
 
 
   public static class DecId {
-    public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)1);
+    public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)2);
     public static final class Factory extends org.capnproto.StructFactory<Builder, Reader> {
       public Factory() {
       }
@@ -1094,6 +1116,21 @@ public final class Mearless {
         _setIntField(0, value);
       }
 
+      public final boolean hasHash() {
+        return !_pointerFieldIsNull(1);
+      }
+      public final org.capnproto.Data.Builder getHash() {
+        return _getPointerField(org.capnproto.Data.factory, 1, null, 0, 0);
+      }
+      public final void setHash(org.capnproto.Data.Reader value) {
+        _setPointerField(org.capnproto.Data.factory, 1, value);
+      }
+      public final void setHash(byte [] value) {
+        _setPointerField(org.capnproto.Data.factory, 1, new org.capnproto.Data.Reader(value));
+      }
+      public final org.capnproto.Data.Builder initHash(int size) {
+        return _initPointerField(org.capnproto.Data.factory, 1, size);
+      }
     }
 
     public static final class Reader extends org.capnproto.StructReader {
@@ -1112,6 +1149,13 @@ public final class Mearless {
         return _getIntField(0);
       }
 
+      public boolean hasHash() {
+        return !_pointerFieldIsNull(1);
+      }
+      public org.capnproto.Data.Reader getHash() {
+        return _getPointerField(org.capnproto.Data.factory, 1, null, 0, 0);
+      }
+
     }
 
   }
@@ -1128,7 +1172,7 @@ public final class Mearless {
   }
 
   public static class MethName {
-    public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)1);
+    public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)1,(short)2);
     public static final class Factory extends org.capnproto.StructFactory<Builder, Reader> {
       public Factory() {
       }
@@ -1192,6 +1236,21 @@ public final class Mearless {
         _setIntField(1, value);
       }
 
+      public final boolean hasHash() {
+        return !_pointerFieldIsNull(1);
+      }
+      public final org.capnproto.Data.Builder getHash() {
+        return _getPointerField(org.capnproto.Data.factory, 1, null, 0, 0);
+      }
+      public final void setHash(org.capnproto.Data.Reader value) {
+        _setPointerField(org.capnproto.Data.factory, 1, value);
+      }
+      public final void setHash(byte [] value) {
+        _setPointerField(org.capnproto.Data.factory, 1, new org.capnproto.Data.Reader(value));
+      }
+      public final org.capnproto.Data.Builder initHash(int size) {
+        return _initPointerField(org.capnproto.Data.factory, 1, size);
+      }
     }
 
     public static final class Reader extends org.capnproto.StructReader {
@@ -1220,6 +1279,13 @@ public final class Mearless {
 
       public final int getArity() {
         return _getIntField(1);
+      }
+
+      public boolean hasHash() {
+        return !_pointerFieldIsNull(1);
+      }
+      public org.capnproto.Data.Reader getHash() {
+        return _getPointerField(org.capnproto.Data.factory, 1, null, 0, 0);
       }
 
     }
@@ -1610,7 +1676,7 @@ public final class Mearless {
 
 
     public static class CreateObj {
-      public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)0,(short)4);
+      public static final org.capnproto.StructSize STRUCT_SIZE = new org.capnproto.StructSize((short)0,(short)3);
       public static final class Factory extends org.capnproto.StructFactory<Builder, Reader> {
         public Factory() {
         }
@@ -1664,29 +1730,17 @@ public final class Mearless {
         public final org.capnproto.StructList.Builder<org.fearlang.mearless.proto.Mearless.Meth.Builder> initMeths(int size) {
           return _initPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 1, size);
         }
-        public final boolean hasUnreachableMs() {
+        public final boolean hasCaptures() {
           return !_pointerFieldIsNull(2);
         }
-        public final org.capnproto.StructList.Builder<org.fearlang.mearless.proto.Mearless.Meth.Builder> getUnreachableMs() {
-          return _getPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 2, null, 0);
-        }
-        public final void setUnreachableMs(org.capnproto.StructList.Reader<org.fearlang.mearless.proto.Mearless.Meth.Reader> value) {
-          _setPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 2, value);
-        }
-        public final org.capnproto.StructList.Builder<org.fearlang.mearless.proto.Mearless.Meth.Builder> initUnreachableMs(int size) {
-          return _initPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 2, size);
-        }
-        public final boolean hasCaptures() {
-          return !_pointerFieldIsNull(3);
-        }
         public final org.capnproto.StructList.Builder<org.fearlang.mearless.proto.Mearless.TypePair.Builder> getCaptures() {
-          return _getPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 3, null, 0);
+          return _getPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 2, null, 0);
         }
         public final void setCaptures(org.capnproto.StructList.Reader<org.fearlang.mearless.proto.Mearless.TypePair.Reader> value) {
-          _setPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 3, value);
+          _setPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 2, value);
         }
         public final org.capnproto.StructList.Builder<org.fearlang.mearless.proto.Mearless.TypePair.Builder> initCaptures(int size) {
-          return _initPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 3, size);
+          return _initPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 2, size);
         }
       }
 
@@ -1709,18 +1763,11 @@ public final class Mearless {
           return _getPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 1, null, 0);
         }
 
-        public final boolean hasUnreachableMs() {
+        public final boolean hasCaptures() {
           return !_pointerFieldIsNull(2);
         }
-        public final org.capnproto.StructList.Reader<org.fearlang.mearless.proto.Mearless.Meth.Reader> getUnreachableMs() {
-          return _getPointerField(org.fearlang.mearless.proto.Mearless.Meth.listFactory, 2, null, 0);
-        }
-
-        public final boolean hasCaptures() {
-          return !_pointerFieldIsNull(3);
-        }
         public final org.capnproto.StructList.Reader<org.fearlang.mearless.proto.Mearless.TypePair.Reader> getCaptures() {
-          return _getPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 3, null, 0);
+          return _getPointerField(org.fearlang.mearless.proto.Mearless.TypePair.listFactory, 2, null, 0);
         }
 
       }
@@ -2315,47 +2362,54 @@ public static final org.capnproto.SegmentReader b_a447c9f0f5521b5e =
    "\u005e\u001b\u0052\u00f5\u00f0\u00c9\u0047\u00a4" +
    "\u0011\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
    "\u00b8\u009a\u0098\u00fa\u00fa\u00b7\u0020\u00da" +
-   "\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
+   "\u0003\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0015\u0000\u0000\u0000\u00b2\u0000\u0000\u0000" +
    "\u001d\u0000\u0000\u0000\u0007\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0019\u0000\u0000\u0000\u00e7\u0000\u0000\u0000" +
+   "\u0019\u0000\u0000\u0000\u001f\u0001\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0073\u0063\u0068\u0065\u006d\u0061\u002e\u0063" +
    "\u0061\u0070\u006e\u0070\u003a\u0046\u0075\u006e" +
    "\u002e\u004e\u0061\u006d\u0065\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
-   "\u0010\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
+   "\u0014\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0061\u0000\u0000\u0000\u0012\u0000\u0000\u0000" +
+   "\u007d\u0000\u0000\u0000\u0012\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\\\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0068\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0078\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0084\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0001\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0065\u0000\u0000\u0000\u0012\u0000\u0000\u0000" +
+   "\u0081\u0000\u0000\u0000\u0012\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0060\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u006c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u007c\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0088\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0002\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0069\u0000\u0000\u0000\u006a\u0000\u0000\u0000" +
+   "\u0085\u0000\u0000\u0000\u006a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0068\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0074\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0084\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0090\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0003\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0003\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0071\u0000\u0000\u0000\u001a\u0000\u0000\u0000" +
+   "\u008d\u0000\u0000\u0000\u001a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u006c\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0078\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0088\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0094\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0004\u0000\u0000\u0000\u0002\u0000\u0000\u0000" +
+   "\u0000\u0000\u0001\u0000\u0004\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0091\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u008c\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0098\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0064\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u00ed\u00fb\u001e\u0067\u00b5\u00d4\u00a8\u00ce" +
@@ -2387,6 +2441,14 @@ public static final org.capnproto.SegmentReader b_a447c9f0f5521b5e =
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u000f\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0068\u0061\u0073\u0068\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" + "");
 public static final org.capnproto.SegmentReader b_fd71105e28399dc6 =
@@ -2668,33 +2730,40 @@ public static final org.capnproto.SegmentReader b_cea8d4b5671efbed =
    "\u00ed\u00fb\u001e\u0067\u00b5\u00d4\u00a8\u00ce" +
    "\r\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
    "\u00ae\u006a\"\u0071\u00e1\u00c7\u0050\u00d4" +
-   "\u0001\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
+   "\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0015\u0000\u0000\u0000\u009a\u0000\u0000\u0000" +
    "\u001d\u0000\u0000\u0000\u0007\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0019\u0000\u0000\u0000\u0077\u0000\u0000\u0000" +
+   "\u0019\u0000\u0000\u0000\u00af\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0073\u0063\u0068\u0065\u006d\u0061\u002e\u0063" +
    "\u0061\u0070\u006e\u0070\u003a\u0044\u0065\u0063" +
    "\u0049\u0064\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
-   "\u0008\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
+   "\u000c\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0029\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0045\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0024\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0030\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0040\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u004c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u002d\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0049\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0028\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0034\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0044\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0050\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0002\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
+   "\u0000\u0000\u0001\u0000\u0002\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u004d\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0048\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0054\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u006e\u0061\u006d\u0065\u0000\u0000\u0000\u0000" +
    "\u000c\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
@@ -2709,6 +2778,14 @@ public static final org.capnproto.SegmentReader b_cea8d4b5671efbed =
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0008\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0068\u0061\u0073\u0068\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" + "");
 public static final org.capnproto.SegmentReader b_d79bf80b86c31d5a =
@@ -2759,40 +2836,47 @@ public static final org.capnproto.SegmentReader b_a89c65c4b68c28fe =
    "\u00fe\u0028\u008c\u00b6\u00c4\u0065\u009c\u00a8" +
    "\r\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
    "\u00ae\u006a\"\u0071\u00e1\u00c7\u0050\u00d4" +
-   "\u0001\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
+   "\u0002\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0015\u0000\u0000\u0000\u00b2\u0000\u0000\u0000" +
    "\u001d\u0000\u0000\u0000\u0007\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0019\u0000\u0000\u0000\u00af\u0000\u0000\u0000" +
+   "\u0019\u0000\u0000\u0000\u00e7\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0073\u0063\u0068\u0065\u006d\u0061\u002e\u0063" +
    "\u0061\u0070\u006e\u0070\u003a\u004d\u0065\u0074" +
    "\u0068\u004e\u0061\u006d\u0065\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
-   "\u000c\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
+   "\u0010\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0045\u0000\u0000\u0000\u001a\u0000\u0000\u0000" +
+   "\u0061\u0000\u0000\u0000\u001a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0040\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u004c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\\\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0068\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0049\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0065\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0044\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0050\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0060\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u006c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0002\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0002\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u004d\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
+   "\u0069\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0048\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0054\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0064\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0070\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0003\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
+   "\u0000\u0000\u0001\u0000\u0003\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u006d\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0068\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0074\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0072\u0063\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u000f\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u005a\u001d\u00c3\u0086\u000b\u00f8\u009b\u00d7" +
@@ -2815,6 +2899,14 @@ public static final org.capnproto.SegmentReader b_a89c65c4b68c28fe =
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0008\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0068\u0061\u0073\u0068\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\r\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" + "");
 public static final org.capnproto.SegmentReader b_d08f47af381da063 =
@@ -3110,12 +3202,12 @@ public static final org.capnproto.SegmentReader b_fd0043dc0961c2db =
    "\u00db\u00c2\u0061\u0009\u00dc\u0043\u0000\u00fd" +
    "\u000f\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
    "\u0063\u00a0\u001d\u0038\u00af\u0047\u008f\u00d0" +
-   "\u0004\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
+   "\u0003\u0000\u0007\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0015\u0000\u0000\u0000\u00ca\u0000\u0000\u0000" +
    "\u0021\u0000\u0000\u0000\u0007\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u001d\u0000\u0000\u0000\u00e7\u0000\u0000\u0000" +
+   "\u001d\u0000\u0000\u0000\u00af\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0073\u0063\u0068\u0065\u006d\u0061\u002e\u0063" +
@@ -3123,35 +3215,28 @@ public static final org.capnproto.SegmentReader b_fd0043dc0961c2db =
    "\u0072\u0065\u0061\u0074\u0065\u004f\u0062\u006a" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
-   "\u0010\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
+   "\u000c\u0000\u0000\u0000\u0003\u0000\u0004\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0045\u0000\u0000\u0000\u004a\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0044\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0050\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0001\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
+   "\u0000\u0000\u0001\u0000\u0001\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u004d\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0048\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
+   "\u0064\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u0002\u0000\u0000\u0000\u0002\u0000\u0000\u0000" +
+   "\u0000\u0000\u0001\u0000\u0002\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0061\u0000\u0000\u0000\u004a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0060\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u006c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
-   "\u0001\u0000\u0000\u0000\u0001\u0000\u0000\u0000" +
-   "\u0000\u0000\u0001\u0000\u0001\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0069\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0064\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0080\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
-   "\u0002\u0000\u0000\u0000\u0002\u0000\u0000\u0000" +
-   "\u0000\u0000\u0001\u0000\u0002\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u007d\u0000\u0000\u0000\u0072\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u007c\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0098\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
-   "\u0003\u0000\u0000\u0000\u0003\u0000\u0000\u0000" +
-   "\u0000\u0000\u0001\u0000\u0003\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0095\u0000\u0000\u0000\u004a\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0094\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u00b0\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
+   "\u007c\u0000\u0000\u0000\u0002\u0000\u0001\u0000" +
    "\u0073\u0065\u006c\u0066\u004e\u0061\u006d\u0065" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u000c\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
@@ -3162,19 +3247,6 @@ public static final org.capnproto.SegmentReader b_fd0043dc0961c2db =
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u006d\u0065\u0074\u0068\u0073\u0000\u0000\u0000" +
-   "\u000e\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0003\u0000\u0001\u0000" +
-   "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u009d\u00ae\u00b4\u008f\u00bf\u0048\u00b1\u00dd" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u000e\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0075\u006e\u0072\u0065\u0061\u0063\u0068\u0061" +
-   "\u0062\u006c\u0065\u004d\u0073\u0000\u0000\u0000" +
    "\u000e\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
