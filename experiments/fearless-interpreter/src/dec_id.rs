@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use anyhow::{anyhow, bail, Result};
@@ -17,6 +18,11 @@ pub struct ExplicitDecId<'a> {
 	full_name: Cow<'a, str>,
 	arity: u32,
 	hash: blake3::Hash,
+}
+impl Display for ExplicitDecId<'_> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}/{}", self.full_name, self.arity)
+	}
 }
 impl<'mir> From<AstDecId<'mir>> for ExplicitDecId<'static> {
 	fn from(id: AstDecId<'mir>) -> Self {

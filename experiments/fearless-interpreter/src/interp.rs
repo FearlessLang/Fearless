@@ -18,7 +18,7 @@ impl Display for InterpreterError {
 		match self {
 			InterpreterError::Fearless(_) => todo!(),
 			InterpreterError::NonDeterministic(_) => todo!(),
-			InterpreterError::Internal(error) => error.fmt(f), 
+			InterpreterError::Internal(error) => error.fmt(f),
 		}
 	}
 }
@@ -54,18 +54,37 @@ impl Interpreter {
 		let recv_obj: &CreateObj = match &recv {
 			E::CreateObj(obj) => obj,
 			E::SummonObj(obj) => {
-				match self.program.lookup_by_hash(hash_from_type(obj)?) {
+				match self.program.lookup_type_by_hash(obj.def) {
 					Some(def) => match &def.singleton_instance {
 						Some(obj) => obj,
 						None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
 					},
 					None =>
-						Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", hash_from_type(&obj)?, recv)))?,
+						Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", obj.def, recv)))?,
 				}
 			},
 			_ => Err(InterpreterError::Internal(anyhow!("Method call on non-obj type: {:?}", recv)))?,
 		};
-		
+		let meth = recv_obj.meths.get(&call.meth)
+			.ok_or_else(|| {
+				let type_name = self.program.lookup_type_by_hash(recv_obj.def)
+					.map(|def| def.name.to_string())
+					.unwrap_or(recv_obj.def.to_string());
+				InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", call.meth, type_name))
+			})?;
+		let fun = meth
+			.fun_name
+			.ok_or_else(|| {
+				let type_name = self.program.lookup_type_by_hash(recv_obj.def)
+					.map(|def| def.name.to_string())
+					.unwrap_or(recv_obj.def.to_string());
+				InterpreterError::Internal(anyhow!("Illegal call to abstract method '{}' on '{:?}'", call.meth, type_name))
+			})
+			.and_then(|fun_name| self.program
+				.lookup_fun_by_hash(fun_name)
+				.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_name)))
+			)?;
+
 		todo!()
 		// match recv {
 		// 	E::Obj(obj) => {
@@ -75,13 +94,6 @@ impl Interpreter {
 		// 	}
 		// 	_ => todo!(),
 		// }
-	}
-}
-
-fn hash_from_type(ty: &Type) -> Result<blake3::Hash> {
-	match ty.rt {
-		RawType::Plain(ty) => Ok(ty),
-		RawType::Any => Err(InterpreterError::Internal(anyhow!("Type lookup on non-concrete type"))),
 	}
 }
 

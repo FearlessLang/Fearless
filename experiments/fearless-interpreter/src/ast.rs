@@ -1,7 +1,7 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
-use crate::{interp, schema_capnp};
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
+use crate::{interp, schema_capnp};
 use anyhow::{anyhow, bail, Result};
 use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
@@ -10,7 +10,6 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
-use crate::interp::Value;
 
 #[derive(Debug, Clone)]
 struct ParseCtx<'mir> {
@@ -94,12 +93,15 @@ impl Program {
 			.map(|def| def.name.package())
 			.unique()
 	}
-	pub fn lookup<Id: DecId>(&self, id: &Id) -> Option<&TypeDef> {
+	pub fn lookup_type<Id: DecId>(&self, id: &Id) -> Option<&TypeDef> {
 		let key = id.unique_hash();
-		self.lookup_by_hash(key)
+		self.lookup_type_by_hash(key)
 	}
-	pub fn lookup_by_hash(&self, hash: blake3::Hash) -> Option<&TypeDef> {
+	pub fn lookup_type_by_hash(&self, hash: blake3::Hash) -> Option<&TypeDef> {
 		self.defs.get(&hash)
+	}
+	pub fn lookup_fun_by_hash(&self, hash: blake3::Hash) -> Option<&Fun> {
+		self.funs.get(&hash)
 	}
 }
 
@@ -300,7 +302,7 @@ pub enum E {
 	X(TypePair),
 	MCall(MCall),
 	CreateObj(CreateObj),
-	SummonObj(Type),
+	SummonObj(SummonObj),
 	InterpreterValue(interp::Value),
 }
 impl E {
@@ -318,7 +320,7 @@ impl E {
 					_ => bail!("Expected a plain type for CreateObj: {:?}", t),
 				};
 				if ctx.singletons.borrow().contains(&ty) {
-					E::SummonObj(t)
+					E::SummonObj(SummonObj { rc: t.rc, def: ty })
 				} else {
 					E::CreateObj(CreateObj::parse(ctx, k?, t)?)
 				}
@@ -332,8 +334,22 @@ impl HasType for E {
 			E::X(x) => x.t(),
 			E::MCall(c) => c.t(),
 			E::CreateObj(k) => k.t(),
-			E::SummonObj(t) => *t,
+			E::SummonObj(k) => k.t(),
 			E::InterpreterValue(_) => unimplemented!("Please use an interpreter-specific method for getting the type of a value in the interpreter"),
+		}
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct SummonObj {
+	pub(crate) rc: RC,
+	pub(crate) def: blake3::Hash,
+}
+impl HasType for SummonObj {
+	fn t(&self) -> Type {
+		Type {
+			rc: self.rc,
+			rt: RawType::Plain(self.def)
 		}
 	}
 }
@@ -372,13 +388,19 @@ impl HasType for MCall {
 
 #[derive(Debug, Clone)]
 pub struct CreateObj {
-	ty: Type,
-	self_name: u32,
-	meths: HashMap<blake3::Hash, Meth>,
-	captures: HashSet<TypePair>,
+	pub(crate) rc: RC,
+	pub(crate) def: blake3::Hash,
+	pub(crate) self_name: u32,
+	pub(crate) meths: HashMap<blake3::Hash, Meth>,
+	pub(crate) captures: HashSet<TypePair>,
 }
 impl CreateObj {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::create_obj::Reader<'ctx>, ty: Type) -> Result<Self> {
+		let rc = ty.rc;
+		let def = match ty.rt {
+			RawType::Plain(def) => def,
+			_ => bail!("Expected a plain type for CreateObj: {:?}", ty),
+		};
 		let self_name = ctx.add_x(reader.get_self_name()?)?;
 		let captures = reader.get_captures()?.iter()
 			.map(|reader| TypePair::parse_ref(ctx, reader))
@@ -390,7 +412,8 @@ impl CreateObj {
 			})
 			.collect::<Result<_>>()?;
 		Ok(Self {
-			ty,
+			rc,
+			def,
 			self_name,
 			meths,
 			captures,
@@ -399,7 +422,10 @@ impl CreateObj {
 }
 impl HasType for CreateObj {
 	fn t(&self) -> Type {
-		self.ty
+		Type {
+			rc: self.rc,
+			rt: RawType::Plain(self.def)
+		}
 	}
 }
 
@@ -429,11 +455,11 @@ impl HasType for Sig {
 
 #[derive(Debug, Clone)]
 pub struct Meth {
-	origin: blake3::Hash,
-	sig: Sig,
-	captures_self: bool,
-	captures: HashSet<u32>,
-	fun_name: Option<blake3::Hash>,
+	pub(crate) origin: blake3::Hash,
+	pub(crate) sig: Sig,
+	pub(crate) captures_self: bool,
+	pub(crate) captures: HashSet<u32>,
+	pub(crate) fun_name: Option<blake3::Hash>,
 }
 impl Meth {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::meth::Reader<'ctx>) -> Result<Self> {
