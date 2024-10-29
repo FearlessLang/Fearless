@@ -92,6 +92,10 @@ impl Program {
 			let fun = Fun::parse(&mut ctx, fun)?;
 			self.funs.insert(fun.name.unique_hash, fun);
 		}
+		println!("Bindings for package: {}", reader.get_name()?.to_str()?);
+		for (name, binding) in ctx.bindings.iter() {
+			println!("{} = {}", std::str::from_utf8(name).unwrap_or("?"), binding);
+		}
 		Ok(())
 	}
 	pub fn pkg_names(&self) -> impl Iterator<Item = &str> {

@@ -61,10 +61,13 @@ impl Interpreter {
 				println!("{}", def.name);
 				Ok(())
 			},
-			Err(ref e) => match e {
-				InterpreterError::Fearless(_) => todo!(),
-				InterpreterError::NonDeterministic(_) => todo!(),
-				InterpreterError::Internal(_) => res.map(|_| ()),
+			Err(ref e) => {
+				eprintln!("Stack trace:\n{}", self);
+				match e {
+					InterpreterError::Fearless(_) => todo!(),
+					InterpreterError::NonDeterministic(_) => todo!(),
+					InterpreterError::Internal(_) => res.map(|_| ()),
+				}
 			},
 		}
 	}
@@ -122,6 +125,8 @@ impl Interpreter {
 		let body = fun.body.clone();
 		let (_, body) = self.allocate_captures(capture_context, &body)?;
 
+		// self.stack.pop_front();
+
 		Ok(body)
 		// match recv {
 		// 	E::Obj(obj) => {
@@ -142,7 +147,10 @@ impl Interpreter {
 					// Ok((c, value))
 					Ok((CaptureContext::new(), value))
 				},
-				None => Err(InterpreterError::Internal(anyhow!("Capture not found: {:?}", xt))),
+				None => {
+					println!("{:?}", c);
+					Err(InterpreterError::Internal(anyhow!("X not found: {:?}", xt)))
+				},
 			},
 			E::MCall(call) => {
 				let (recv_ctx, recv_value) = self.allocate_captures(c.clone(), &call.recv)?;
@@ -156,18 +164,23 @@ impl Interpreter {
 					args: args.into_iter().map(|(_, v)| E::InterpreterValue(v)).collect(),
 					return_type: call.return_type,
 				};
+				println!("\n{:?}", reduced_call);
 				let res = self.eval_call(&reduced_call)?;
 				Ok((CaptureContext::new(), res))
 			},
 			E::CreateObj(k) => {
 				let fat_meths = k.meths.iter()
 					.map(|(meth_id, meth)| {
-						let mut ctx = CaptureContext::with_capacity(meth.captures.len());
-						c.add(k.self_name, Value::obj(k));
-						for x in meth.captures.iter() {
-							let capture = c.lookup(*x)
-								.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
-							ctx.add(*x, capture.clone());
+						// let mut ctx = CaptureContext::with_capacity(meth.captures.len());
+						// c.add(k.self_name, Value::obj(k));
+						// for x in meth.captures.iter() {
+						// 	let capture = c.lookup(*x)
+						// 		.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
+						// 	ctx.add(*x, capture.clone());
+						// }
+						let mut ctx = c.clone();
+						if meth.captures_self {
+							ctx.add(THIS_X, Value::obj(k));
 						}
 						Ok((*meth_id, ctx))
 					})

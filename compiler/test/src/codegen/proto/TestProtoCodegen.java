@@ -57,4 +57,30 @@ public class TestProtoCodegen {
     Num: {}
     FortyTwo: Num
     """);}
+
+  @Test void capturingDeep() { ok("""
+    """, "fake.Fake", false, Base.minimalBase, """
+    package test
+    Person: {
+      read .age: Num,
+      mut .wrap: mut Person -> {'self
+       .age -> this.age.plus1,
+       .wrap -> {'topLevelWrapped
+         .age -> self.age.plus1,
+         }
+       },
+      }
+    FPerson: { #(age: Num): mut Person -> {'original
+      .age -> age,
+      }}
+    Usage: {
+      #: Num -> FPerson#FortyTwo.wrap.age,
+      }
+    Num: {
+      .plus1: Num,
+      }
+    FortyTwo: Num{ .plus1 -> FortyThree }
+    FortyThree: Num{ .plus1 -> FortyFour }
+    FortyFour: Num{ .plus1 -> this.plus1 }
+    """);}
 }
