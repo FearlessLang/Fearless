@@ -27,15 +27,16 @@ async fn main() -> Result<()> {
 		program
 	};
 
-	println!("{:?}", program);
+	// println!("{:?}", program);
 	let entry: ExplicitDecId = "test.Usage/0".try_into()?;
 	let entry = program.lookup_type(&entry).unwrap();
 	assert!(entry.has_singleton());
 	let entry_recv = ast::E::SummonObj(SummonObj { def: entry.name.unique_hash(), rc: RC::Mut });
 	let entry_ret = program.lookup_type::<ExplicitDecId>(&"test.Num/0".try_into().unwrap()).unwrap();
-	let entry_call = ast::E::MCall(ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/0".as_bytes()), vec![], entry_ret.t()));
+	let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/0".as_bytes()), vec![], entry_ret.t());
 	let mut interp = Interpreter::new(program);
-	interp.eval(&entry_call)?;
+	interp.run(&entry_call)?;
+	println!("\nStack trace:\n{}", interp);
 	
 	// println!("{:?}", entry);
 	// println!("{:?}", program.pkg_names().collect::<Vec<_>>());
