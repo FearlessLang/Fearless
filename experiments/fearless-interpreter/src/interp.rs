@@ -72,11 +72,11 @@ impl Interpreter {
 		}
 	}
 
-	fn eval(&mut self, expr: &E) -> Result<Value> {
+	fn eval<'a>(&mut self, expr: &'a E) -> Result<Cow<'a, Value>> {
 		match expr {
-			E::MCall(call) => self.eval_call(call),
-			E::SummonObj(k) => Value::summoned_obj(k, &self.program),
-			E::InterpreterValue(value) => Ok(value.clone()),
+			E::MCall(call) => Ok(Cow::Owned(self.eval_call(call)?)),
+			E::SummonObj(k) => Ok(Cow::Owned(Value::summoned_obj(k, &self.program)?)),
+			E::InterpreterValue(value) => Ok(Cow::Borrowed(value)),
 			E::X(_) => unreachable!("X is not a valid free expression"),
 			E::CreateObj(_) => unreachable!("CreateObj is not a valid free expression"),
 		}
@@ -84,10 +84,10 @@ impl Interpreter {
 
 	fn eval_call(&mut self, call: &MCall) -> Result<Value> {
 		let recv = self.eval(&call.recv)?;
-		let args: Vec<Value> = call.args.iter()
+		let args: Vec<Cow<Value>> = call.args.iter()
 			.map(|arg| self.eval(arg))
 			.collect::<Result<_>>()?;
-		let Value::Obj(recv_obj) = &recv;
+		let Value::Obj(recv_obj) = &*recv;
 		let meth = recv_obj.k.meths.get(&call.meth)
 			.ok_or_else(|| {
 				let type_name = self.program.lookup_type_by_hash(recv_obj.k.def)
@@ -117,7 +117,7 @@ impl Interpreter {
 			ctx
 		} else {
 			let mut ctx = CaptureContext::zip(&args, gamma);
-			ctx.add(THIS_X, recv.clone());
+			ctx.add(THIS_X, Value::clone(&*recv));
 			ctx
 		};
 
@@ -139,7 +139,8 @@ impl Interpreter {
 			// };
 
 			let fun_args = args.iter()
-				.chain(std::iter::once(&recv))
+				.map(|value| &**value)
+				.chain(std::iter::once(&*recv))
 				.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
 			for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
 				fun_ctx.add(fun_xt.x, v.clone());
@@ -286,21 +287,26 @@ impl CaptureContext {
 	fn add(&mut self, key: u32, value: Value) {
 		self.inner.insert(key, value);
 	}
-	fn zip(vs: &[Value], gamma: &[TypePair]) -> Self {
+	fn zip(vs: &[Cow<Value>], gamma: &[TypePair]) -> Self {
 		let mut inner = HashMap::with_capacity(vs.len());
 		vs.iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				inner.insert(xt.x, v.clone());
+				inner.insert(xt.x, match v {
+					Cow::Borrowed(v) => Value::clone(v),
+					Cow::Owned(v) => v.clone(),
+				});
 			});
 		Self { inner }
 	}
-
-	fn and_zip(&mut self, vs: &[Value], gamma: &[TypePair]) {
+	fn and_zip(&mut self, vs: &[Cow<Value>], gamma: &[TypePair]) {
 		vs.iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				self.inner.insert(xt.x, v.clone());
+				self.inner.insert(xt.x, match v {
+					Cow::Borrowed(v) => Value::clone(v),
+					Cow::Owned(v) => v.clone(),
+				});
 			});
 	}
 }
