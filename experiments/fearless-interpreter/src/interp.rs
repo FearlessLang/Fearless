@@ -155,7 +155,6 @@ impl Interpreter {
 		Ok(body)
 	}
 
-	// I'm currently ignoring CaptureContext to see if I can do this without it
 	fn allocate_captures(&mut self, c: &CaptureContext, e: &E) -> Result<Value> {
 		match e {
 			E::X(xt) => match c.lookup(xt.x) {
