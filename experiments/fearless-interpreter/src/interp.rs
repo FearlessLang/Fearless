@@ -1,12 +1,12 @@
-use std::borrow::Cow;
 use crate::ast::{CreateObj, MCall, Program, SummonObj, TypePair, E, THIS_X};
 use anyhow::anyhow;
+use itertools::{zip_eq, Itertools};
+use std::borrow::Cow;
 use hashbrown::HashMap;
-use itertools::Itertools;
+// use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::os::unix::fs::lchown;
 use std::rc::Rc;
 
 #[derive(Debug)]
@@ -74,13 +74,14 @@ impl Interpreter {
 
 	fn eval(&mut self, expr: &E) -> Result<Value> {
 		match expr {
-			E::X(_) => todo!("X"),
 			E::MCall(call) => self.eval_call(call),
-			E::CreateObj(_) => todo!("CreateObj"),
 			E::SummonObj(k) => Value::summoned_obj(k, &self.program),
 			E::InterpreterValue(value) => Ok(value.clone()),
+			E::X(_) => unreachable!("X is not a valid free expression"),
+			E::CreateObj(_) => unreachable!("CreateObj is not a valid free expression"),
 		}
 	}
+
 	fn eval_call(&mut self, call: &MCall) -> Result<Value> {
 		let recv = self.eval(&call.recv)?;
 		let args: Vec<Value> = call.args.iter()
@@ -122,65 +123,74 @@ impl Interpreter {
 
 		self.stack.push_front(StackFrame::new(recv_obj.k.def, call.meth));
 
+		let fun_ctx = {
+			let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
+			let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
+
+			// I thought we needed to dynamically pick and choose selfName passing, but it's always expected.
+			// let mut fun_args_with_self;
+			// let mut fun_args_without_self;
+			// let fun_args: &mut dyn Iterator<Item = &Value> = if fun.name.captures_self {
+			// 	fun_args_with_self = args.iter().chain(std::iter::once(&recv));
+			// 	&mut fun_args_with_self
+			// } else {
+			// 	fun_args_without_self = args.iter();
+			// 	&mut fun_args_without_self
+			// };
+
+			let fun_args = args.iter()
+				.chain(std::iter::once(&recv))
+				.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
+			for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
+				fun_ctx.add(fun_xt.x, v.clone());
+			}
+			fun_ctx
+		};
+
 		let body = fun.body.clone();
-		let (_, body) = self.allocate_captures(capture_context, &body)?;
+		let body = self.allocate_captures(&fun_ctx, &body)?;
 
 		// self.stack.pop_front();
 
 		Ok(body)
-		// match recv {
-		// 	E::Obj(obj) => {
-		// 		let method = obj.lookup_method(method)?;
-		// 		let ret = method.call(args)?;
-		// 		Ok(E::Obj(ret))
-		// 	}
-		// 	_ => todo!(),
-		// }
 	}
 
 	// I'm currently ignoring CaptureContext to see if I can do this without it
-	fn allocate_captures(&mut self, mut c: CaptureContext, e: &E) -> Result<(CaptureContext, Value)> {
+	fn allocate_captures(&mut self, c: &CaptureContext, e: &E) -> Result<Value> {
 		match e {
 			E::X(xt) => match c.lookup(xt.x) {
 				Some(value) => {
 					let value = value.clone();
 					// Ok((c, value))
-					Ok((CaptureContext::new(), value))
+					Ok(value)
 				},
 				None => {
-					println!("{:?}", c);
 					Err(InterpreterError::Internal(anyhow!("X not found: {:?}", xt)))
 				},
 			},
 			E::MCall(call) => {
-				let (recv_ctx, recv_value) = self.allocate_captures(c.clone(), &call.recv)?;
-				let args: Vec<(CaptureContext, Value)> = call.args.iter()
-					.map(|arg| self.allocate_captures(c.clone(), arg))
+				let recv_value = self.allocate_captures(c, &call.recv)?;
+				let args: Vec<Value> = call.args.iter()
+					.map(|arg| self.allocate_captures(c, arg))
 					.collect::<Result<_>>()?;
 				let reduced_call = MCall {
 					recv: Box::new(E::InterpreterValue(recv_value)),
 					rc: call.rc,
 					meth: call.meth,
-					args: args.into_iter().map(|(_, v)| E::InterpreterValue(v)).collect(),
+					args: args.into_iter().map(E::InterpreterValue).collect(),
 					return_type: call.return_type,
 				};
-				println!("\n{:?}", reduced_call);
 				let res = self.eval_call(&reduced_call)?;
-				Ok((CaptureContext::new(), res))
+				Ok(res)
 			},
 			E::CreateObj(k) => {
 				let fat_meths = k.meths.iter()
 					.map(|(meth_id, meth)| {
-						// let mut ctx = CaptureContext::with_capacity(meth.captures.len());
-						// c.add(k.self_name, Value::obj(k));
-						// for x in meth.captures.iter() {
-						// 	let capture = c.lookup(*x)
-						// 		.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
-						// 	ctx.add(*x, capture.clone());
-						// }
-						let mut ctx = c.clone();
-						if meth.captures_self {
-							ctx.add(THIS_X, Value::obj(k));
+						let mut ctx = CaptureContext::with_capacity(meth.captures.len());
+						for x in meth.captures.iter() {
+							let capture = c.lookup(*x)
+								.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
+							ctx.add(*x, capture.clone());
 						}
 						Ok((*meth_id, ctx))
 					})
@@ -189,10 +199,10 @@ impl Interpreter {
 					k: k.clone(),
 					fat_meths
 				});
-				Ok((CaptureContext::new(), obj))
+				Ok(obj)
 			},
-			E::SummonObj(k) => Ok((CaptureContext::new(), Value::summoned_obj(k, &self.program)?)),
-			E::InterpreterValue(_) => todo!(),
+			E::SummonObj(k) => Ok(Value::summoned_obj(k, &self.program)?),
+			E::InterpreterValue(_) => unreachable!(),
 		}
 	}
 }

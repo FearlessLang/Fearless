@@ -8,13 +8,13 @@ use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
 pub(crate) const THIS_X: u32 = 0;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ParseCtx<'mir> {
 	bindings: HashMap<&'mir [u8], u32>,
 	singletons: Rc<RefCell<HashSet<blake3::Hash>>>,
@@ -88,14 +88,15 @@ impl Program {
 			}
 			self.defs.insert(def.name.unique_hash(), def);
 		}
+		let mut ctx = ctx.clone();
 		for fun in reader.get_funs()? {
 			let fun = Fun::parse(&mut ctx, fun)?;
 			self.funs.insert(fun.name.unique_hash, fun);
 		}
-		println!("Bindings for package: {}", reader.get_name()?.to_str()?);
-		for (name, binding) in ctx.bindings.iter() {
-			println!("{} = {}", std::str::from_utf8(name).unwrap_or("?"), binding);
-		}
+		// println!("Bindings for package: {}", reader.get_name()?.to_str()?);
+		// for (name, binding) in ctx.bindings.iter() {
+		// 	println!("{} = {}", std::str::from_utf8(name).unwrap_or("?"), binding);
+		// }
 		Ok(())
 	}
 	pub fn pkg_names(&self) -> impl Iterator<Item = &str> {
@@ -190,11 +191,11 @@ impl Fun {
 
 #[derive(Debug, Clone)]
 pub struct FunName {
-	d: blake3::Hash,
-	rc: RC,
-	m: blake3::Hash,
-	captures_self: bool,
-	unique_hash: blake3::Hash,
+	pub(crate) d: blake3::Hash,
+	pub(crate) rc: RC,
+	pub(crate) m: blake3::Hash,
+	pub(crate) captures_self: bool,
+	pub(crate) unique_hash: blake3::Hash,
 }
 impl FunName {
 	fn parse(reader: schema_capnp::fun::name::Reader) -> Result<FunName> {
@@ -479,7 +480,7 @@ pub struct Meth {
 impl Meth {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::meth::Reader<'ctx>) -> Result<Self> {
 		let captures_self = reader.get_captures_self();
-		let mut captures = reader.get_captures()?.iter()
+		let captures = reader.get_captures()?.iter()
 			.map(|reader| ctx.get_x(reader?.as_bytes()))
 			.collect::<Result<_>>()?;
 		Ok(Self {

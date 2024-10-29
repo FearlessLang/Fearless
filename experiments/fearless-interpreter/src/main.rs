@@ -1,7 +1,6 @@
 use crate::ast::{HasType, Program, SummonObj};
 use anyhow::Result;
 use std::fs;
-use std::ops::Index;
 use crate::dec_id::{DecId, ExplicitDecId};
 use crate::interp::Interpreter;
 use crate::schema_capnp::RC;
@@ -15,8 +14,8 @@ mod ast;
 #[global_allocator]
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+// #[tokio::main]
+fn main() -> Result<()> {
 	let paths = ["/tmp/test.fear.pkg.mearless", "/tmp/base.fear.pkg.mearless"];
 	let program = {
 		let mut program = Program::new();
