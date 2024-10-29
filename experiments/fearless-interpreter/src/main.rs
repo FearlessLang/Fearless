@@ -36,6 +36,8 @@ fn main() -> Result<()> {
 	let mut interp = Interpreter::new(program);
 	interp.run(&entry_call)?;
 	println!("\nStack trace:\n{}", interp);
+
+	println!("{}", size_of::<interp::Value>());
 	
 	// println!("{:?}", entry);
 	// println!("{:?}", program.pkg_names().collect::<Vec<_>>());

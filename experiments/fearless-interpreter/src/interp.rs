@@ -1,8 +1,8 @@
-use crate::ast::{CreateObj, MCall, Program, SummonObj, TypePair, E, THIS_X};
+use crate::ast::{CreateObj, MCall, Meth, Program, SummonObj, TypePair, E, THIS_X};
 use anyhow::anyhow;
+use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
 use std::borrow::Cow;
-use hashbrown::HashMap;
 // use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::error::Error;
@@ -55,7 +55,7 @@ impl Interpreter {
 		match res {
 			Ok(res) => {
 				let def = match res {
-					Value::Obj(obj) => self.program.lookup_type_by_hash(obj.k.def)
+					Value::Obj(obj) => self.program.lookup_type_by_hash(obj.k.def())
 						.unwrap(),
 				};
 				println!("{}", def.name);
@@ -75,7 +75,7 @@ impl Interpreter {
 	fn eval<'a>(&mut self, expr: &'a E) -> Result<Cow<'a, Value>> {
 		match expr {
 			E::MCall(call) => Ok(Cow::Owned(self.eval_call(call)?)),
-			E::SummonObj(k) => Ok(Cow::Owned(Value::summoned_obj(k, &self.program)?)),
+			E::SummonObj(k) => Ok(Cow::Owned(Value::summoned_obj(k)?)),
 			E::InterpreterValue(value) => Ok(Cow::Borrowed(value)),
 			E::X(_) => unreachable!("X is not a valid free expression"),
 			E::CreateObj(_) => unreachable!("CreateObj is not a valid free expression"),
@@ -88,20 +88,20 @@ impl Interpreter {
 			.map(|arg| self.eval(arg))
 			.collect::<Result<_>>()?;
 		let Value::Obj(recv_obj) = &*recv;
-		let meth = recv_obj.k.meths.get(&call.meth)
+		let meth = recv_obj.k.meths(&self.program)?.get(&call.meth)
 			.ok_or_else(|| {
-				let type_name = self.program.lookup_type_by_hash(recv_obj.k.def)
+				let type_name = self.program.lookup_type_by_hash(recv_obj.k.def())
 					.map(|def| def.name.to_string())
-					.unwrap_or(recv_obj.k.def.to_string());
+					.unwrap_or(recv_obj.k.def().to_string());
 				InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", call.meth, type_name))
 			})?;
 		let gamma = &meth.sig.xs;
 		let fun = meth
 			.fun_name
 			.ok_or_else(|| {
-				let type_name = self.program.lookup_type_by_hash(recv_obj.k.def)
+				let type_name = self.program.lookup_type_by_hash(recv_obj.k.def())
 					.map(|def| def.name.to_string())
-					.unwrap_or(recv_obj.k.def.to_string());
+					.unwrap_or(recv_obj.k.def().to_string());
 				InterpreterError::Internal(anyhow!("Illegal call to abstract method '{}' on '{:?}'", call.meth, type_name))
 			})
 			.and_then(|fun_name| self.program
@@ -111,7 +111,7 @@ impl Interpreter {
 
 		let capture_context = if is_meth_in_obj(recv_obj, &call.meth) {
 			let mut ctx = recv_obj.fat_meths.get(&call.meth)
-				.ok_or_else(|| InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", call.meth, recv_obj.k.def)))?
+				.ok_or_else(|| InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", call.meth, recv_obj.k.def())))?
 				.clone();
 			ctx.and_zip(&args, gamma);
 			ctx
@@ -121,7 +121,7 @@ impl Interpreter {
 			ctx
 		};
 
-		self.stack.push_front(StackFrame::new(recv_obj.k.def, call.meth));
+		self.stack.push_front(StackFrame::new(recv_obj.k.def(), call.meth));
 
 		let fun_ctx = {
 			let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
@@ -196,12 +196,12 @@ impl Interpreter {
 					})
 					.collect::<Result<HashMap<_,_>>>()?;
 				let obj = Value::Obj(Obj {
-					k: k.clone(),
+					k: Literal::obj(k.clone()),
 					fat_meths
 				});
 				Ok(obj)
 			},
-			E::SummonObj(k) => Ok(Value::summoned_obj(k, &self.program)?),
+			E::SummonObj(k) => Ok(Value::summoned_obj(k)?),
 			E::InterpreterValue(_) => unreachable!(),
 		}
 	}
@@ -234,24 +234,16 @@ pub enum Value {
 impl Value {
 	fn obj(k: &CreateObj) -> Self {
 		Value::Obj(Obj {
-			k: k.clone(),
+			k: Literal::obj(k.clone()),
 			fat_meths: k.meths.iter()
 				.filter(|(_, meth)| meth.origin == k.def)
 				.map(|(meth_id, _)| (*meth_id, CaptureContext::new()))
 				.collect()
 		})
 	}
-	fn summoned_obj(k: &SummonObj, program: &Program) -> Result<Self> {
-		let k = match program.lookup_type_by_hash(k.def) {
-			Some(def) => match &def.singleton_instance {
-				Some(obj) => obj,
-				None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
-			},
-			None =>
-				Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", k.def, k)))?,
-		};
+	fn summoned_obj(k: &SummonObj) -> Result<Self> {
 		Ok(Value::Obj(Obj {
-			k: k.clone(),
+			k: Literal::Summoned(k.clone()),
 			fat_meths: Default::default()
 		}))
 	}
@@ -259,9 +251,40 @@ impl Value {
 
 #[derive(Debug, Clone)]
 pub struct Obj {
-	k: CreateObj,
+	k: Literal,
 	/// `mc` from our reduction, the capture context per-method
 	fat_meths: HashMap<blake3::Hash, CaptureContext>
+}
+#[derive(Debug, Clone)]
+enum Literal {
+	Summoned(SummonObj),
+	Obj(Box<CreateObj>),
+}
+impl Literal {
+	fn obj(obj: CreateObj) -> Self {
+		Literal::Obj(Box::new(obj))
+	}
+	fn def(&self) -> blake3::Hash {
+		match self {
+			Literal::Summoned(k) => k.def,
+			Literal::Obj(k) => k.def,
+		}
+	}
+	fn meths<'a>(&'a self, program: &'a Program) -> Result<&'a HashMap<blake3::Hash, Meth>> {
+		match self {
+			Literal::Summoned(k) => {
+				match program.lookup_type_by_hash(k.def) {
+					Some(def) => match &def.singleton_instance {
+						Some(obj) => Ok(&obj.meths),
+						None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
+					},
+					None =>
+						Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", k.def, k)))?,
+				}
+			},
+			Literal::Obj(k) => Ok(&k.meths),
+		}
+	}
 }
 
 /// `c` from our reduction, a capture context
