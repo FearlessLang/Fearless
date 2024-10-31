@@ -26,7 +26,7 @@ public class TestProtoCodegen {
     assert content.length > 0;
     Main.resetAll();
     AtomicInteger pi = new AtomicInteger();
-    String[] baseLibs = loadBase ? Base.baseLib : new String[0];
+    String[] baseLibs = loadBase ? Base.immBaseLib : new String[0];
     var ps = Stream.concat(Arrays.stream(content), Arrays.stream(baseLibs))
       .map(code->new Parser(Path.of("Dummy" + pi.getAndIncrement() + ".fear"), code))
       .toList();
@@ -83,4 +83,11 @@ public class TestProtoCodegen {
     FortyThree: Num{ .plus1 -> FortyFour }
     FortyFour: Num{ .plus1 -> this.plus1 }
     """);}
+
+  @Test void helloWorld() { ok("""
+    """, "fake.Fake", true, """
+    package test
+    alias base.Main as Main,
+    Test: Main{_ -> "Hello, World!"}
+    """); }
 }

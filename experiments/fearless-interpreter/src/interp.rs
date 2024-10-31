@@ -52,6 +52,7 @@ impl Interpreter {
 
 	pub fn run(&mut self, entry: &MCall) -> Result<()> {
 		let res = self.eval_call(entry);
+		println!("res: {:?}", res);
 		match res {
 			Ok(res) => {
 				let def = match res {
