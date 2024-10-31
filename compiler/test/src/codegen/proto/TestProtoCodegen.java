@@ -58,6 +58,16 @@ public class TestProtoCodegen {
     FortyTwo: Num
     """);}
 
+  @Test void stuck() { ok("""
+    """, "fake.Fake", false, Base.minimalBase, """
+    package test
+    Usage: {
+      #: Num -> this#,
+      }
+    Num: {}
+    FortyTwo: Num
+    """);}
+
   @Test void capturingDeep() { ok("""
     """, "fake.Fake", false, Base.minimalBase, """
     package test

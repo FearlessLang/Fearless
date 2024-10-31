@@ -319,7 +319,7 @@ pub enum E {
 	MCall(MCall),
 	CreateObj(CreateObj),
 	SummonObj(SummonObj),
-	InterpreterValue(interp::Value),
+	InterpreterE(interp::InterpreterE),
 }
 impl E {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::Reader<'ctx>) -> Result<Self> {
@@ -351,7 +351,7 @@ impl HasType for E {
 			E::MCall(c) => c.t(),
 			E::CreateObj(k) => k.t(),
 			E::SummonObj(k) => k.t(),
-			E::InterpreterValue(_) => unimplemented!("Please use an interpreter-specific method for getting the type of a value in the interpreter"),
+			E::InterpreterE(_) => unimplemented!("Please use an interpreter-specific method for getting the type of a value in the interpreter"),
 		}
 	}
 }
