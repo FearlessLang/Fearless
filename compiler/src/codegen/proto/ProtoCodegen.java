@@ -226,7 +226,9 @@ public class ProtoCodegen implements MIRVisitor<Void> {
       case readH -> Mearless.RC.READ_H;
       case iso -> Mearless.RC.ISO;
       case imm -> Mearless.RC.IMM;
-      case recMdf, mdf, readImm -> throw Bug.unreachable();
+      case readImm -> Mearless.RC.READ_IMM;
+      case mdf -> Mearless.RC.GENERIC;
+      case recMdf -> throw Bug.unreachable();
     };
   }
 }

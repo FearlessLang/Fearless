@@ -1,7 +1,7 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
-use crate::{interp, schema_capnp};
+use crate::{magic, schema_capnp};
 use anyhow::{anyhow, bail, Result};
 use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
@@ -9,7 +9,7 @@ use itertools::Itertools;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::rc::Rc;
 
 pub(crate) const THIS_X: u32 = 0;
@@ -254,7 +254,7 @@ impl Display for MethName<'_> {
 pub trait HasType {
 	fn t(&self) -> Type;
 }
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Type {
 	pub rc: RC,
 	pub rt: RawType
@@ -264,31 +264,35 @@ impl Type {
 		Ok(Self {
 			rc: reader.get_rc()?,
 			rt: match reader.which()? {
-				schema_capnp::t::Plain(plain) => RawType::Plain(AstDecId(plain?).unique_hash()),
+				schema_capnp::t::Plain(plain) => {
+					let dec_id = AstDecId(plain?);
+					if dec_id.full_name().contains('.') {
+						RawType::Plain(dec_id.unique_hash())
+					} else {
+						Self::parse_magic_type(dec_id)?
+					}
+				},
 				schema_capnp::t::Any(_) => RawType::Any,
 			}
 		})
 	}
-}
-impl Hash for Type {
-	fn hash<H: Hasher>(&self, state: &mut H) {
-		debug_assert_eq!(size_of_val(&self.rc), size_of::<u16>());
-		state.write_u16(self.rc as u16);
-		self.rt.hash(state);
+	fn parse_magic_type(dec_id: AstDecId) -> Result<RawType> {
+		Ok(RawType::Magic(magic::parse_type(dec_id)?))
 	}
 }
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum RawType {
 	Plain(blake3::Hash),
 	Any,
+	Magic(magic::MagicType),
 }
 impl HasType for Type {
 	fn t(&self) -> Type {
-		*self
+		self.clone()
 	}
 }
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypePair {
 	pub x: u32,
 	pub t: Type
@@ -309,7 +313,7 @@ impl TypePair {
 }
 impl HasType for TypePair {
 	fn t(&self) -> Type {
-		self.t
+		self.t.clone()
 	}
 }
 
@@ -319,7 +323,7 @@ pub enum E {
 	MCall(MCall),
 	CreateObj(CreateObj),
 	SummonObj(SummonObj),
-	InterpreterValue(interp::Value),
+	MagicValue(RC, magic::MagicType),
 }
 impl E {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::Reader<'ctx>) -> Result<Self> {
@@ -331,14 +335,16 @@ impl E {
 			}),
 			schema_capnp::e::MCall(c) => E::MCall(MCall::parse(ctx, c?, t)?),
 			schema_capnp::e::CreateObj(k) => {
-				let ty = match t.rt {
-					RawType::Plain(ty) => ty,
+				match t.rt {
+					RawType::Plain(ty) => {
+						if ctx.singletons.borrow().contains(&ty) {
+							E::SummonObj(SummonObj { rc: t.rc, def: ty })
+						} else {
+							E::CreateObj(CreateObj::parse(ctx, k?, t)?)
+						}	
+					},
+					RawType::Magic(ty) => E::MagicValue(t.rc, ty),
 					_ => bail!("Expected a plain type for CreateObj: {:?}", t),
-				};
-				if ctx.singletons.borrow().contains(&ty) {
-					E::SummonObj(SummonObj { rc: t.rc, def: ty })
-				} else {
-					E::CreateObj(CreateObj::parse(ctx, k?, t)?)
 				}
 			},
 		})
@@ -351,7 +357,7 @@ impl HasType for E {
 			E::MCall(c) => c.t(),
 			E::CreateObj(k) => k.t(),
 			E::SummonObj(k) => k.t(),
-			E::InterpreterValue(_) => unimplemented!("Please use an interpreter-specific method for getting the type of a value in the interpreter"),
+			E::MagicValue(rc, ty) => Type { rc: *rc, rt: RawType::Magic(ty.clone()) },
 		}
 	}
 }
@@ -398,7 +404,7 @@ impl MCall {
 }
 impl HasType for MCall {
 	fn t(&self) -> Type {
-		self.return_type
+		self.return_type.clone()
 	}
 }
 
@@ -408,7 +414,7 @@ pub struct CreateObj {
 	pub(crate) def: blake3::Hash,
 	pub(crate) self_name: u32,
 	pub(crate) meths: HashMap<blake3::Hash, Meth>,
-	pub(crate) captures: HashSet<TypePair>,
+	pub(crate) captures: Vec<TypePair>,
 }
 impl CreateObj {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::create_obj::Reader<'ctx>, ty: Type) -> Result<Self> {
@@ -426,7 +432,7 @@ impl CreateObj {
 			.collect::<Result<_>>()?;
 		let captures = reader.get_captures()?.iter()
 			.map(|reader| TypePair::parse_ref(ctx, reader))
-			.collect::<Result<HashSet<_>>>()?;
+			.collect::<Result<Vec<_>>>()?;
 		Ok(Self {
 			rc,
 			def,
@@ -465,7 +471,7 @@ impl Sig {
 }
 impl HasType for Sig {
 	fn t(&self) -> Type {
-		self.return_type
+		self.return_type.clone()
 	}
 }
 

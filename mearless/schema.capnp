@@ -1,5 +1,5 @@
 @0xd450c7e171226aae;
-using Java = import "/capnp/java.capnp";
+using Java = import "./java.capnp";
 $Java.package("org.fearlang.mearless.proto");
 $Java.outerClassname("Mearless");
 
@@ -83,6 +83,11 @@ enum RC @0xd79bf80b86c31d5a {
   mutH @3;
   read @4;
   readH @5;
+  # Any could be annotated with nothing or read/imm in theory
+  # These aren't RCs but it keeps things simpler to pretend
+  # that they are here
+  readImm @6;
+  generic @7;
 }
 
 struct MethName {

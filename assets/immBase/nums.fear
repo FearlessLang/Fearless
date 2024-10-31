@@ -155,9 +155,3 @@ _FloatAssertionHelper: _NumsAssertionHelper[Float]{
   .assertEq(expected, actual, message) ->
     Assert!(expected == actual, message+"\nExpected: "+(expected.str)+"\nActual: "+(actual.str), {{}}),
   }
-_ByteAssertionHelper: _NumsAssertionHelper[Byte]{
-  .assertEq(expected, actual) ->
-    Assert!(expected == actual, "Expected: "+(expected.str)+"\nActual: "+(actual.str), {{}}),
-  .assertEq(expected, actual, message) ->
-    Assert!(expected == actual, message+"\nExpected: "+(expected.str)+"\nActual: "+(actual.str), {{}}),
-  }

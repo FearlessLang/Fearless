@@ -543,6 +543,8 @@ public final class Mearless {
             case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
             case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
             case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+            case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+            case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
             default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
           }
         }
@@ -598,6 +600,8 @@ public final class Mearless {
             case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
             case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
             case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+            case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+            case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
             default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
           }
         }
@@ -974,6 +978,8 @@ public final class Mearless {
           case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
           case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
           case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+          case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+          case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
           default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
         }
       }
@@ -1031,6 +1037,8 @@ public final class Mearless {
           case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
           case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
           case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+          case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+          case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
           default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
         }
       }
@@ -1168,6 +1176,8 @@ public final class Mearless {
     MUT_H,
     READ,
     READ_H,
+    READ_IMM,
+    GENERIC,
     _NOT_IN_SCHEMA,
   }
 
@@ -1207,6 +1217,8 @@ public final class Mearless {
           case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
           case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
           case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+          case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+          case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
           default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
         }
       }
@@ -1266,6 +1278,8 @@ public final class Mearless {
           case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
           case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
           case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+          case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+          case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
           default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
         }
       }
@@ -1589,6 +1603,8 @@ public final class Mearless {
             case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
             case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
             case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+            case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+            case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
             default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
           }
         }
@@ -1651,6 +1667,8 @@ public final class Mearless {
             case 3 : return org.fearlang.mearless.proto.Mearless.RC.MUT_H;
             case 4 : return org.fearlang.mearless.proto.Mearless.RC.READ;
             case 5 : return org.fearlang.mearless.proto.Mearless.RC.READ_H;
+            case 6 : return org.fearlang.mearless.proto.Mearless.RC.READ_IMM;
+            case 7 : return org.fearlang.mearless.proto.Mearless.RC.GENERIC;
             default: return org.fearlang.mearless.proto.Mearless.RC._NOT_IN_SCHEMA;
           }
         }
@@ -2799,37 +2817,45 @@ public static final org.capnproto.SegmentReader b_d79bf80b86c31d5a =
    "\u0015\u0000\u0000\u0000\u0082\u0000\u0000\u0000" +
    "\u0019\u0000\u0000\u0000\u0007\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0015\u0000\u0000\u0000\u0097\u0000\u0000\u0000" +
+   "\u0015\u0000\u0000\u0000\u00c7\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0073\u0063\u0068\u0065\u006d\u0061\u002e\u0063" +
    "\u0061\u0070\u006e\u0070\u003a\u0052\u0043\u0000" +
    "\u0000\u0000\u0000\u0000\u0001\u0000\u0001\u0000" +
-   "\u0018\u0000\u0000\u0000\u0001\u0000\u0002\u0000" +
+   "\u0020\u0000\u0000\u0000\u0001\u0000\u0002\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0041\u0000\u0000\u0000\"\u0000\u0000\u0000" +
+   "\u0059\u0000\u0000\u0000\"\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0039\u0000\u0000\u0000\"\u0000\u0000\u0000" +
+   "\u0051\u0000\u0000\u0000\"\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0031\u0000\u0000\u0000\"\u0000\u0000\u0000" +
+   "\u0049\u0000\u0000\u0000\"\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0029\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0041\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0021\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
+   "\u0039\u0000\u0000\u0000\u002a\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0005\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
-   "\u0019\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
+   "\u0031\u0000\u0000\u0000\u0032\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0006\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0029\u0000\u0000\u0000\u0042\u0000\u0000\u0000" +
+   "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0007\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
+   "\u0021\u0000\u0000\u0000\u0042\u0000\u0000\u0000" +
    "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000" +
    "\u0069\u0073\u006f\u0000\u0000\u0000\u0000\u0000" +
    "\u0069\u006d\u006d\u0000\u0000\u0000\u0000\u0000" +
    "\u006d\u0075\u0074\u0000\u0000\u0000\u0000\u0000" +
    "\u006d\u0075\u0074\u0048\u0000\u0000\u0000\u0000" +
    "\u0072\u0065\u0061\u0064\u0000\u0000\u0000\u0000" +
-   "\u0072\u0065\u0061\u0064\u0048\u0000\u0000\u0000" + "");
+   "\u0072\u0065\u0061\u0064\u0048\u0000\u0000\u0000" +
+   "\u0072\u0065\u0061\u0064\u0049\u006d\u006d\u0000" +
+   "\u0067\u0065\u006e\u0065\u0072\u0069\u0063\u0000" + "");
 public static final org.capnproto.SegmentReader b_a89c65c4b68c28fe =
    org.capnproto.GeneratedClassSupport.decodeRawBytes(
    "\u0000\u0000\u0000\u0000\u0005\u0000\u0006\u0000" +

@@ -3269,6 +3269,8 @@ pub enum RC {
   MutH = 3,
   Read = 4,
   ReadH = 5,
+  ReadImm = 6,
+  Generic = 7,
 }
 
 impl ::capnp::introspect::Introspect for RC {
@@ -3287,6 +3289,8 @@ impl ::core::convert::TryFrom<u16> for RC {
       3 => ::core::result::Result::Ok(Self::MutH),
       4 => ::core::result::Result::Ok(Self::Read),
       5 => ::core::result::Result::Ok(Self::ReadH),
+      6 => ::core::result::Result::Ok(Self::ReadImm),
+      7 => ::core::result::Result::Ok(Self::Generic),
       n => ::core::result::Result::Err(::capnp::NotInSchema(n)),
     }
   }
@@ -3299,7 +3303,7 @@ impl ::capnp::traits::HasTypeId for RC {
   const TYPE_ID: u64 = 0xd79b_f80b_86c3_1d5au64;
 }
 mod r_c {
-pub static ENCODED_NODE: [::capnp::Word; 40] = [
+pub static ENCODED_NODE: [::capnp::Word; 48] = [
   ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
   ::capnp::word(90, 29, 195, 134, 11, 248, 155, 215),
   ::capnp::word(13, 0, 0, 0, 2, 0, 0, 0),
@@ -3309,30 +3313,36 @@ pub static ENCODED_NODE: [::capnp::Word; 40] = [
   ::capnp::word(21, 0, 0, 0, 130, 0, 0, 0),
   ::capnp::word(25, 0, 0, 0, 7, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(21, 0, 0, 0, 151, 0, 0, 0),
+  ::capnp::word(21, 0, 0, 0, 199, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(115, 99, 104, 101, 109, 97, 46, 99),
   ::capnp::word(97, 112, 110, 112, 58, 82, 67, 0),
   ::capnp::word(0, 0, 0, 0, 1, 0, 1, 0),
-  ::capnp::word(24, 0, 0, 0, 1, 0, 2, 0),
+  ::capnp::word(32, 0, 0, 0, 1, 0, 2, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(65, 0, 0, 0, 34, 0, 0, 0),
+  ::capnp::word(89, 0, 0, 0, 34, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(1, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(57, 0, 0, 0, 34, 0, 0, 0),
+  ::capnp::word(81, 0, 0, 0, 34, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(2, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(49, 0, 0, 0, 34, 0, 0, 0),
+  ::capnp::word(73, 0, 0, 0, 34, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(3, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(41, 0, 0, 0, 42, 0, 0, 0),
+  ::capnp::word(65, 0, 0, 0, 42, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(4, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(33, 0, 0, 0, 42, 0, 0, 0),
+  ::capnp::word(57, 0, 0, 0, 42, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(5, 0, 0, 0, 0, 0, 0, 0),
-  ::capnp::word(25, 0, 0, 0, 50, 0, 0, 0),
+  ::capnp::word(49, 0, 0, 0, 50, 0, 0, 0),
+  ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
+  ::capnp::word(6, 0, 0, 0, 0, 0, 0, 0),
+  ::capnp::word(41, 0, 0, 0, 66, 0, 0, 0),
+  ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
+  ::capnp::word(7, 0, 0, 0, 0, 0, 0, 0),
+  ::capnp::word(33, 0, 0, 0, 66, 0, 0, 0),
   ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
   ::capnp::word(105, 115, 111, 0, 0, 0, 0, 0),
   ::capnp::word(105, 109, 109, 0, 0, 0, 0, 0),
@@ -3340,6 +3350,8 @@ pub static ENCODED_NODE: [::capnp::Word; 40] = [
   ::capnp::word(109, 117, 116, 72, 0, 0, 0, 0),
   ::capnp::word(114, 101, 97, 100, 0, 0, 0, 0),
   ::capnp::word(114, 101, 97, 100, 72, 0, 0, 0),
+  ::capnp::word(114, 101, 97, 100, 73, 109, 109, 0),
+  ::capnp::word(103, 101, 110, 101, 114, 105, 99, 0),
 ];
 pub fn get_annotation_types(child_index: Option<u16>, index: u32) -> ::capnp::introspect::Type {
   panic!("invalid annotation indices ({:?}, {}) ", child_index, index)
