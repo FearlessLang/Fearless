@@ -10,6 +10,7 @@ mod schema_capnp;
 mod interp;
 mod dec_id;
 mod ast;
+mod bounded_stack;
 
 #[global_allocator]
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -34,7 +35,7 @@ fn main() -> Result<()> {
 	let entry_ret = program.lookup_type::<ExplicitDecId>(&"test.Num/0".try_into().unwrap()).unwrap();
 	let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/0".as_bytes()), vec![], entry_ret.t());
 	let mut interp = Interpreter::new(program);
-	interp.run(&entry_call)?;
+	interp.run(entry_call)?;
 	println!("\nStack trace:\n{}", interp);
 
 	println!("{}", size_of::<interp::Value>());

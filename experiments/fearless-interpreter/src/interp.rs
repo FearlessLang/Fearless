@@ -1,4 +1,5 @@
 use crate::ast::{CreateObj, MCall, Meth, Program, SummonObj, Type, TypePair, E, THIS_X};
+use crate::schema_capnp::RC;
 use anyhow::anyhow;
 use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
@@ -7,10 +8,7 @@ use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::mem::{ManuallyDrop, MaybeUninit};
 use std::rc::Rc;
-use crate::bounded_stack::BoundedStack;
-use crate::schema_capnp::RC;
 
 #[derive(Debug)]
 pub enum InterpreterError {
@@ -146,10 +144,11 @@ impl Interpreter {
 		};
 	}
 
-	fn eval_call2(&mut self, frame: &StackFrame, call: &AllocatedMCall) -> Result<Value> {
+	fn eval_call2(&mut self, frame: &StackFrame, call: &AllocatedMCall) -> Result<()> {
 		let recv = match &*call.recv {
 			InterpreterE::Value(recv) => recv,
 			InterpreterE::MCall(recv) => {
+				self.push_frame(frame.clone());
 				self.push_frame(frame.extend(frame.fun_ctx.clone(), InterpreterE::MCall(recv.clone())));
 				// self.push_frame()
 				println!("recv: {}", self);
