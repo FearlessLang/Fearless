@@ -1,7 +1,8 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
+use crate::interp::Value;
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
-use crate::{magic, schema_capnp};
+use crate::{interp, magic, schema_capnp};
 use anyhow::{anyhow, bail, Result};
 use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
@@ -11,6 +12,7 @@ use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::rc::Rc;
+use crate::rc::format_rc;
 
 pub(crate) const THIS_X: u32 = 0;
 
@@ -106,13 +108,13 @@ impl Program {
 	}
 	pub fn lookup_type<Id: DecId>(&self, id: &Id) -> Option<&TypeDef> {
 		let key = id.unique_hash();
-		self.lookup_type_by_hash(key)
+		self.lookup_type_by_hash(&key)
 	}
-	pub fn lookup_type_by_hash(&self, hash: blake3::Hash) -> Option<&TypeDef> {
-		self.defs.get(&hash)
+	pub fn lookup_type_by_hash(&self, hash: &blake3::Hash) -> Option<&TypeDef> {
+		self.defs.get(hash)
 	}
-	pub fn lookup_fun_by_hash(&self, hash: blake3::Hash) -> Option<&Fun> {
-		self.funs.get(&hash)
+	pub fn lookup_fun_by_hash(&self, hash: &blake3::Hash) -> Option<&Fun> {
+		self.funs.get(hash)
 	}
 }
 
@@ -222,6 +224,14 @@ pub struct MethName<'a> {
 	pub(crate) hash: blake3::Hash,
 }
 impl<'a> MethName<'a> {
+	pub fn new(rc: RC, name: &'a str, arity: u32) -> Self {
+		Self {
+			rc,
+			name: name.into(),
+			arity,
+			hash: blake3::hash(format!("{} {}/{}", format_rc(rc), name, arity).as_bytes()),
+		}
+	}
 	fn parse(reader: schema_capnp::meth_name::Reader<'a>) -> Result<MethName<'a>> {
 		Ok(MethName {
 			rc: reader.get_rc()?,
@@ -266,10 +276,10 @@ impl Type {
 			rt: match reader.which()? {
 				schema_capnp::t::Plain(plain) => {
 					let dec_id = AstDecId(plain?);
-					if dec_id.full_name().contains('.') {
-						RawType::Plain(dec_id.unique_hash())
-					} else {
+					if magic::is_magic_type(dec_id) {
 						Self::parse_magic_type(dec_id)?
+					} else {
+						RawType::Plain(dec_id.unique_hash())
 					}
 				},
 				schema_capnp::t::Any(_) => RawType::Any,
@@ -481,7 +491,7 @@ pub struct Meth {
 	pub(crate) sig: Sig,
 	pub(crate) captures_self: bool,
 	pub(crate) captures: HashSet<u32>,
-	pub(crate) fun_name: Option<blake3::Hash>,
+	pub(crate) body: MethImpl,
 }
 impl Meth {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::meth::Reader<'ctx>) -> Result<Self> {
@@ -494,10 +504,10 @@ impl Meth {
 			sig: Sig::parse(ctx, reader.get_sig()?)?,
 			captures_self,
 			captures,
-			fun_name: match reader.get_f_name().which()? {
+			body: match reader.get_f_name().which()? {
 				schema_capnp::meth::f_name::Instance(f_name) =>
-					Some(FunName::parse(f_name?)?.unique_hash),
-				schema_capnp::meth::f_name::Empty(_) => None,
+					MethImpl::Fun(FunName::parse(f_name?)?.unique_hash),
+				schema_capnp::meth::f_name::Empty(_) => MethImpl::Abstract,
 			},
 		})
 	}
@@ -506,4 +516,10 @@ impl HasType for Meth {
 	fn t(&self) -> Type {
 		self.sig.t()
 	}
+}
+#[derive(Debug, Clone)]
+pub enum MethImpl {
+	Fun(blake3::Hash),
+	Magic(fn(Value, Vec<Value>) -> interp::Result<interp::InterpreterE>),
+	Abstract
 }

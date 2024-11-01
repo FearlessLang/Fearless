@@ -100,4 +100,17 @@ public class TestProtoCodegen {
     alias base.Main as Main,
     Test: Main{_ -> "Hello, World!"}
     """); }
+
+  @Test void fib42() { ok("""
+    """, "fake.Fake", true, """
+    package test
+    alias base.Main as Main, alias base.Nat as Nat,
+    Test: Main{ _ -> Fib#(10).str }
+    Fib: {
+      #(n: Nat): Nat -> n <= 1 ? {
+        .then -> n,
+        .else -> this#(n - 1) + (this#(n - 2))
+        }
+      }
+    """); }
 }

@@ -19,7 +19,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
     var msg = new MessageBuilder();
     fill(msg.initRoot(Mearless.Package.factory), ()->visitPackage(pkg));
     // obviously this is a bad idea to just chuck a pkg name here, also only works on unix-like:
-    try (var out = new FileOutputStream(Path.of("/tmp/"+pkg.name()+".fear.pkg.mearless").toFile())) {
+    try (var out = new FileOutputStream(Path.of(pkg.name()+".fear.pkg.mearless").toFile())) {
       org.capnproto.Serialize.write(out.getChannel(), msg);
     } catch (java.io.IOException e) {
       throw new RuntimeException(e);

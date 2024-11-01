@@ -1,4 +1,4 @@
-use crate::ast::{CreateObj, MCall, Meth, Program, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
+use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
 use anyhow::anyhow;
 use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
@@ -28,7 +28,7 @@ impl Display for InterpreterError {
 	}
 }
 impl Error for InterpreterError {}
-type Result<T> = std::result::Result<T, InterpreterError>;
+pub type Result<T> = std::result::Result<T, InterpreterError>;
 
 #[derive(Debug, Copy, Clone)]
 struct StackFrame { def: blake3::Hash, meth: blake3::Hash }
@@ -46,12 +46,12 @@ pub struct Interpreter {
 	max_depth: u32,
 }
 impl Interpreter {
-	pub fn new(program: Program) -> Self {
+	pub fn new(program: Program, max_depth: u32) -> Self {
 		Self {
 			program: Rc::new(program),
 			stack: Default::default(),
 			depth: 0,
-			max_depth: 1000,
+			max_depth,
 		}
 	}
 
@@ -63,7 +63,7 @@ impl Interpreter {
 			Ok(res) => {
 				match res {
 					Value::Obj(obj) => {
-						let def = self.program.lookup_type_by_hash(obj.k.def()).unwrap();
+						let def = self.program.lookup_type_by_hash(&obj.k.def()).unwrap();
 						println!("{}", def.name);
 					},
 					Value::Magic(ty) => {
@@ -85,7 +85,7 @@ impl Interpreter {
 
 	fn eval_call(&mut self, call: AllocatedMCall) -> Result<Value> {
 		self.depth += 1;
-		if self.depth > self.max_depth {
+		if self.max_depth > 0 && self.depth > self.max_depth {
 			return Err(InterpreterError::Internal(anyhow!("Stack overflowed")));
 		}
 
@@ -93,57 +93,66 @@ impl Interpreter {
 		let args: Vec<Value> = call.args.into_iter()
 			.map(|arg| arg.clone().eval(self))
 			.collect::<Result<_>>()?;
-		let meth = recv.meths(&self.program)?.get(&call.meth)
-			.ok_or_else(|| {
-				let type_name = self.type_name_or_hash(&recv);
-				InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", call.meth, type_name))
-			})?;
+		let meth = recv.meth(&call.meth, &self.program)?;
 		let gamma = &meth.sig.xs;
-		let fun = meth
-			.fun_name
-			.ok_or_else(|| {
-				let type_name = self.type_name_or_hash(&recv);
-				InterpreterError::Internal(anyhow!("Illegal call to abstract method '{}' on '{}'", call.meth, type_name))
-			})
-			.and_then(|fun_name| self.program
-				.lookup_fun_by_hash(fun_name)
-				.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_name)))
-			)?;
+		
+		match &meth.body {
+			MethImpl::Fun(fun_hash) => {
+				let fun = self.program
+					.lookup_fun_by_hash(fun_hash)
+					.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_hash)))?;
 
-		let capture_context = if is_meth_in_obj(&recv, &call.meth) {
-			let ctx = &*recv.meth_captures(&call.meth)?;
-			let mut ctx = CaptureContext::to_owned(ctx);
-			ctx.and_zip(args.clone(), gamma);
-			ctx
-		} else {
-			let mut ctx = CaptureContext::zip(args.clone(), gamma);
-			ctx.add(THIS_X, recv.clone());
-			ctx
-		};
+				let capture_context = if is_meth_in_obj(&recv, &call.meth) {
+					let ctx = &*recv.meth_captures(&call.meth)?;
+					let mut ctx = CaptureContext::to_owned(ctx);
+					ctx.and_zip(args.clone(), gamma);
+					ctx
+				} else {
+					let mut ctx = CaptureContext::zip(args.clone(), gamma);
+					ctx.add(THIS_X, recv.clone());
+					ctx
+				};
 
-		self.stack.push_front(StackFrame::new(recv.def(), call.meth));
+				let fun_ctx = {
+					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
+					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
 
-		let fun_ctx = {
-			let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
-			let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
+					let fun_args = args.iter()
+						.chain(std::iter::once(&recv))
+						.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
+					for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
+						fun_ctx.add(fun_xt.x, v.clone());
+					}
 
-			let fun_args = args.iter()
-				.chain(std::iter::once(&recv))
-				.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
-			for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
-				fun_ctx.add(fun_xt.x, v.clone());
-			}
-			fun_ctx
-		};
+					self.stack.push_front(StackFrame::new(recv.def(), call.meth));
+					fun_ctx
+				};
 
-		let body = fun.body.clone();
-		let body = Self::allocate_captures(&fun_ctx, &body)?;
-		match body {
-			InterpreterE::Value(value) => {
-				self.stack.pop_front();
-				Ok(value)
+				let body = fun.body.clone();
+				let body = Self::allocate_captures(&fun_ctx, &body)?;
+				match body {
+					InterpreterE::Value(value) => {
+						self.stack.pop_front();
+						Ok(value)
+					},
+					InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+				}
 			},
-			InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+			MethImpl::Magic(magic) => {
+				self.stack.push_front(StackFrame::new(recv.def(), call.meth));
+				let body = magic(recv, args)?;
+				match body {
+					InterpreterE::Value(value) => {
+						self.stack.pop_front();
+						Ok(value)
+					},
+					InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+				}
+			},
+			MethImpl::Abstract => {
+				let type_name = type_name_or_hash(&self.program, &recv);
+				Err(InterpreterError::Internal(anyhow!("Illegal call to abstract method '{}' on '{}'", call.meth, type_name)))
+			},
 		}
 	}
 
@@ -195,17 +204,11 @@ impl Interpreter {
 			E::MagicValue(_, ty) => Ok(InterpreterE::Value(Value::Magic(ty.clone()))),
 		}
 	}
-
-	fn type_name_or_hash(&self, obj: &Value) -> String {
-		self.program.lookup_type_by_hash(obj.def())
-			.map(|def| def.name.to_string())
-			.unwrap_or(obj.def().to_string())
-	}
 }
 impl Display for Interpreter {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		for frame in self.stack.iter() {
-				match self.program.lookup_type_by_hash(frame.def) {
+				match self.program.lookup_type_by_hash(&frame.def) {
 					None => writeln!(f, "<unknown>: <unknown>")?,
 					Some(def) => {
 						let meth: Cow<'static, str> = def.sigs.get(&frame.meth)
@@ -226,13 +229,19 @@ fn is_meth_in_obj(obj: &Value, meth: &blake3::Hash) -> bool {
 	}
 }
 
+fn type_name_or_hash(program: &Program, obj: &Value) -> String {
+	program.lookup_type_by_hash(&obj.def())
+		.map(|def| def.name.to_string())
+		.unwrap_or(obj.def().to_string())
+}
+
 #[derive(Debug, Clone)]
 pub enum Value {
 	Obj(Obj),
 	Magic(MagicType),
 }
 impl Value {
-	fn obj(k: &CreateObj) -> Self {
+	pub fn obj(k: &CreateObj) -> Self {
 		Value::Obj(Obj {
 			k: Literal::obj(k.clone()),
 			fat_meths: k.meths.iter()
@@ -241,16 +250,22 @@ impl Value {
 				.collect()
 		})
 	}
-	fn summoned_obj(k: &SummonObj) -> Result<Self> {
+	pub fn summoned_obj(k: &SummonObj) -> Result<Self> {
 		Ok(Value::Obj(Obj {
 			k: Literal::Summoned(k.clone()),
 			fat_meths: Default::default()
 		}))
 	}
-	fn meths<'a>(&'a self, program: &'a Program) -> Result<&'a HashMap<blake3::Hash, Meth>> {
+	fn meth<'a>(&'a self, meth_hash: &blake3::Hash, program: &'a Program) -> Result<&'a Meth> {
 		match self {
-			Value::Obj(obj) => obj.k.meths(program),
-			Value::Magic(_) => todo!("magic methods"),
+			Value::Obj(obj) => obj.k.meths(program)?.get(meth_hash)
+				.ok_or_else(|| {
+					let type_name = type_name_or_hash(program, self);
+					let visible = obj.k.meths(program).unwrap().values().map(|meth| &meth.sig.name).collect::<Vec<_>>();
+					InterpreterError::Internal(anyhow!("Method '{}' not found on '{}'\nVisible: {:?}", meth_hash, type_name, visible))
+				}),
+			Value::Magic(m) =>
+				m.meth(meth_hash, program).map_err(InterpreterError::Internal),
 		}
 	}
 	fn def(&self) -> blake3::Hash {
@@ -272,7 +287,7 @@ impl Value {
 }
 
 #[derive(Debug, Clone)]
-enum InterpreterE {
+pub enum InterpreterE {
 	Value(Value),
 	MCall(AllocatedMCall),
 }
@@ -285,7 +300,7 @@ impl InterpreterE {
 	}
 }
 #[derive(Debug, Clone)]
-struct AllocatedMCall {
+pub struct AllocatedMCall {
 	recv: Box<InterpreterE>,
 	rc: RC,
 	meth: blake3::Hash,
@@ -294,7 +309,7 @@ struct AllocatedMCall {
 }
 
 #[derive(Debug, Clone)]
-pub struct Obj {
+struct Obj {
 	k: Literal,
 	/// `mc` from our reduction, the capture context per-method
 	fat_meths: HashMap<blake3::Hash, CaptureContext>
@@ -317,7 +332,7 @@ impl Literal {
 	fn meths<'a>(&'a self, program: &'a Program) -> Result<&'a HashMap<blake3::Hash, Meth>> {
 		match self {
 			Literal::Summoned(k) => {
-				match program.lookup_type_by_hash(k.def) {
+				match program.lookup_type_by_hash(&k.def) {
 					Some(def) => match &def.singleton_instance {
 						Some(obj) => Ok(&obj.meths),
 						None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
