@@ -295,7 +295,9 @@ impl InterpreterE {
 	fn eval(self, interpreter: &mut Interpreter) -> Result<Value> {
 		match self {
 			InterpreterE::Value(v) => Ok(v),
-			InterpreterE::MCall(call) => interpreter.eval_call(call)
+			InterpreterE::MCall(call) => {
+				interpreter.eval_call(call)
+			}
 		}
 	}
 }
