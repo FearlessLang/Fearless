@@ -1,6 +1,5 @@
 #![feature(once_cell_try)]
 
-use std::cmp::PartialEq;
 use crate::ast::{HasType, Program, SummonObj, E};
 use anyhow::Result;
 use std::fs;
