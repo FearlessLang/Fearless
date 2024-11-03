@@ -28,6 +28,16 @@ impl MagicType {
 			_ => bail!("No methods for {:?}", self),
 		}
 	}
+	pub fn def(&self) -> blake3::Hash {
+		match self {
+			MagicType::String(_) => blake3::hash("base.String/0".as_bytes()),
+			MagicType::Int(_) => blake3::hash("base.Int/0".as_bytes()),
+			MagicType::Nat(_) => blake3::hash(nat::TYPE_NAME.as_bytes()),
+			MagicType::Float(_) => blake3::hash("base.Float/0".as_bytes()),
+			MagicType::Byte(_) => blake3::hash("base.Byte/0".as_bytes()),
+			MagicType::Magic => blake3::hash(magic::TYPE_NAME.as_bytes()),
+		}
+	}
 }
 
 impl Display for MagicType {
@@ -59,9 +69,7 @@ pub fn is_magic_type(dec_id: AstDecId) -> bool {
 
 pub fn parse_type(dec_id: AstDecId) -> Result<MagicType> {
 	let name = dec_id.full_name();
-	if name == "base.Magic" && dec_id.arity() == 0 {
-		return Ok(MagicType::Magic)
-	}
+	if name == "base.Magic" && dec_id.arity() == 0 { return Ok(MagicType::Magic) }
 	
 	if is_numeric_literal(name) {
 		if IS_INT.with(|re| re.is_match(name)) {

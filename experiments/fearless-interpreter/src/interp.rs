@@ -1,4 +1,4 @@
-use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
+use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
 use anyhow::anyhow;
 use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
@@ -89,6 +89,7 @@ impl Interpreter {
 			return Err(InterpreterError::Internal(anyhow!("Stack overflowed")));
 		}
 
+		self.stack.push_front(StackFrame::new(call.recv.def().unwrap_or(blake3::hash(b"")), call.meth));
 		let recv = call.recv.eval(self)?;
 		let args: Vec<Value> = call.args.into_iter()
 			.map(|arg| arg.clone().eval(self))
@@ -102,20 +103,20 @@ impl Interpreter {
 					.lookup_fun_by_hash(fun_hash)
 					.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_hash)))?;
 
-				let capture_context = if is_meth_in_obj(&recv, &call.meth) {
-					let ctx = &*recv.meth_captures(&call.meth)?;
-					let mut ctx = CaptureContext::to_owned(ctx);
-					ctx.and_zip(args.clone(), gamma);
-					ctx
-				} else {
-					let mut ctx = CaptureContext::zip(args.clone(), gamma);
-					ctx.add(THIS_X, recv.clone());
-					ctx
-				};
-
 				let fun_ctx = {
 					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
 					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
+
+					let capture_context = if is_meth_in_obj(&recv, &call.meth) {
+						let ctx = &*recv.meth_captures(&call.meth)?;
+						let mut ctx = CaptureContext::to_owned(ctx);
+						ctx.and_zip(args.clone(), gamma);
+						ctx
+					} else {
+						let mut ctx = CaptureContext::zip(args.clone(), gamma);
+						ctx.add(THIS_X, recv.clone());
+						ctx
+					};
 
 					let fun_args = args.iter()
 						.chain(std::iter::once(&recv))
@@ -124,6 +125,7 @@ impl Interpreter {
 						fun_ctx.add(fun_xt.x, v.clone());
 					}
 
+					self.stack.pop_front();
 					self.stack.push_front(StackFrame::new(recv.def(), call.meth));
 					fun_ctx
 				};
@@ -139,6 +141,7 @@ impl Interpreter {
 				}
 			},
 			MethImpl::Magic(magic) => {
+				self.stack.pop_front();
 				self.stack.push_front(StackFrame::new(recv.def(), call.meth));
 				let body = magic(recv, args)?;
 				match body {
@@ -298,6 +301,16 @@ impl InterpreterE {
 			InterpreterE::MCall(call) => {
 				interpreter.eval_call(call)
 			}
+		}
+	}
+	fn def(&self) -> Option<blake3::Hash> {
+		match self {
+			InterpreterE::Value(v) => Some(v.def()),
+			InterpreterE::MCall(call) => match &call.return_type.rt {
+				RawType::Plain(def) => Some(*def),
+				RawType::Any => None,
+				RawType::Magic(magic) => Some(magic.def()),
+			},
 		}
 	}
 }

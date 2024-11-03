@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use hashbrown::HashMap;
 use std::sync::OnceLock;
 
-const TYPE_NAME: &str = "base.Magic/0";
+pub(crate) const TYPE_NAME: &str = "base.Magic/0";
 static METHS: OnceLock<HashMap<blake3::Hash, Meth>> = OnceLock::new();
 
 pub fn meth<'a>(meth_hash: &blake3::Hash, program: &'a Program) -> anyhow::Result<&'a Meth> {

@@ -73,11 +73,11 @@ fn main() -> Result<()> {
 			E::SummonObj(SummonObj { rc: RC::Imm, def: program.lookup_type::<ExplicitDecId>(&"base.LList/1".try_into().unwrap()).unwrap().name.unique_hash() })
 		], entry_ret.t());
 		let mut interp = Interpreter::new(program.clone(), 0);
-		let res = interp.run(entry_call.clone());
-		match res {
-			Ok(_) => happy += 1,
-			Err(_) => sad += 1,
-		}
+		let res = interp.run(entry_call.clone())?;
+		// match res {
+		// 	Ok(_) => happy += 1,
+		// 	Err(_) => sad += 1,
+		// }
 	}
 	
 	println!("{:?}", ps.len());

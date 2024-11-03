@@ -9,7 +9,7 @@ use hashbrown::HashMap;
 use itertools::Itertools;
 use std::sync::OnceLock;
 
-const TYPE_NAME: &str = "base.Nat/0";
+pub(crate) const TYPE_NAME: &str = "base.Nat/0";
 const INSTANCE_NAME: &str = "base._NatInstance/0";
 static METHS: OnceLock<HashMap<blake3::Hash, Meth>> = OnceLock::new();
 
