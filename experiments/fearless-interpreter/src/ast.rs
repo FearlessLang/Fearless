@@ -63,7 +63,7 @@ impl<'mir> ParseCtx<'mir> {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Program {
 	defs: HashMap<blake3::Hash, TypeDef>,
 	funs: HashMap<blake3::Hash, Fun>,
@@ -118,7 +118,7 @@ impl Program {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeDef {
 	pub(crate) name: ExplicitDecId<'static>,
 	pub(crate) impls: HashSet<blake3::Hash>,
@@ -167,7 +167,7 @@ impl HasType for TypeDef {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Fun {
 	pub(crate) name: FunName,
 	pub(crate) args: Vec<TypePair>,
@@ -191,7 +191,7 @@ impl Fun {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunName {
 	pub(crate) d: blake3::Hash,
 	pub(crate) rc: RC,
@@ -216,7 +216,7 @@ impl FunName {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MethName<'a> {
 	pub(crate) rc: RC,
 	pub(crate) name: Cow<'a, str>,
@@ -327,7 +327,7 @@ impl HasType for TypePair {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum E {
 	X(TypePair),
 	MCall(MCall),
@@ -372,7 +372,7 @@ impl HasType for E {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SummonObj {
 	pub(crate) rc: RC,
 	pub(crate) def: blake3::Hash,
@@ -386,7 +386,7 @@ impl HasType for SummonObj {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MCall {
 	pub recv: Box<E>,
 	pub rc: RC,
@@ -400,11 +400,13 @@ impl MCall {
 	}
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::m_call::Reader<'ctx>, return_type: Type) -> Result<Self> {
 		let meth = MethName::parse_hash(reader.get_name()?)?;
+		let recv = Box::new(E::parse(ctx, reader.get_recv()?)?);
 		let args = reader.get_args()?.iter()
 			.map(|reader| E::parse(ctx, reader))
 			.collect::<Result<_>>()?;
+		
 		Ok(Self {
-			recv: Box::new(E::parse(ctx, reader.get_recv()?)?),
+			recv,
 			rc: reader.get_rc()?,
 			meth,
 			args,
@@ -418,7 +420,7 @@ impl HasType for MCall {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CreateObj {
 	pub(crate) rc: RC,
 	pub(crate) def: blake3::Hash,
@@ -461,7 +463,7 @@ impl HasType for CreateObj {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sig {
 	pub(crate) name: MethName<'static>,
 	pub(crate) xs: Vec<TypePair>,
@@ -485,7 +487,7 @@ impl HasType for Sig {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Meth {
 	pub(crate) origin: blake3::Hash,
 	pub(crate) sig: Sig,
@@ -517,7 +519,7 @@ impl HasType for Meth {
 		self.sig.t()
 	}
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum MethImpl {
 	Fun(blake3::Hash),
 	Magic(fn(Value, Vec<Value>) -> interp::Result<interp::InterpreterE>),

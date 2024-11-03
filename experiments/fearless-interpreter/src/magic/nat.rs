@@ -1,14 +1,13 @@
 use crate::ast::{Meth, MethImpl, MethName, Program};
 use crate::interp;
-use crate::interp::{InterpreterE, InterpreterError, Value};
+use crate::interp::{InterpreterE, Value};
 use crate::magic::magic_meths::add_override;
+use crate::magic::MagicType;
 use crate::schema_capnp::RC;
 use anyhow::{anyhow, Result};
 use hashbrown::HashMap;
-use std::sync::OnceLock;
 use itertools::Itertools;
-use crate::magic::MagicType;
-use crate::magic::MagicType::Magic;
+use std::sync::OnceLock;
 
 const TYPE_NAME: &str = "base.Nat/0";
 const INSTANCE_NAME: &str = "base._NatInstance/0";
