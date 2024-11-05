@@ -21,6 +21,7 @@ public class ProtoCodegen implements MIRVisitor<Void> {
     // obviously this is a bad idea to just chuck a pkg name here, also only works on unix-like:
     try (var out = new FileOutputStream(Path.of(pkg.name()+".fear.pkg.mearless").toFile())) {
       org.capnproto.Serialize.write(out.getChannel(), msg);
+      out.flush();
     } catch (java.io.IOException e) {
       throw new RuntimeException(e);
     }
