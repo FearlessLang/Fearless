@@ -1,4 +1,8 @@
-use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
+use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
+use crate::magic::MagicType;
+use crate::pretty_print::{Format, PrettyPrint};
+use crate::rc::format_rc;
+use crate::schema_capnp::RC;
 use anyhow::anyhow;
 use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
@@ -6,10 +10,8 @@ use std::borrow::Cow;
 // use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
 use std::rc::Rc;
-use crate::magic::MagicType;
-use crate::schema_capnp::RC;
 
 #[derive(Debug)]
 pub enum InterpreterError {
@@ -56,7 +58,7 @@ impl Interpreter {
 	}
 
 	pub fn run(&mut self, entry: MCall) -> Result<()> {
-		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry))?;
+		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry), self.program.clone())?;
 		let InterpreterE::MCall(entry) = entry else { unreachable!("non-call main expression") };
 		let res = self.eval_call(entry);
 		match res {
@@ -131,7 +133,8 @@ impl Interpreter {
 				};
 
 				let body = fun.body.clone();
-				let body = Self::allocate_captures(&fun_ctx, &body)?;
+				println!("please eval: {}", Format(|f| body.pretty_print(f, &self.program)));
+				let body = Self::allocate_captures(&fun_ctx, &body, self.program.clone())?;
 				match body {
 					InterpreterE::Value(value) => {
 						self.stack.pop_front();
@@ -159,7 +162,7 @@ impl Interpreter {
 		}
 	}
 
-	fn allocate_captures(c: &CaptureContext, e: &E) -> Result<InterpreterE> {
+	fn allocate_captures(c: &CaptureContext, e: &E, p: Rc<Program>) -> Result<InterpreterE> {
 		match e {
 			E::X(xt) => match c.lookup(xt.x) {
 				Some(value) => {
@@ -172,9 +175,10 @@ impl Interpreter {
 				},
 			},
 			E::MCall(call) => {
-				let recv_value = Self::allocate_captures(c, &call.recv)?;
+				let recv_value = Self::allocate_captures(c, &call.recv, p.clone())?;
+				println!("Recv for: {}", Format(|f| recv_value.pretty_print(f, &p)));
 				let args: Vec<InterpreterE> = call.args.iter()
-					.map(|arg| Self::allocate_captures(c, arg))
+					.map(|arg| Self::allocate_captures(c, arg, p.clone()))
 					.collect::<Result<_>>()?;
 				let allocated_call = AllocatedMCall {
 					recv: Box::new(recv_value),
@@ -183,6 +187,20 @@ impl Interpreter {
 					args: args.into_iter().collect(),
 					return_type: call.return_type.clone(),
 				};
+				
+				// debug_assert!({
+        //   let Some(recv) = p.lookup_type_by_hash(&allocated_call.recv.def().unwrap())
+        //   else { unreachable!("No type found for {:?}", allocated_call.recv) };
+        //   recv.sigs.contains_key(&allocated_call.meth)
+        // }, "Method not found: {:?}", allocated_call.meth);
+				
+				let bad_meth = blake3::hash(b"imm -/1");
+				let bad_dec = blake3::hash(b"test.Fib/0");
+				if allocated_call.recv.def().map(|def| def == bad_dec).unwrap_or(false) && call.meth == bad_meth {
+					println!("Bad call! {}\n\n", Format(|f| allocated_call.pretty_print(f, &p)));
+				} else {
+					println!("Acceptable: {}\n\n", Format(|f| allocated_call.pretty_print(f, &p)));
+				}
 				Ok(InterpreterE::MCall(allocated_call))
 			},
 			E::CreateObj(k) => {
@@ -274,7 +292,7 @@ impl Value {
 	fn def(&self) -> blake3::Hash {
 		match self {
 			Value::Obj(obj) => obj.k.def(),
-			Value::Magic(_) => blake3::hash(&[]),
+			Value::Magic(magic) => magic.def(),
 		}
 	}
 	fn meth_captures(&self, meth_name: &blake3::Hash) -> Result<Cow<CaptureContext>> {
@@ -285,6 +303,14 @@ impl Value {
 				Ok(Cow::Borrowed(fat_meth))
 			},
 			Value::Magic(_) => Ok(Cow::Owned(CaptureContext::new())),
+		}
+	}
+}
+impl PrettyPrint for Value {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		match self {
+			Value::Obj(obj) => obj.k.pretty_print(f, program),
+			Value::Magic(ty) => ty.pretty_print(f, program),
 		}
 	}
 }
@@ -314,6 +340,15 @@ impl InterpreterE {
 		}
 	}
 }
+impl PrettyPrint for InterpreterE {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		match self {
+			InterpreterE::Value(v) => v.pretty_print(f, program),
+			InterpreterE::MCall(call) => call.pretty_print(f, program),
+		}
+	}
+}
+
 #[derive(Debug, Clone)]
 pub struct AllocatedMCall {
 	recv: Box<InterpreterE>,
@@ -321,6 +356,37 @@ pub struct AllocatedMCall {
 	meth: blake3::Hash,
 	args: Vec<InterpreterE>,
 	return_type: Type,
+}
+impl PrettyPrint for AllocatedMCall {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		let recv = program.lookup_type_by_hash(&self.recv.def().unwrap());
+		let recv = match recv {
+			Some(def) => def,
+			None => panic!("No type found for {:?} @ {:?}", self.recv, self.recv.def()),
+		};
+		let meth = recv.sigs.get(&self.meth);
+		f.write_str(format_rc(self.rc))?;
+		f.write_str(" ")?;
+		write!(f, "{} ", recv.name)?;
+		match meth {
+			Some(meth) => {
+				write!(f, "{}(", meth.name)?;
+			},
+			None => write!(f, "{}(", self.meth)?,
+		}
+		for (i, arg) in self.args.iter().enumerate() {
+			arg.pretty_print(f, program)?;
+			f.write_str(": ")?;
+			let t = &program.lookup_type_by_hash(&arg.def().unwrap()).unwrap().name;
+			t.pretty_print(f, program)?;
+			if i < self.args.len() - 1 {
+				f.write_str(", ")?;
+			}
+		}
+		f.write_str("): ")?;
+		self.return_type.pretty_print(f, program)?;
+		Ok(())
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -358,6 +424,13 @@ impl Literal {
 			},
 			Literal::Obj(k) => Ok(&k.meths),
 		}
+	}
+}
+impl PrettyPrint for Literal {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		let t = program.lookup_type_by_hash(&self.def()).unwrap();
+		let n_captures = if let Literal::Obj(k) = self { k.captures.len() } else { 0 };
+		write!(f, "{}[{}]", t.name, n_captures)
 	}
 }
 

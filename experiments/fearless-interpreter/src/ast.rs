@@ -1,5 +1,7 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
 use crate::interp::Value;
+use crate::pretty_print::PrettyPrint;
+use crate::rc::format_rc;
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
 use crate::{interp, magic, schema_capnp};
@@ -9,10 +11,9 @@ use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 use std::borrow::Cow;
 use std::cell::RefCell;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
 use std::hash::Hash;
 use std::rc::Rc;
-use crate::rc::format_rc;
 
 pub(crate) const THIS_X: u32 = 0;
 
@@ -301,6 +302,18 @@ impl HasType for Type {
 		self.clone()
 	}
 }
+impl PrettyPrint for Type {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		match &self.rt {
+			RawType::Plain(hash) => {
+				let def = program.lookup_type_by_hash(&hash).unwrap();
+				write!(f, "{}", def.name)
+			},
+			RawType::Magic(magic) => write!(f, "{}", magic),
+			RawType::Any => f.write_str("Any"),
+		}
+	}
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypePair {
@@ -319,6 +332,12 @@ impl TypePair {
 			x: ctx.get_x(reader.get_name()?.as_bytes())?,
 			t: Type::parse(reader.get_t()?)?,
 		})
+	}
+}
+impl PrettyPrint for TypePair {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		write!(f, "x{}:", self.x)?;
+		self.t.pretty_print(f, program)
 	}
 }
 impl HasType for TypePair {
@@ -371,6 +390,25 @@ impl HasType for E {
 		}
 	}
 }
+impl PrettyPrint for E {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		match self {
+			E::X(x) => x.pretty_print(f, program),
+			E::MCall(call) => call.pretty_print(f, program),
+			E::CreateObj(k) => {
+				f.write_str("CreateObj(")?;
+				k.t().pretty_print(f, program)?;
+				f.write_str(")")
+			},
+			E::SummonObj(k) => {
+				f.write_str("CreateObj(")?;
+				k.t().pretty_print(f, program)?;
+				f.write_str(")")
+			},
+			E::MagicValue(_, ty) => ty.pretty_print(f, program),
+		}
+	}
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SummonObj {
@@ -412,6 +450,27 @@ impl MCall {
 			args,
 			return_type,
 		})
+	}
+}
+impl PrettyPrint for MCall {
+	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
+		let recv = match self.recv.t().rt {
+			RawType::Plain(hash) => program.lookup_type_by_hash(&hash),
+			RawType::Magic(magic) => program.lookup_type_by_hash(&magic.def()),
+			RawType::Any => unreachable!(),
+		}.unwrap();
+		let meth = recv.sigs.get(&self.meth).unwrap();
+		self.recv.pretty_print(f, program)?;
+		write!(f, " {}(", meth.name)?;
+		for (i, xt) in meth.xs.iter().enumerate() {
+			xt.pretty_print(f, program)?;
+			if i < meth.xs.len() - 1 {
+				f.write_str(", ")?;
+			}
+		}
+		f.write_str("): ")?;
+		self.return_type.pretty_print(f, program)?;
+		Ok(())
 	}
 }
 impl HasType for MCall {
