@@ -1,4 +1,4 @@
-use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
+use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypeDef, TypePair, E, THIS_X};
 use crate::magic::MagicType;
 use crate::pretty_print::{Format, PrettyPrint};
 use crate::rc::format_rc;
@@ -91,7 +91,7 @@ impl Interpreter {
 			return Err(InterpreterError::Internal(anyhow!("Stack overflowed")));
 		}
 
-		self.stack.push_front(StackFrame::new(call.recv.def().unwrap_or(blake3::hash(b"")), call.meth));
+		self.stack.push_front(StackFrame::new(call.recv.def().expect("Cannot call a method if it has no associated type"), call.meth));
 		let recv = call.recv.eval(self)?;
 		let args: Vec<Value> = call.args.into_iter()
 			.map(|arg| arg.clone().eval(self))
@@ -106,9 +106,6 @@ impl Interpreter {
 					.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_hash)))?;
 
 				let fun_ctx = {
-					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
-					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
-
 					let capture_context = if is_meth_in_obj(&recv, &call.meth) {
 						let ctx = &*recv.meth_captures(&call.meth)?;
 						let mut ctx = CaptureContext::to_owned(ctx);
@@ -116,24 +113,32 @@ impl Interpreter {
 						ctx
 					} else {
 						let mut ctx = CaptureContext::zip(args.clone(), gamma);
-						ctx.add(THIS_X, recv.clone());
+						ctx.add(THIS_X.to_string(), recv.clone());
 						ctx
 					};
 
+					println!("fun: {:?}", fun.name);
+
+					let fun_ctx_len = fun.args.len() + 1 + meth.captures.len();
+					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
 					let fun_args = args.iter()
 						.chain(std::iter::once(&recv))
-						.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
-					for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
-						fun_ctx.add(fun_xt.x, v.clone());
+						.chain(meth.captures.iter().map(|x| capture_context.lookup(x).unwrap()));
+					for (fun_xt, v) in zip_eq(fun.args.iter(), fun_args) {
+						println!("Adding to fun ctx with key {} and value {}", fun_xt.x, Format(|f| v.pretty_print(f, &self.program)));
+						fun_ctx.add(fun_xt.x.clone(), v.clone());
 					}
-
-					self.stack.pop_front();
+					// self.stack.pop_front();
 					self.stack.push_front(StackFrame::new(recv.def(), call.meth));
 					fun_ctx
 				};
 
 				let body = fun.body.clone();
 				println!("please eval: {}", Format(|f| body.pretty_print(f, &self.program)));
+				// if fun_ctx.lookup("n").is_some() && fun_ctx.lookup("this").is_some() {
+				// 	println!("x1: {}", Format(|f| fun_ctx.lookup(1).unwrap().pretty_print(f, &self.program)));
+				// 	println!("x3: {}", Format(|f| fun_ctx.lookup(3).unwrap().pretty_print(f, &self.program)));
+				// }
 				let body = Self::allocate_captures(&fun_ctx, &body, self.program.clone())?;
 				match body {
 					InterpreterE::Value(value) => {
@@ -164,7 +169,7 @@ impl Interpreter {
 
 	fn allocate_captures(c: &CaptureContext, e: &E, p: Rc<Program>) -> Result<InterpreterE> {
 		match e {
-			E::X(xt) => match c.lookup(xt.x) {
+			E::X(xt) => match c.lookup(&xt.x) {
 				Some(value) => {
 					let value = value.clone();
 					// Ok((c, value))
@@ -208,9 +213,9 @@ impl Interpreter {
 					.map(|(meth_id, meth)| {
 						let mut ctx = CaptureContext::with_capacity(meth.captures.len());
 						for x in meth.captures.iter() {
-							let capture = c.lookup(*x)
+							let capture = c.lookup(x)
 								.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
-							ctx.add(*x, capture.clone());
+							ctx.add(x.clone(), capture.clone());
 						}
 						Ok((*meth_id, ctx))
 					})
@@ -376,9 +381,11 @@ impl PrettyPrint for AllocatedMCall {
 		}
 		for (i, arg) in self.args.iter().enumerate() {
 			arg.pretty_print(f, program)?;
-			f.write_str(": ")?;
-			let t = &program.lookup_type_by_hash(&arg.def().unwrap()).unwrap().name;
-			t.pretty_print(f, program)?;
+			f.write_str(" as ")?;
+			match program.lookup_type_by_hash(&arg.def().unwrap()) {
+				Some(def) => def.name.pretty_print(f, program)?,
+				None => write!(f, "<unknown {}>", &arg.def().unwrap())?,
+			};
 			if i < self.args.len() - 1 {
 				f.write_str(", ")?;
 			}
@@ -428,9 +435,13 @@ impl Literal {
 }
 impl PrettyPrint for Literal {
 	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
-		let t = program.lookup_type_by_hash(&self.def()).unwrap();
-		let n_captures = if let Literal::Obj(k) = self { k.captures.len() } else { 0 };
-		write!(f, "{}[{}]", t.name, n_captures)
+		match program.lookup_type_by_hash(&self.def()) {
+			None => write!(f, "<unknown {}>", self.def()),
+			Some(t) => {
+				let n_captures = if let Literal::Obj(k) = self { k.captures.len() } else { 0 };
+				write!(f, "{}[{}]", t.name, n_captures)
+			}
+		}
 	}
 }
 
@@ -438,7 +449,7 @@ impl PrettyPrint for Literal {
 #[derive(Debug, Clone)]
 #[repr(transparent)]
 struct CaptureContext {
-	inner: HashMap<u32, Value>
+	inner: HashMap<String, Value>
 }
 impl CaptureContext {
 	fn new() -> Self {
@@ -451,10 +462,10 @@ impl CaptureContext {
 			inner: HashMap::with_capacity(n)
 		}
 	}
-	fn lookup(&self, key: u32) -> Option<&Value> {
-		self.inner.get(&key)
+	fn lookup(&self, key: &str) -> Option<&Value> {
+		self.inner.get(key)
 	}
-	fn add(&mut self, key: u32, value: Value) {
+	fn add(&mut self, key: String, value: Value) {
 		self.inner.insert(key, value);
 	}
 	fn zip(vs: Vec<Value>, gamma: &[TypePair]) -> Self {
@@ -462,7 +473,7 @@ impl CaptureContext {
 		vs.into_iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				inner.insert(xt.x, v);
+				inner.insert(xt.x.clone(), v);
 			});
 		Self { inner }
 	}
@@ -470,7 +481,7 @@ impl CaptureContext {
 		vs.into_iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				self.inner.insert(xt.x, v);
+				self.inner.insert(xt.x.clone(), v);
 			});
 	}
 }

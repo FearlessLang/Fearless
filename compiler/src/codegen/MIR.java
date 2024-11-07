@@ -129,11 +129,19 @@ public sealed interface MIR {
   }
 
   record FName(Id.DecId d, Id.MethName m, boolean capturesSelf, Mdf mdf) {
+    public FName {
+      assert m.mdf().isPresent() && mdf == m.mdf().get();
+    }
     public FName(CM cm, boolean capturesSelf) {
       this(cm.c().name(), cm.name(), capturesSelf, cm.mdf());
     }
     public byte[] uniqueHash() {
-      return NativeRuntime.uniqueHashStr(this.toString());
+      System.out.println(d.toString()+" > "+mHashContents());
+      return NativeRuntime.uniqueHashStr(d+" > "+mHashContents());
+    }
+
+    private String mHashContents() {
+      return mdf+" "+m.name()+"/"+m.num();
     }
   }
 

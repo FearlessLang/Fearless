@@ -117,3 +117,8 @@ impl<'mir> Deref for AstDecId<'mir> {
 		&self.0
 	}
 }
+impl<'mir> Display for AstDecId<'mir> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}/{}", self.full_name(), self.arity())
+	}
+}

@@ -50,7 +50,7 @@ fn plus(lhs: Value, args: Vec<Value>) -> interp::Result<InterpreterE> {
 	let Value::Magic(rhs) = rhs else { unreachable!("{:?} was not magical", rhs) };
 	let MagicType::Nat(lhs) = lhs else { unreachable!("{:?} was not a Nat", lhs) };
 	let MagicType::Nat(rhs) = rhs else { unreachable!("{:?} was not a Nat", rhs) };
-	Ok(InterpreterE::Value(Value::Magic(MagicType::Nat(lhs + *rhs))))
+	Ok(InterpreterE::Value(Value::Magic(MagicType::Nat(lhs.wrapping_add(*rhs)))))
 }
 fn minus(lhs: Value, args: Vec<Value>) -> interp::Result<InterpreterE> {
 	let rhs = &args[0];
@@ -58,7 +58,7 @@ fn minus(lhs: Value, args: Vec<Value>) -> interp::Result<InterpreterE> {
 	let Value::Magic(rhs) = rhs else { unreachable!("{:?} was not magical", rhs) };
 	let MagicType::Nat(lhs) = lhs else { unreachable!("{:?} was not a Nat", lhs) };
 	let MagicType::Nat(rhs) = rhs else { unreachable!("{:?} was not a Nat", rhs) };
-	Ok(InterpreterE::Value(Value::Magic(MagicType::Nat(lhs - *rhs))))
+	Ok(InterpreterE::Value(Value::Magic(MagicType::Nat(lhs.wrapping_sub(*rhs)))))
 }
 fn str(recv: Value, _: Vec<Value>) -> interp::Result<InterpreterE> {
 	let Value::Magic(recv) = recv else { unreachable!("{:?} was not magical", recv) };

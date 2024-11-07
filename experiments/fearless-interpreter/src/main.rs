@@ -5,6 +5,7 @@ use anyhow::Result;
 use std::fs;
 use crate::dec_id::{DecId, ExplicitDecId};
 use crate::interp::Interpreter;
+use crate::pretty_print::{Format, PrettyPrint};
 use crate::schema_capnp::RC;
 
 mod schema_capnp;
@@ -30,11 +31,15 @@ fn main() -> Result<()> {
 		program
 	};
 	
+	// let fear6 = program.lookup_type::<ExplicitDecId>(&"test.Fear6$/0".try_into().unwrap()).unwrap();
+	let else_fun = program.lookup_fun_by_hash(&blake3::hash(b"test.Fear6$/0 > imm .else/0")).unwrap();
+	println!("else!! {}", Format(|f| else_fun.body.pretty_print(f, &program)));
+	
 	// println!("{:#?}", program);
 	let entry: ExplicitDecId = "test.Test/0".try_into()?;
 	let entry = program.lookup_type(&entry).unwrap();
 	assert!(entry.has_singleton());
-	let entry_recv = E::SummonObj(SummonObj { def: entry.name.unique_hash(), rc: RC::Mut });
+	let entry_recv = E::SummonObj(SummonObj { def: entry.name.unique_hash(), rc: RC::Mut, name: entry.name.full_name().to_string() });
 	// let entry_ret = program.lookup_type::<ExplicitDecId>(&"test.Num/0".try_into().unwrap()).unwrap();
 	// let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/0".as_bytes()), vec![], entry_ret.t());
 	// let entry_ret = program.lookup_type::<ExplicitDecId>(&"base.Void/0".try_into().unwrap()).unwrap();
@@ -50,7 +55,7 @@ fn main() -> Result<()> {
 	let mut happy = 0;
 	let mut sad = 0;
 	for _ in 0..100 {
-		let paths = ["tests/fib/test.fear.pkg.mearless", "tests/fib/base.fear.pkg.mearless"];
+		let paths = ["tests/fib/base.fear.pkg.mearless", "tests/fib/test.fear.pkg.mearless"];
 		let program = {
 			let mut program = Program::new();
 			for path in paths.iter() {
@@ -68,10 +73,10 @@ fn main() -> Result<()> {
 		let program = &program;
 		let entry = program.lookup_type(&entry).unwrap();
 		assert!(entry.has_singleton());
-		let entry_recv = E::SummonObj(SummonObj { def: entry.name.unique_hash(), rc: RC::Mut });
+		let entry_recv = E::SummonObj(SummonObj { def: entry.name.unique_hash(), rc: RC::Mut, name: "".to_string() });
 		let entry_ret = program.lookup_type::<ExplicitDecId>(&"base.Str/0".try_into().unwrap()).unwrap();
 		let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/1".as_bytes()), vec![
-			E::SummonObj(SummonObj { rc: RC::Imm, def: program.lookup_type::<ExplicitDecId>(&"base.LList/1".try_into().unwrap()).unwrap().name.unique_hash() })
+			E::SummonObj(SummonObj { rc: RC::Imm, def: program.lookup_type::<ExplicitDecId>(&"base.LList/1".try_into().unwrap()).unwrap().name.unique_hash(), name: "".to_string() })
 		], entry_ret.t());
 		let mut interp = Interpreter::new(program.clone(), 0);
 		let res = interp.run(entry_call.clone())?;

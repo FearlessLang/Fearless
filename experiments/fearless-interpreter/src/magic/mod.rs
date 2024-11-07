@@ -3,13 +3,14 @@ mod nat;
 mod magic;
 mod magic_meths;
 
-use crate::ast::{Meth, Program, SummonObj, E};
+use crate::ast::{Meth, Program, SummonObj};
 use crate::dec_id::{AstDecId, DecId};
+use crate::interp::Value;
+use crate::schema_capnp::RC;
 use anyhow::{bail, Result};
 use regex::Regex;
 use std::fmt::{Display, Formatter};
-use crate::interp::Value;
-use crate::schema_capnp::RC;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MagicType {
@@ -23,6 +24,7 @@ pub enum MagicType {
 impl MagicType {
 	pub fn meth<'a>(&self, meth_hash: &blake3::Hash, program: &'a Program) -> Result<&'a Meth> {
 		match self {
+			// MagicType::Nat(_) => nat::meth(meth_hash, program),
 			MagicType::Nat(_) => nat::meth(meth_hash, program),
 			MagicType::Magic => magic::meth(meth_hash, program),
 			_ => bail!("No methods for {:?}", self),
@@ -63,7 +65,7 @@ pub fn is_magic_type(dec_id: AstDecId) -> bool {
 	let name = dec_id.full_name();
 	
 	if is_numeric_literal(name) || is_string_literal(name) { return true; }
-	if dec_id.full_name() == "base.Magic" && dec_id.arity() == 0 { return true; }
+	if name == "base.Magic" && dec_id.arity() == 0 { return true; }
 	false
 }
 
@@ -105,10 +107,22 @@ pub fn is_numeric_literal(dec_name: &str) -> bool {
 
 impl From<bool> for Value {
 	fn from(b: bool) -> Self {
-		let ty = if b { "base.True/0" } else { "base.False/0" };
-		Value::summoned_obj(&SummonObj {
-			rc: RC::Imm,
-			def: blake3::hash(ty.as_bytes()),
-		}).unwrap()
+		static TRUE: OnceLock<Value> = OnceLock::new();
+		static FALSE: OnceLock<Value> = OnceLock::new();
+		
+		let value = if b {
+			TRUE.get_or_try_init(|| Value::summoned_obj(&SummonObj {
+				rc: RC::Imm,
+				def: blake3::hash(b"base.True/0"),
+				name: "base.True/0".into(),
+			})).unwrap()
+		} else {
+			FALSE.get_or_try_init(|| Value::summoned_obj(&SummonObj {
+				rc: RC::Imm,
+				def: blake3::hash(b"base.False/0"),
+				name: "base.False/0".into(),
+			})).unwrap()
+		};
+		value.clone()
 	}
 }

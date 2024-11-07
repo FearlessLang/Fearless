@@ -1,67 +1,64 @@
 use crate::dec_id::{AstDecId, DecId, ExplicitDecId};
 use crate::interp::Value;
-use crate::pretty_print::PrettyPrint;
+use crate::pretty_print::{Format, PrettyPrint};
 use crate::rc::format_rc;
 use crate::schema_capnp::e::WhichReader;
 use crate::schema_capnp::RC;
 use crate::{interp, magic, schema_capnp};
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
-use itertools::Itertools;
+use itertools::{zip_eq, Itertools};
 use std::borrow::Cow;
-use std::cell::RefCell;
-use std::fmt::{Display, Formatter, Write};
-use std::hash::Hash;
-use std::rc::Rc;
+use std::fmt::{Display, Formatter};
 
-pub(crate) const THIS_X: u32 = 0;
+pub(crate) const THIS_X: &str = "this";
 
-#[derive(Debug, Clone)]
-struct ParseCtx<'mir> {
-	bindings: HashMap<&'mir [u8], u32>,
-	singletons: Rc<RefCell<HashSet<blake3::Hash>>>,
-	next_binding: u32,
+#[derive(Debug)]
+struct ParseCtx {
+	// bindings: HashMap<&'mir [u8], u32>,
+	singletons: HashSet<blake3::Hash>,
+	// next_binding: u32,
 }
-impl<'mir> ParseCtx<'mir> {
+impl ParseCtx {
 	fn new() -> Self {
-		let mut ctx = Self {
-			bindings: Default::default(),
+		let ctx = Self {
+			// bindings: Default::default(),
 			singletons: Default::default(),
-			next_binding: 0,
+			// next_binding: 0,
 		};
-		let this_x = ctx.add_x(b"this").unwrap();
-		assert_eq!(this_x, THIS_X);
+		// let this_x = ctx.add_x(b"this").unwrap();
+		// assert_eq!(this_x, THIS_X);
 		ctx
 	}
-	fn get_x(&self, reader: &'mir [u8]) -> Result<u32> {
-		self.bindings.get(reader)
-			.copied()
-			.ok_or_else(|| anyhow!("Binding not found: {}", std::str::from_utf8(reader).unwrap_or("?")))
-	}
-	fn add_x(&mut self, reader: &'mir [u8]) -> Result<u32> {
-		let entry = self.bindings.entry(reader);
-		Ok(*entry.or_insert_with(|| {
-			let x = self.next_binding;
-			self.next_binding = self.next_binding
-				.checked_add(1)
-				.expect("Binding limit exceeded (u32)");
-			x
-		}))
-		// TODO: we seem to get issues with this
-		// match entry {
-		// 	hashbrown::hash_map::Entry::Occupied(n) =>
-		// 		bail!("Duplicate binding: {:?} = {}", reader, n.get()),
-		// 	hashbrown::hash_map::Entry::Vacant(_) => {
-		// 		let x = self.next_binding;
-		// 		self.next_binding = self.next_binding
-		// 			.checked_add(1)
-		// 			.expect("Binding limit exceeded (u32)");
-		// 		entry.insert(x);
-		// 		Ok(x)
-		// 	}
-		// }
-	}
+	// fn get_x(&self, reader: &'mir [u8]) -> Result<u32> {
+	// 	self.bindings.get(reader)
+	// 		.copied()
+	// 		.ok_or_else(|| anyhow!("Binding not found: {}", std::str::from_utf8(reader).unwrap_or("?")))
+	// }
+	// fn add_x(&mut self, reader: &'mir [u8]) -> Result<u32> {
+	// 	let entry = self.bindings.entry(reader);
+	// 	Ok(*entry.or_insert_with(|| {
+	// 		let x = self.next_binding;
+	// 		self.next_binding = self.next_binding
+	// 			.checked_add(1)
+	// 			.expect("Binding limit exceeded (u32)");
+	// 		x
+	// 	}))
+	// 	// TODO: we seem to get issues with this
+	// 	// match entry {
+	// 	// 	hashbrown::hash_map::Entry::Occupied(n) =>
+	// 	// 		bail!("Duplicate binding: {:?} = {}", reader, n.get()),
+	// 	// 	hashbrown::hash_map::Entry::Vacant(_) => {
+	// 	// 		let x = self.next_binding;
+	// 	// 		self.next_binding = self.next_binding
+	// 	// 			.checked_add(1)
+	// 	// 			.expect("Binding limit exceeded (u32)");
+	// 	// 		entry.insert(x);
+	// 	// 		Ok(x)
+	// 	// 	}
+	// 	// }
+	// }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -85,15 +82,16 @@ impl Program {
 		let reader = reader.get()?;
 		let mut ctx = ParseCtx::new();
 		for def in reader.get_defs()? {
-			let def = TypeDef::parse(&mut ctx, def)?;
+			let def = TypeDef::parse(def)?;
 			if def.singleton_instance.is_some() {
-				ctx.singletons.borrow_mut().insert(def.name.unique_hash());
+				ctx.singletons.insert(def.name.unique_hash());
 			}
+			assert!(!self.defs.contains_key(&def.name.unique_hash()), "Duplicate type: {:?}", def.name);
 			self.defs.insert(def.name.unique_hash(), def);
 		}
-		let mut ctx = ctx.clone();
 		for fun in reader.get_funs()? {
 			let fun = Fun::parse(&mut ctx, fun)?;
+			assert!(!self.funs.contains_key(&fun.name.unique_hash), "Duplicate function: {:?}", fun.name);
 			self.funs.insert(fun.name.unique_hash, fun);
 		}
 		// println!("Bindings for package: {}", reader.get_name()?.to_str()?);
@@ -130,13 +128,13 @@ impl TypeDef {
 	pub fn has_singleton(&self) -> bool {
 		self.singleton_instance.is_some()
 	}
-	fn parse<'a>(ctx: &mut ParseCtx<'a>, reader: schema_capnp::type_def::Reader<'a>) -> Result<Self> {
+	fn parse(reader: schema_capnp::type_def::Reader) -> Result<Self> {
 		let impls = reader.get_impls()?.iter()
 			.map(|reader| AstDecId(reader).unique_hash())
 			.collect();
 		let sigs = reader.get_sigs()?.iter()
 			.map(|reader| {
-				let sig = Sig::parse(ctx, reader)?;
+				let sig = Sig::parse(reader)?;
 				Ok((sig.name.hash, sig))
 			})
 			.collect::<Result<_>>()?;
@@ -144,8 +142,8 @@ impl TypeDef {
 		let singleton_instance = match reader.get_singleton_instance().which()? {
 			schema_capnp::type_def::singleton_instance::Instance(e) => match e?.which()? {
 				WhichReader::CreateObj(create_obj) => {
-					let ty = Type { rc: RC::Mut, rt: RawType::Plain(name.unique_hash()) };
-					Some(CreateObj::parse(ctx, create_obj?, ty)?)
+					let ty = Type { rc: RC::Mut, rt: RawType::Plain(name.unique_hash()), name: name.full_name().to_string() };
+					Some(CreateObj::parse(create_obj?, ty)?)
 				},
 				_ => bail!("Expected a CreateObj expression for singletonInstance on {:?}", name),
 			},
@@ -163,7 +161,8 @@ impl HasType for TypeDef {
 	fn t(&self) -> Type {
 		Type {
 			rc: RC::Mut,
-			rt: RawType::Plain(self.name.unique_hash())
+			rt: RawType::Plain(self.name.unique_hash()),
+			name: self.name.full_name().to_string(),
 		}
 	}
 }
@@ -176,13 +175,18 @@ pub struct Fun {
 	pub(crate) body: E,
 }
 impl Fun {
-	fn parse<'a>(ctx: &mut ParseCtx<'a>, reader: schema_capnp::fun::Reader<'a>) -> Result<Self> {
+	fn parse(ctx: &mut ParseCtx, reader: schema_capnp::fun::Reader) -> Result<Self> {
 		let name = FunName::parse(reader.get_name()?)?;
 		let args = reader.get_args()?.iter()
-			.map(|reader| TypePair::parse_binding(ctx, reader))
+			.map(|reader| TypePair::parse(reader))
 			.collect::<Result<_>>()?;
 		let ret = Type::parse(reader.get_ret()?)?;
 		let body = E::parse(ctx, reader.get_body()?)?;
+
+		if name.real_name == "test.Fear6$" && name.meth_name == ".else/0" {
+			println!("Parsed this body: {:?}", body);
+		}
+
 		Ok(Self {
 			name,
 			args,
@@ -199,6 +203,8 @@ pub struct FunName {
 	pub(crate) m: blake3::Hash,
 	pub(crate) captures_self: bool,
 	pub(crate) unique_hash: blake3::Hash,
+	real_name: String,
+	meth_name: String,
 }
 impl FunName {
 	fn parse(reader: schema_capnp::fun::name::Reader) -> Result<FunName> {
@@ -208,6 +214,8 @@ impl FunName {
 			m: MethName::parse_hash(reader.get_m()?)?,
 			captures_self: reader.get_captures_self(),
 			unique_hash: Self::parse_hash(reader)?,
+			real_name: AstDecId(reader.get_d()?).full_name().to_string(),
+			meth_name: MethName::parse(reader.get_m()?)?.to_string(),
 		})
 	}
 	fn parse_hash(reader: schema_capnp::fun::name::Reader) -> Result<blake3::Hash> {
@@ -268,7 +276,8 @@ pub trait HasType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
 	pub rc: RC,
-	pub rt: RawType
+	pub rt: RawType,
+	name: String,
 }
 impl Type {
 	fn parse(reader: schema_capnp::t::Reader) -> Result<Self> {
@@ -284,7 +293,11 @@ impl Type {
 					}
 				},
 				schema_capnp::t::Any(_) => RawType::Any,
-			}
+			},
+			name: match reader.which()? {
+				schema_capnp::t::Plain(plain) => AstDecId(plain?).full_name().to_string(),
+				schema_capnp::t::Any(_) => "Any".to_string(),
+			},
 		})
 	}
 	fn parse_magic_type(dec_id: AstDecId) -> Result<RawType> {
@@ -317,19 +330,13 @@ impl PrettyPrint for Type {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypePair {
-	pub x: u32,
+	pub x: String,
 	pub t: Type
 }
 impl TypePair {
-	fn parse_binding<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::type_pair::Reader<'ctx>) -> Result<Self> {
+	fn parse(reader: schema_capnp::type_pair::Reader) -> Result<Self> {
 		Ok(Self {
-			x: ctx.add_x(reader.get_name()?.as_bytes())?,
-			t: Type::parse(reader.get_t()?)?,
-		})
-	}
-	fn parse_ref<'ctx>(ctx: &ParseCtx<'ctx>, reader: schema_capnp::type_pair::Reader<'ctx>) -> Result<Self> {
-		Ok(Self {
-			x: ctx.get_x(reader.get_name()?.as_bytes())?,
+			x: reader.get_name()?.to_string()?,
 			t: Type::parse(reader.get_t()?)?,
 		})
 	}
@@ -355,21 +362,21 @@ pub enum E {
 	MagicValue(RC, magic::MagicType),
 }
 impl E {
-	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::Reader<'ctx>) -> Result<Self> {
+	fn parse(ctx: &mut ParseCtx, reader: schema_capnp::e::Reader) -> Result<Self> {
 		let t = Type::parse(reader.get_t()?)?;
 		Ok(match reader.which()? {
 			schema_capnp::e::X(x) => E::X(TypePair {
-				x: ctx.get_x(x?.get_name()?.as_bytes())?,
+				x: x?.get_name()?.to_string()?,
 				t,
 			}),
 			schema_capnp::e::MCall(c) => E::MCall(MCall::parse(ctx, c?, t)?),
 			schema_capnp::e::CreateObj(k) => {
 				match t.rt {
 					RawType::Plain(ty) => {
-						if ctx.singletons.borrow().contains(&ty) {
-							E::SummonObj(SummonObj { rc: t.rc, def: ty })
+						if ctx.singletons.contains(&ty) {
+							E::SummonObj(SummonObj { rc: t.rc, def: ty, name: t.name })
 						} else {
-							E::CreateObj(CreateObj::parse(ctx, k?, t)?)
+							E::CreateObj(CreateObj::parse(k?, t)?)
 						}	
 					},
 					RawType::Magic(ty) => E::MagicValue(t.rc, ty),
@@ -386,7 +393,7 @@ impl HasType for E {
 			E::MCall(c) => c.t(),
 			E::CreateObj(k) => k.t(),
 			E::SummonObj(k) => k.t(),
-			E::MagicValue(rc, ty) => Type { rc: *rc, rt: RawType::Magic(ty.clone()) },
+			E::MagicValue(rc, ty) => Type { rc: *rc, rt: RawType::Magic(ty.clone()), name: ty.to_string() },
 		}
 	}
 }
@@ -414,12 +421,14 @@ impl PrettyPrint for E {
 pub struct SummonObj {
 	pub(crate) rc: RC,
 	pub(crate) def: blake3::Hash,
+	pub(crate) name: String,
 }
 impl HasType for SummonObj {
 	fn t(&self) -> Type {
 		Type {
 			rc: self.rc,
-			rt: RawType::Plain(self.def)
+			rt: RawType::Plain(self.def),
+			name: self.name.clone(),
 		}
 	}
 }
@@ -436,7 +445,7 @@ impl MCall {
 	pub fn new(recv: E, rc: RC, meth: blake3::Hash, args: Vec<E>, return_type: Type) -> Self {
 		Self { recv: Box::new(recv), rc, meth, args, return_type }
 	}
-	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::m_call::Reader<'ctx>, return_type: Type) -> Result<Self> {
+	fn parse(ctx: &mut ParseCtx, reader: schema_capnp::e::m_call::Reader, return_type: Type) -> Result<Self> {
 		let meth = MethName::parse_hash(reader.get_name()?)?;
 		let recv = Box::new(E::parse(ctx, reader.get_recv()?)?);
 		let args = reader.get_args()?.iter()
@@ -455,16 +464,19 @@ impl MCall {
 impl PrettyPrint for MCall {
 	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
 		let recv = match self.recv.t().rt {
-			RawType::Plain(hash) => program.lookup_type_by_hash(&hash),
-			RawType::Magic(magic) => program.lookup_type_by_hash(&magic.def()),
+			RawType::Plain(hash) => program.lookup_type_by_hash(&hash).unwrap_or_else(|| panic!("{:?}", self.recv.t())),
+			RawType::Magic(magic) => program.lookup_type_by_hash(&magic.def()).unwrap(),
 			RawType::Any => unreachable!(),
-		}.unwrap();
+		};
 		let meth = recv.sigs.get(&self.meth).unwrap();
 		self.recv.pretty_print(f, program)?;
 		write!(f, " {}(", meth.name)?;
-		for (i, xt) in meth.xs.iter().enumerate() {
-			xt.pretty_print(f, program)?;
-			if i < meth.xs.len() - 1 {
+		for (i, (arg, xt)) in zip_eq(self.args.iter(), meth.xs.iter()).enumerate() {
+			arg.pretty_print(f, program)?;
+			f.write_str(" as ")?;
+			xt.t().pretty_print(f, program)?;
+			
+			if i < self.args.len() - 1 {
 				f.write_str(", ")?;
 			}
 		}
@@ -483,26 +495,26 @@ impl HasType for MCall {
 pub struct CreateObj {
 	pub(crate) rc: RC,
 	pub(crate) def: blake3::Hash,
-	pub(crate) self_name: u32,
+	pub(crate) self_name: String,
 	pub(crate) meths: HashMap<blake3::Hash, Meth>,
 	pub(crate) captures: Vec<TypePair>,
 }
 impl CreateObj {
-	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::create_obj::Reader<'ctx>, ty: Type) -> Result<Self> {
+	fn parse(reader: schema_capnp::e::create_obj::Reader, ty: Type) -> Result<Self> {
 		let rc = ty.rc;
 		let def = match ty.rt {
 			RawType::Plain(def) => def,
 			_ => bail!("Expected a plain type for CreateObj: {:?}", ty),
 		};
-		let self_name = ctx.add_x(reader.get_self_name()?.as_bytes())?;
+		let self_name = reader.get_self_name()?.to_string()?;
 		let meths = reader.get_meths()?.iter()
 			.map(|reader| {
-				let meth = Meth::parse(ctx, reader)?;
+				let meth = Meth::parse(reader)?;
 				Ok((meth.sig.name.hash, meth))
 			})
 			.collect::<Result<_>>()?;
 		let captures = reader.get_captures()?.iter()
-			.map(|reader| TypePair::parse_ref(ctx, reader))
+			.map(|reader| TypePair::parse(reader))
 			.collect::<Result<Vec<_>>>()?;
 		Ok(Self {
 			rc,
@@ -517,7 +529,8 @@ impl HasType for CreateObj {
 	fn t(&self) -> Type {
 		Type {
 			rc: self.rc,
-			rt: RawType::Plain(self.def)
+			rt: RawType::Plain(self.def),
+			name: self.self_name.clone(),
 		}
 	}
 }
@@ -529,9 +542,9 @@ pub struct Sig {
 	pub(crate) return_type: Type,
 }
 impl Sig {
-	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::sig::Reader<'ctx>) -> Result<Self> {
+	fn parse(reader: schema_capnp::sig::Reader) -> Result<Self> {
 		let xs = reader.get_xs()?.iter()
-			.map(|reader| TypePair::parse_binding(ctx, reader))
+			.map(|reader| TypePair::parse(reader))
 			.collect::<Result<Vec<TypePair>>>()?;
 		Ok(Sig {
 			name: MethName::parse_owned(reader.get_name()?)?,
@@ -551,18 +564,18 @@ pub struct Meth {
 	pub(crate) origin: blake3::Hash,
 	pub(crate) sig: Sig,
 	pub(crate) captures_self: bool,
-	pub(crate) captures: HashSet<u32>,
+	pub(crate) captures: Vec<String>,
 	pub(crate) body: MethImpl,
 }
 impl Meth {
-	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::meth::Reader<'ctx>) -> Result<Self> {
+	fn parse(reader: schema_capnp::meth::Reader) -> Result<Self> {
 		let captures_self = reader.get_captures_self();
 		let captures = reader.get_captures()?.iter()
-			.map(|reader| ctx.get_x(reader?.as_bytes()))
+			.map(|reader| Ok(reader?.to_string()?))
 			.collect::<Result<_>>()?;
 		Ok(Self {
 			origin: AstDecId(reader.get_origin()?).unique_hash(),
-			sig: Sig::parse(ctx, reader.get_sig()?)?,
+			sig: Sig::parse(reader.get_sig()?)?,
 			captures_self,
 			captures,
 			body: match reader.get_f_name().which()? {
