@@ -16,6 +16,6 @@ regex = "1.11.1"
 
 [profile.release]
 lto = true
-codegen-units = 1
+#codegen-units = 1
 debug = "none"
 opt-level = 3

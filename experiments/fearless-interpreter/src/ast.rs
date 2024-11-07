@@ -10,17 +10,14 @@ use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
 use itertools::Itertools;
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::fmt::{Display, Formatter, Write};
-use std::hash::Hash;
-use std::rc::Rc;
 
 pub(crate) const THIS_X: u32 = 0;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct ParseCtx<'mir> {
 	bindings: HashMap<&'mir [u8], u32>,
-	singletons: Rc<RefCell<HashSet<blake3::Hash>>>,
+	singletons: HashSet<blake3::Hash>,
 	next_binding: u32,
 }
 impl<'mir> ParseCtx<'mir> {
@@ -68,12 +65,14 @@ impl<'mir> ParseCtx<'mir> {
 pub struct Program {
 	defs: HashMap<blake3::Hash, TypeDef>,
 	funs: HashMap<blake3::Hash, Fun>,
+	pub effectively_final_defs: HashSet<blake3::Hash>,
 }
 impl Program {
 	pub fn new() -> Self {
 		Self {
 			defs: Default::default(),
 			funs: Default::default(),
+			effectively_final_defs: Default::default(),
 		}
 	}
 	pub fn add_pkg(&mut self, raw: &[u8]) -> Result<()> {
@@ -87,11 +86,10 @@ impl Program {
 		for def in reader.get_defs()? {
 			let def = TypeDef::parse(&mut ctx, def)?;
 			if def.singleton_instance.is_some() {
-				ctx.singletons.borrow_mut().insert(def.name.unique_hash());
+				ctx.singletons.insert(def.name.unique_hash());
 			}
 			self.defs.insert(def.name.unique_hash(), def);
 		}
-		let mut ctx = ctx.clone();
 		for fun in reader.get_funs()? {
 			let fun = Fun::parse(&mut ctx, fun)?;
 			self.funs.insert(fun.name.unique_hash, fun);
@@ -116,6 +114,15 @@ impl Program {
 	}
 	pub fn lookup_fun_by_hash(&self, hash: &blake3::Hash) -> Option<&Fun> {
 		self.funs.get(hash)
+	}
+	pub fn compute_effectively_final_defs(&mut self) {
+		let mut all = self.defs.keys().copied().collect::<HashSet<_>>();
+		self.defs.values()
+			.flat_map(|def| def.impls.iter())
+			.for_each(|super_type| {
+				all.remove(super_type);
+			});
+		self.effectively_final_defs = all;
 	}
 }
 
@@ -306,7 +313,7 @@ impl PrettyPrint for Type {
 	fn pretty_print(&self, f: &mut Formatter<'_>, program: &Program) -> std::fmt::Result {
 		match &self.rt {
 			RawType::Plain(hash) => {
-				let def = program.lookup_type_by_hash(&hash).unwrap();
+				let def = program.lookup_type_by_hash(hash).unwrap();
 				write!(f, "{}", def.name)
 			},
 			RawType::Magic(magic) => write!(f, "{}", magic),
@@ -366,7 +373,7 @@ impl E {
 			schema_capnp::e::CreateObj(k) => {
 				match t.rt {
 					RawType::Plain(ty) => {
-						if ctx.singletons.borrow().contains(&ty) {
+						if ctx.singletons.contains(&ty) {
 							E::SummonObj(SummonObj { rc: t.rc, def: ty })
 						} else {
 							E::CreateObj(CreateObj::parse(ctx, k?, t)?)
@@ -551,7 +558,7 @@ pub struct Meth {
 	pub(crate) origin: blake3::Hash,
 	pub(crate) sig: Sig,
 	pub(crate) captures_self: bool,
-	pub(crate) captures: HashSet<u32>,
+	pub(crate) captures: Vec<u32>,
 	pub(crate) body: MethImpl,
 }
 impl Meth {

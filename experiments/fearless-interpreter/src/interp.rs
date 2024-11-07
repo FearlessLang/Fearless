@@ -1,23 +1,22 @@
 use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
 use crate::magic::MagicType;
-use crate::pretty_print::{Format, PrettyPrint};
+use crate::pretty_print::PrettyPrint;
 use crate::rc::format_rc;
 use crate::schema_capnp::RC;
-use anyhow::anyhow;
 use hashbrown::HashMap;
 use itertools::{zip_eq, Itertools};
 use std::borrow::Cow;
 // use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::error::Error;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 use std::rc::Rc;
 
 #[derive(Debug)]
 pub enum InterpreterError {
 	Fearless(Box<Value>),
 	NonDeterministic(Box<Value>),
-	Internal(anyhow::Error),
+	Internal(Cow<'static, str>),
 }
 
 impl Display for InterpreterError {
@@ -58,7 +57,7 @@ impl Interpreter {
 	}
 
 	pub fn run(&mut self, entry: MCall) -> Result<()> {
-		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry), self.program.clone())?;
+		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry))?;
 		let InterpreterE::MCall(entry) = entry else { unreachable!("non-call main expression") };
 		let res = self.eval_call(entry);
 		match res {
@@ -88,53 +87,49 @@ impl Interpreter {
 	fn eval_call(&mut self, call: AllocatedMCall) -> Result<Value> {
 		self.depth += 1;
 		if self.max_depth > 0 && self.depth > self.max_depth {
-			return Err(InterpreterError::Internal(anyhow!("Stack overflowed")));
+			return Err(InterpreterError::Internal("Stack overflowed".into()));
 		}
 
-		self.stack.push_front(StackFrame::new(call.recv.def().unwrap_or(blake3::hash(b"")), call.meth));
 		let recv = call.recv.eval(self)?;
 		let args: Vec<Value> = call.args.into_iter()
 			.map(|arg| arg.clone().eval(self))
 			.collect::<Result<_>>()?;
-		let meth = recv.meth(&call.meth, &self.program)?;
+		let meth = recv.meth(&call.meth, &self.program);
 		let gamma = &meth.sig.xs;
 		
 		match &meth.body {
 			MethImpl::Fun(fun_hash) => {
-				let fun = self.program
-					.lookup_fun_by_hash(fun_hash)
-					.ok_or_else(|| InterpreterError::Internal(anyhow!("Function '{}' not found", fun_hash)))?;
+				let Some(fun) = self.program.lookup_fun_by_hash(fun_hash) else {
+					panic!("Function '{}' not found", fun_hash)
+				};
 
-				let fun_ctx = {
-					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
-					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
-
+				let body = {
 					let capture_context = if is_meth_in_obj(&recv, &call.meth) {
-						let ctx = &*recv.meth_captures(&call.meth)?;
+						let ctx = &*recv.meth_captures(&call.meth);
 						let mut ctx = CaptureContext::to_owned(ctx);
-						ctx.and_zip(args.clone(), gamma);
+						ctx.and_zip(&args, gamma);
 						ctx
 					} else {
-						let mut ctx = CaptureContext::zip(args.clone(), gamma);
-						ctx.add(THIS_X, recv.clone());
+						let mut ctx = CaptureContext::zip(&args, gamma);
+						ctx.add(THIS_X, Cow::Borrowed(&recv));
 						ctx
 					};
 
+					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
+					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
 					let fun_args = args.iter()
 						.chain(std::iter::once(&recv))
 						.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
 					for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
-						fun_ctx.add(fun_xt.x, v.clone());
+						fun_ctx.add(fun_xt.x, Cow::Borrowed(v));
 					}
 
 					self.stack.pop_front();
 					self.stack.push_front(StackFrame::new(recv.def(), call.meth));
-					fun_ctx
+					let body = fun.body.clone();
+					Self::allocate_captures(&fun_ctx, &body)?
 				};
-
-				let body = fun.body.clone();
-				println!("please eval: {}", Format(|f| body.pretty_print(f, &self.program)));
-				let body = Self::allocate_captures(&fun_ctx, &body, self.program.clone())?;
+				
 				match body {
 					InterpreterE::Value(value) => {
 						self.stack.pop_front();
@@ -157,12 +152,12 @@ impl Interpreter {
 			},
 			MethImpl::Abstract => {
 				let type_name = type_name_or_hash(&self.program, &recv);
-				Err(InterpreterError::Internal(anyhow!("Illegal call to abstract method '{}' on '{}'", call.meth, type_name)))
+				panic!("Illegal call to abstract method '{}' on '{}'", call.meth, type_name)
 			},
 		}
 	}
 
-	fn allocate_captures(c: &CaptureContext, e: &E, p: Rc<Program>) -> Result<InterpreterE> {
+	fn allocate_captures(c: &CaptureContext, e: &E) -> Result<InterpreterE> {
 		match e {
 			E::X(xt) => match c.lookup(xt.x) {
 				Some(value) => {
@@ -171,14 +166,13 @@ impl Interpreter {
 					Ok(InterpreterE::Value(value))
 				},
 				None => {
-					Err(InterpreterError::Internal(anyhow!("X not found: {:?}", xt)))
+					panic!("X not found: {:?}", xt)
 				},
 			},
 			E::MCall(call) => {
-				let recv_value = Self::allocate_captures(c, &call.recv, p.clone())?;
-				println!("Recv for: {}", Format(|f| recv_value.pretty_print(f, &p)));
+				let recv_value = Self::allocate_captures(c, &call.recv)?;
 				let args: Vec<InterpreterE> = call.args.iter()
-					.map(|arg| Self::allocate_captures(c, arg, p.clone()))
+					.map(|arg| Self::allocate_captures(c, arg))
 					.collect::<Result<_>>()?;
 				let allocated_call = AllocatedMCall {
 					recv: Box::new(recv_value),
@@ -187,20 +181,7 @@ impl Interpreter {
 					args: args.into_iter().collect(),
 					return_type: call.return_type.clone(),
 				};
-				
-				// debug_assert!({
-        //   let Some(recv) = p.lookup_type_by_hash(&allocated_call.recv.def().unwrap())
-        //   else { unreachable!("No type found for {:?}", allocated_call.recv) };
-        //   recv.sigs.contains_key(&allocated_call.meth)
-        // }, "Method not found: {:?}", allocated_call.meth);
-				
-				let bad_meth = blake3::hash(b"imm -/1");
-				let bad_dec = blake3::hash(b"test.Fib/0");
-				if allocated_call.recv.def().map(|def| def == bad_dec).unwrap_or(false) && call.meth == bad_meth {
-					println!("Bad call! {}\n\n", Format(|f| allocated_call.pretty_print(f, &p)));
-				} else {
-					println!("Acceptable: {}\n\n", Format(|f| allocated_call.pretty_print(f, &p)));
-				}
+
 				Ok(InterpreterE::MCall(allocated_call))
 			},
 			E::CreateObj(k) => {
@@ -208,20 +189,19 @@ impl Interpreter {
 					.map(|(meth_id, meth)| {
 						let mut ctx = CaptureContext::with_capacity(meth.captures.len());
 						for x in meth.captures.iter() {
-							let capture = c.lookup(*x)
-								.ok_or_else(|| InterpreterError::Internal(anyhow!("Capture not found: {:?}", x)))?;
-							ctx.add(*x, capture.clone());
+							let Some(capture) = c.lookup(*x) else { panic!("Capture not found: {:?}", x) };
+							ctx.add(*x, Cow::Owned(capture.clone()));
 						}
 						Ok((*meth_id, ctx))
 					})
 					.collect::<Result<HashMap<_,_>>>()?;
-				let obj = Value::Obj(Obj {
+				let obj = Value::Obj(Rc::new(Obj {
 					k: Literal::obj(k.clone()),
 					fat_meths
-				});
+				}));
 				Ok(InterpreterE::Value(obj))
 			},
-			E::SummonObj(k) => Ok(InterpreterE::Value(Value::summoned_obj(k)?)),
+			E::SummonObj(k) => Ok(InterpreterE::Value(Value::summoned_obj(k))),
 			E::MagicValue(_, ty) => Ok(InterpreterE::Value(Value::Magic(ty.clone()))),
 		}
 	}
@@ -258,35 +238,36 @@ fn type_name_or_hash(program: &Program, obj: &Value) -> String {
 
 #[derive(Debug, Clone)]
 pub enum Value {
-	Obj(Obj),
+	Obj(Rc<Obj>),
 	Magic(MagicType),
 }
 impl Value {
 	pub fn obj(k: &CreateObj) -> Self {
-		Value::Obj(Obj {
+		Value::Obj(Rc::new(Obj {
 			k: Literal::obj(k.clone()),
 			fat_meths: k.meths.iter()
 				.filter(|(_, meth)| meth.origin == k.def)
 				.map(|(meth_id, _)| (*meth_id, CaptureContext::new()))
 				.collect()
-		})
+		}))
 	}
-	pub fn summoned_obj(k: &SummonObj) -> Result<Self> {
-		Ok(Value::Obj(Obj {
+	pub fn summoned_obj(k: &SummonObj) -> Self {
+		Value::Obj(Rc::new(Obj {
 			k: Literal::Summoned(k.clone()),
 			fat_meths: Default::default()
 		}))
 	}
-	fn meth<'a>(&'a self, meth_hash: &blake3::Hash, program: &'a Program) -> Result<&'a Meth> {
+	fn meth<'a>(&'a self, meth_hash: &blake3::Hash, program: &'a Program) -> &'a Meth {
 		match self {
-			Value::Obj(obj) => obj.k.meths(program)?.get(meth_hash)
-				.ok_or_else(|| {
+			Value::Obj(obj) => match obj.k.meths(program).get(meth_hash) {
+				Some(meth) => meth,
+				None => {
 					let type_name = type_name_or_hash(program, self);
-					let visible = obj.k.meths(program).unwrap().values().map(|meth| &meth.sig.name).collect::<Vec<_>>();
-					InterpreterError::Internal(anyhow!("Method '{}' not found on '{}'\nVisible: {:?}", meth_hash, type_name, visible))
-				}),
-			Value::Magic(m) =>
-				m.meth(meth_hash, program).map_err(InterpreterError::Internal),
+					let visible = obj.k.meths(program).values().map(|meth| &meth.sig.name).collect::<Vec<_>>();
+					panic!("Method '{}' not found on '{}'\nVisible: {:?}", meth_hash, type_name, visible);
+				}
+			},
+			Value::Magic(m) => m.meth(meth_hash, program),
 		}
 	}
 	fn def(&self) -> blake3::Hash {
@@ -295,14 +276,15 @@ impl Value {
 			Value::Magic(magic) => magic.def(),
 		}
 	}
-	fn meth_captures(&self, meth_name: &blake3::Hash) -> Result<Cow<CaptureContext>> {
+	fn meth_captures(&self, meth_name: &blake3::Hash) -> Cow<CaptureContext> {
 		match self {
 			Value::Obj(obj) => {
-				let fat_meth = obj.fat_meths.get(meth_name)
-					.ok_or_else(|| InterpreterError::Internal(anyhow!("Method '{}' not found on '{:?}'", meth_name, obj.k.def())))?;
-				Ok(Cow::Borrowed(fat_meth))
+				let Some(fat_meth) = obj.fat_meths.get(meth_name) else {
+					panic!("Method '{}' not found on '{:?}'", meth_name, obj.k.def())
+				};
+				Cow::Borrowed(fat_meth)
 			},
-			Value::Magic(_) => Ok(Cow::Owned(CaptureContext::new())),
+			Value::Magic(_) => Cow::Owned(CaptureContext::new()),
 		}
 	}
 }
@@ -390,10 +372,10 @@ impl PrettyPrint for AllocatedMCall {
 }
 
 #[derive(Debug, Clone)]
-struct Obj {
+pub struct Obj {
 	k: Literal,
 	/// `mc` from our reduction, the capture context per-method
-	fat_meths: HashMap<blake3::Hash, CaptureContext>
+	fat_meths: HashMap<blake3::Hash, CaptureContext<'static>>
 }
 #[derive(Debug, Clone)]
 enum Literal {
@@ -410,19 +392,19 @@ impl Literal {
 			Literal::Obj(k) => k.def,
 		}
 	}
-	fn meths<'a>(&'a self, program: &'a Program) -> Result<&'a HashMap<blake3::Hash, Meth>> {
+	fn meths<'a>(&'a self, program: &'a Program) -> &'a HashMap<blake3::Hash, Meth> {
 		match self {
 			Literal::Summoned(k) => {
 				match program.lookup_type_by_hash(&k.def) {
 					Some(def) => match &def.singleton_instance {
-						Some(obj) => Ok(&obj.meths),
-						None => Err(InterpreterError::Internal(anyhow!("No singleton instance on type")))?,
+						Some(obj) => &obj.meths,
+						None => panic!("No singleton instance on type"),
 					},
 					None =>
-						Err(InterpreterError::Internal(anyhow!("Method call on non-existent type '{}' from:\n{:?}", k.def, k)))?,
+						panic!("Method call on non-existent type '{}' from:\n{:?}", k.def, k),
 				}
 			},
-			Literal::Obj(k) => Ok(&k.meths),
+			Literal::Obj(k) => &k.meths,
 		}
 	}
 }
@@ -437,10 +419,10 @@ impl PrettyPrint for Literal {
 /// `c` from our reduction, a capture context
 #[derive(Debug, Clone)]
 #[repr(transparent)]
-struct CaptureContext {
-	inner: HashMap<u32, Value>
+struct CaptureContext<'a> {
+	inner: HashMap<u32, Cow<'a, Value>>
 }
-impl CaptureContext {
+impl<'a> CaptureContext<'a> {
 	fn new() -> Self {
 		Self {
 			inner: HashMap::new()
@@ -452,25 +434,28 @@ impl CaptureContext {
 		}
 	}
 	fn lookup(&self, key: u32) -> Option<&Value> {
-		self.inner.get(&key)
+		match self.inner.get(&key) {
+			None => None,
+			Some(cow) => Some(&*cow),
+		}
 	}
-	fn add(&mut self, key: u32, value: Value) {
+	fn add(&mut self, key: u32, value: Cow<'a, Value>) {
 		self.inner.insert(key, value);
 	}
-	fn zip(vs: Vec<Value>, gamma: &[TypePair]) -> Self {
+	fn zip(vs: &'a [Value], gamma: &[TypePair]) -> Self {
 		let mut inner = HashMap::with_capacity(vs.len());
 		vs.into_iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				inner.insert(xt.x, v);
+				inner.insert(xt.x, Cow::Borrowed(v));
 			});
 		Self { inner }
 	}
-	fn and_zip(&mut self, vs: Vec<Value>, gamma: &[TypePair]) {
+	fn and_zip(&mut self, vs: &'a [Value], gamma: &[TypePair]) {
 		vs.into_iter()
 			.zip_eq(gamma)
 			.for_each(|(v, xt)| {
-				self.inner.insert(xt.x, v);
+				self.inner.insert(xt.x, Cow::Borrowed(v));
 			});
 	}
 }

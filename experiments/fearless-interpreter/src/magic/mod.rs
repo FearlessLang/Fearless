@@ -3,13 +3,15 @@ mod nat;
 mod magic;
 mod magic_meths;
 
-use crate::ast::{Meth, Program, SummonObj, E};
+use crate::ast::{Meth, Program, SummonObj};
 use crate::dec_id::{AstDecId, DecId};
+use crate::interp::Value;
+use crate::schema_capnp::RC;
 use anyhow::{bail, Result};
 use regex::Regex;
 use std::fmt::{Display, Formatter};
-use crate::interp::Value;
-use crate::schema_capnp::RC;
+use std::sync::OnceLock;
+use hashbrown::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MagicType {
@@ -21,11 +23,11 @@ pub enum MagicType {
 	Magic,
 }
 impl MagicType {
-	pub fn meth<'a>(&self, meth_hash: &blake3::Hash, program: &'a Program) -> Result<&'a Meth> {
+	pub fn meth<'a>(&self, meth_hash: &blake3::Hash, program: &'a Program) -> &'a Meth {
 		match self {
-			MagicType::Nat(_) => nat::meth(meth_hash, program),
-			MagicType::Magic => magic::meth(meth_hash, program),
-			_ => bail!("No methods for {:?}", self),
+			MagicType::Nat(_) => nat::Impl.meth(meth_hash, program),
+			MagicType::Magic => magic::Impl.meth(meth_hash, program),
+			_ => panic!("No methods for {:?}", self),
 		}
 	}
 	pub fn def(&self) -> blake3::Hash {
@@ -62,7 +64,7 @@ thread_local! {
 pub fn is_magic_type(dec_id: AstDecId) -> bool {
 	let name = dec_id.full_name();
 	
-	if is_numeric_literal(name) || is_string_literal(name) { return true; }
+	if is_literal(name) { return true; }
 	if dec_id.full_name() == "base.Magic" && dec_id.arity() == 0 { return true; }
 	false
 }
@@ -103,12 +105,43 @@ pub fn is_numeric_literal(dec_name: &str) -> bool {
 	dec_name.starts_with(['-', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
 }
 
+trait MagicImpl {
+	fn cell(&self) -> &'static OnceLock<HashMap<blake3::Hash, Meth>>;
+	fn instance_name(&self) -> &str;
+	fn meth<'a>(&self, meth_hash: &blake3::Hash, program: &'a Program) -> &'a Meth {
+		let meths = self.cell().get_or_init(|| {
+			let Some(def) = program.lookup_type_by_hash(&blake3::hash(self.instance_name().as_bytes())) else {
+				panic!("No {}", self.instance_name())
+			};
+			let obj = match def.singleton_instance {
+				Some(ref obj) => obj,
+				None => panic!("No singleton instance for {}", def.name),
+			};
+			self.add_overrides(self.instance_name(), obj.meths.clone())
+		});
+		let Some(meth) = meths.get(meth_hash) else { panic!("No method for {} in base.Nat/0", meth_hash); };
+		meth
+	}
+	fn add_overrides(&self, type_name: &str, meths: HashMap<blake3::Hash, Meth>) -> HashMap<blake3::Hash, Meth>;
+}
+
 impl From<bool> for Value {
 	fn from(b: bool) -> Self {
-		let ty = if b { "base.True/0" } else { "base.False/0" };
-		Value::summoned_obj(&SummonObj {
-			rc: RC::Imm,
-			def: blake3::hash(ty.as_bytes()),
-		}).unwrap()
+		thread_local! {
+			static TRUE: Value = Value::summoned_obj(&SummonObj {
+				rc: RC::Imm,
+				def: blake3::hash(b"base.True/0"),
+			});
+			static FALSE: Value = Value::summoned_obj(&SummonObj {
+				rc: RC::Imm,
+				def: blake3::hash(b"base.False/0"),
+			});
+		}
+
+		if b {
+			TRUE.with(|v| v.clone())
+		} else {
+			FALSE.with(|v| v.clone())
+		}
 	}
 }
