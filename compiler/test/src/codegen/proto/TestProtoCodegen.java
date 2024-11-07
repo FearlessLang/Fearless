@@ -105,7 +105,7 @@ public class TestProtoCodegen {
     """, "fake.Fake", true, """
     package test
     alias base.Main as Main, alias base.Nat as Nat,
-    Test: Main{ _ -> Fib#(20).str }
+    Test: Main{ _ -> Fib#(30).str }
     Fib: {
       #(n: Nat): Nat -> n <= 1 ? {
         .then -> n,

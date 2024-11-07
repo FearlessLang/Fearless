@@ -8,7 +8,7 @@ use crate::{interp, magic, schema_capnp};
 use anyhow::{anyhow, bail, Result};
 use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
-use itertools::Itertools;
+use itertools::{zip_eq, Itertools};
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter, Write};
 
@@ -63,8 +63,8 @@ impl<'mir> ParseCtx<'mir> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
-	defs: HashMap<blake3::Hash, TypeDef>,
-	funs: HashMap<blake3::Hash, Fun>,
+	pub defs: HashMap<blake3::Hash, TypeDef>,
+	pub funs: HashMap<blake3::Hash, Fun>,
 	pub effectively_final_defs: HashSet<blake3::Hash>,
 }
 impl Program {
@@ -435,12 +435,12 @@ impl HasType for SummonObj {
 pub struct MCall {
 	pub recv: Box<E>,
 	pub rc: RC,
-	pub meth: blake3::Hash,
+	pub meth: CallTarget,
 	pub args: Vec<E>,
 	pub return_type: Type,
 }
 impl MCall {
-	pub fn new(recv: E, rc: RC, meth: blake3::Hash, args: Vec<E>, return_type: Type) -> Self {
+	pub fn new(recv: E, rc: RC, meth: CallTarget, args: Vec<E>, return_type: Type) -> Self {
 		Self { recv: Box::new(recv), rc, meth, args, return_type }
 	}
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::m_call::Reader<'ctx>, return_type: Type) -> Result<Self> {
@@ -453,7 +453,7 @@ impl MCall {
 		Ok(Self {
 			recv,
 			rc: reader.get_rc()?,
-			meth,
+			meth: CallTarget::Meth(meth),
 			args,
 			return_type,
 		})
@@ -466,17 +466,28 @@ impl PrettyPrint for MCall {
 			RawType::Magic(magic) => program.lookup_type_by_hash(&magic.def()),
 			RawType::Any => unreachable!(),
 		}.unwrap();
-		let meth = recv.sigs.get(&self.meth).unwrap();
-		self.recv.pretty_print(f, program)?;
-		write!(f, " {}(", meth.name)?;
-		for (i, xt) in meth.xs.iter().enumerate() {
-			xt.pretty_print(f, program)?;
-			if i < meth.xs.len() - 1 {
-				f.write_str(", ")?;
+		match self.meth {
+			CallTarget::Meth(meth) => {
+				let meth = recv.sigs.get(&meth).unwrap();
+				self.recv.pretty_print(f, program)?;
+				write!(f, " {}(", meth.name)?;
+				for (i, (arg, xt)) in zip_eq(self.args.iter(), meth.xs.iter()).enumerate() {
+					arg.pretty_print(f, program)?;
+					f.write_str(" as ")?;
+					xt.t().pretty_print(f, program)?;
+
+					if i < self.args.len() - 1 {
+						f.write_str(", ")?;
+					}
+				}
+				f.write_str("): ")?;
+				self.return_type.pretty_print(f, program)?;
+			}
+			CallTarget::Fun(fun) => {
+				let fun = program.funs.get(&fun).unwrap();
+				write!(f, "fun[{:?}]", fun.name)?;
 			}
 		}
-		f.write_str("): ")?;
-		self.return_type.pretty_print(f, program)?;
 		Ok(())
 	}
 }
@@ -484,6 +495,11 @@ impl HasType for MCall {
 	fn t(&self) -> Type {
 		self.return_type.clone()
 	}
+}
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum CallTarget {
+	Meth(blake3::Hash),
+	Fun(blake3::Hash),
 }
 
 #[derive(Debug, Clone, PartialEq)]

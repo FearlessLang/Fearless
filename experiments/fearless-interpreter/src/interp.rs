@@ -1,4 +1,4 @@
-use crate::ast::{CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
+use crate::ast::{CallTarget, CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
 use crate::magic::MagicType;
 use crate::pretty_print::PrettyPrint;
 use crate::rc::format_rc;
@@ -32,9 +32,9 @@ impl Error for InterpreterError {}
 pub type Result<T> = std::result::Result<T, InterpreterError>;
 
 #[derive(Debug, Copy, Clone)]
-struct StackFrame { def: blake3::Hash, meth: blake3::Hash }
+struct StackFrame { def: blake3::Hash, meth: Option<blake3::Hash> }
 impl StackFrame {
-	fn new(def: blake3::Hash, meth: blake3::Hash) -> Self {
+	fn new(def: blake3::Hash, meth: Option<blake3::Hash>) -> Self {
 		Self { def, meth }
 	}
 }
@@ -94,54 +94,83 @@ impl Interpreter {
 		let args: Vec<Value> = call.args.into_iter()
 			.map(|arg| arg.clone().eval(self))
 			.collect::<Result<_>>()?;
-		let meth = recv.meth(&call.meth, &self.program);
-		let gamma = &meth.sig.xs;
-		
-		match &meth.body {
-			MethImpl::Fun(fun_hash) => {
-				let Some(fun) = self.program.lookup_fun_by_hash(fun_hash) else {
-					panic!("Function '{}' not found", fun_hash)
-				};
+		match &call.meth {
+			CallTarget::Meth(meth_hash ) => {
+				let meth = recv.meth(meth_hash, &self.program);
+				let gamma = &meth.sig.xs;
 
-				let body = {
-					let capture_context = if is_meth_in_obj(&recv, &call.meth) {
-						let ctx = &*recv.meth_captures(&call.meth);
-						let mut ctx = CaptureContext::to_owned(ctx);
-						ctx.and_zip(&args, gamma);
-						ctx
-					} else {
-						let mut ctx = CaptureContext::zip(&args, gamma);
-						ctx.add(THIS_X, Cow::Borrowed(&recv));
-						ctx
-					};
+				match &meth.body {
+					MethImpl::Fun(fun_hash) => {
+						let Some(fun) = self.program.lookup_fun_by_hash(fun_hash) else {
+							panic!("Function '{}' not found", fun_hash)
+						};
 
-					let fun_ctx_len = fun.args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
-					let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
-					let fun_args = args.iter()
-						.chain(std::iter::once(&recv))
-						.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
-					for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
-						fun_ctx.add(fun_xt.x, Cow::Borrowed(v));
-					}
+						let body = {
+							let capture_context = if is_meth_in_obj(&recv, meth_hash) {
+								let ctx = &*recv.meth_captures(meth_hash);
+								let mut ctx = CaptureContext::to_owned(ctx);
+								ctx.and_zip(&args, gamma);
+								ctx
+							} else {
+								let mut ctx = CaptureContext::zip(&args, gamma);
+								ctx.add(THIS_X, Cow::Borrowed(&recv));
+								ctx
+							};
 
-					self.stack.pop_front();
-					self.stack.push_front(StackFrame::new(recv.def(), call.meth));
-					let body = fun.body.clone();
-					Self::allocate_captures(&fun_ctx, &body)?
-				};
-				
-				match body {
-					InterpreterE::Value(value) => {
-						self.stack.pop_front();
-						Ok(value)
+							let fun_ctx_len = args.len() + (if fun.name.captures_self { 1 } else { 0 }) + meth.captures.len();
+							let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
+							let fun_args = args.iter()
+								.chain(std::iter::once(&recv))
+								.chain(meth.captures.iter().map(|x| capture_context.lookup(*x).unwrap()));
+							for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
+								fun_ctx.add(fun_xt.x, Cow::Borrowed(v));
+							}
+
+							self.stack.pop_front();
+							self.stack.push_front(StackFrame::new(recv.def(), Some(*meth_hash)));
+							let body = fun.body.clone();
+							Self::allocate_captures(&fun_ctx, &body)?
+						};
+
+						match body {
+							InterpreterE::Value(value) => {
+								self.stack.pop_front();
+								Ok(value)
+							},
+							InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+						}
 					},
-					InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+					MethImpl::Magic(magic) => {
+						self.stack.pop_front();
+						self.stack.push_front(StackFrame::new(recv.def(), Some(*meth_hash)));
+						let body = magic(recv, args)?;
+						match body {
+							InterpreterE::Value(value) => {
+								self.stack.pop_front();
+								Ok(value)
+							},
+							InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
+						}
+					},
+					MethImpl::Abstract => {
+						let type_name = type_name_or_hash(&self.program, &recv);
+						panic!("Illegal call to abstract method '{}' on '{}'", meth_hash, type_name)
+					},
 				}
-			},
-			MethImpl::Magic(magic) => {
+			}
+			CallTarget::Fun(fun_hash) => {
+				let fun = self.program.lookup_fun_by_hash(fun_hash).unwrap();
+				let fun_ctx_len = args.len() + 1;
+				debug_assert!(fun.args.len() == fun_ctx_len);
+				let mut fun_ctx = CaptureContext::with_capacity(fun_ctx_len);
+				let fun_args = args.iter().chain(std::iter::once(&recv));
+				for (v, fun_xt) in zip_eq(fun_args, fun.args.iter()) {
+					fun_ctx.add(fun_xt.x, Cow::Borrowed(v));
+				}
 				self.stack.pop_front();
-				self.stack.push_front(StackFrame::new(recv.def(), call.meth));
-				let body = magic(recv, args)?;
+				self.stack.push_front(StackFrame::new(recv.def(), None));
+				let body = fun.body.clone();
+				let body = Self::allocate_captures(&fun_ctx, &body)?;
 				match body {
 					InterpreterE::Value(value) => {
 						self.stack.pop_front();
@@ -149,11 +178,7 @@ impl Interpreter {
 					},
 					InterpreterE::MCall(next_call) => Ok(self.eval_call(next_call)?),
 				}
-			},
-			MethImpl::Abstract => {
-				let type_name = type_name_or_hash(&self.program, &recv);
-				panic!("Illegal call to abstract method '{}' on '{}'", call.meth, type_name)
-			},
+			}
 		}
 	}
 
@@ -212,9 +237,10 @@ impl Display for Interpreter {
 				match self.program.lookup_type_by_hash(&frame.def) {
 					None => writeln!(f, "<unknown>: <unknown>")?,
 					Some(def) => {
-						let meth: Cow<'static, str> = def.sigs.get(&frame.meth)
+						let meth: Cow<'static, str> = frame.meth
+							.and_then(|ref meth| def.sigs.get(meth))
 							.map(|sig| sig.name.to_string().into())
-							.unwrap_or("<unknown>".into());
+							.unwrap_or("<inline>".into());
 						writeln!(f, "{}: {}", def.name, meth)?;
 					},
 				}
@@ -335,7 +361,7 @@ impl PrettyPrint for InterpreterE {
 pub struct AllocatedMCall {
 	recv: Box<InterpreterE>,
 	rc: RC,
-	meth: blake3::Hash,
+	meth: CallTarget,
 	args: Vec<InterpreterE>,
 	return_type: Type,
 }
@@ -346,26 +372,34 @@ impl PrettyPrint for AllocatedMCall {
 			Some(def) => def,
 			None => panic!("No type found for {:?} @ {:?}", self.recv, self.recv.def()),
 		};
-		let meth = recv.sigs.get(&self.meth);
-		f.write_str(format_rc(self.rc))?;
-		f.write_str(" ")?;
-		write!(f, "{} ", recv.name)?;
-		match meth {
-			Some(meth) => {
-				write!(f, "{}(", meth.name)?;
-			},
-			None => write!(f, "{}(", self.meth)?,
-		}
-		for (i, arg) in self.args.iter().enumerate() {
-			arg.pretty_print(f, program)?;
-			f.write_str(": ")?;
-			let t = &program.lookup_type_by_hash(&arg.def().unwrap()).unwrap().name;
-			t.pretty_print(f, program)?;
-			if i < self.args.len() - 1 {
-				f.write_str(", ")?;
+		match self.meth {
+			CallTarget::Meth(meth_hash) => {
+				let meth = recv.sigs.get(&meth_hash);
+				f.write_str(format_rc(self.rc))?;
+				f.write_str(" ")?;
+				write!(f, "{} ", recv.name)?;
+				match meth {
+					Some(meth) => {
+						write!(f, "{}(", meth.name)?;
+					},
+					None => write!(f, "{}(", meth_hash)?,
+				}
+				for (i, arg) in self.args.iter().enumerate() {
+					arg.pretty_print(f, program)?;
+					f.write_str(": ")?;
+					let t = &program.lookup_type_by_hash(&arg.def().unwrap()).unwrap().name;
+					t.pretty_print(f, program)?;
+					if i < self.args.len() - 1 {
+						f.write_str(", ")?;
+					}
+				}
+				f.write_str("): ")?;
+			}
+			CallTarget::Fun(fun) => {
+				let fun = program.funs.get(&fun).unwrap();
+				write!(f, "fun[{:?}]: ", fun.name)?;
 			}
 		}
-		f.write_str("): ")?;
 		self.return_type.pretty_print(f, program)?;
 		Ok(())
 	}

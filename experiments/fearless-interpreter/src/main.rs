@@ -1,4 +1,4 @@
-use crate::ast::{HasType, Program, SummonObj, E};
+use crate::ast::{CallTarget, HasType, Program, SummonObj, E};
 use crate::dec_id::{DecId, ExplicitDecId};
 use crate::interp::Interpreter;
 use crate::schema_capnp::RC;
@@ -11,6 +11,7 @@ mod ast;
 mod magic;
 mod rc;
 mod pretty_print;
+mod optimisations;
 
 #[global_allocator]
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -25,6 +26,7 @@ fn main() {
 			program.add_pkg(&raw).unwrap();
 		}
 		program.compute_effectively_final_defs();
+		optimisations::devirtualise_final::apply(&mut program);
 		program
 	};
 	
@@ -36,7 +38,7 @@ fn main() {
 	// let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/0".as_bytes()), vec![], entry_ret.t());
 	// let entry_ret = program.lookup_type::<ExplicitDecId>(&"base.Void/0".try_into().unwrap()).unwrap();
 	let entry_ret = program.lookup_type::<ExplicitDecId>(&"base.Str/0".try_into().unwrap()).unwrap();
-	let entry_call = ast::MCall::new(entry_recv, RC::Imm, blake3::hash("imm #/1".as_bytes()), vec![
+	let entry_call = ast::MCall::new(entry_recv, RC::Imm, CallTarget::Meth(blake3::hash("imm #/1".as_bytes())), vec![
 		E::SummonObj(SummonObj { rc: RC::Imm, def: program.lookup_type::<ExplicitDecId>(&"base.LList/1".try_into().unwrap()).unwrap().name.unique_hash() })
 	], entry_ret.t());
 	let mut interpreter = Interpreter::new(program, 0);
