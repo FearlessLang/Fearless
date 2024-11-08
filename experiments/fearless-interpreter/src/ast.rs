@@ -385,6 +385,13 @@ impl E {
 			},
 		})
 	}
+	pub fn get_static_call(&self) -> Option<blake3::Hash> {
+		match self {
+			E::MCall(call) =>
+				if let CallTarget::Fun(fun) = call.meth { Some(fun) } else { None },
+			_ => None,
+		}
+	}
 }
 impl HasType for E {
 	fn t(&self) -> Type {
