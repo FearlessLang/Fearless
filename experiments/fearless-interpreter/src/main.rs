@@ -49,7 +49,7 @@ fn main() {
 		E::SummonObj(SummonObj { rc: RC::Imm, def: program.lookup_type::<ExplicitDecId>(&"base.LList/1".try_into().unwrap()).unwrap().name.unique_hash() })
 	], entry_ret.t());
 	let mut interpreter = Interpreter::new(program, 0);
-	interpreter.run(entry_call.clone()).unwrap();
+	interpreter.run(&entry_call).unwrap();
 	println!("\nStack trace:\n{}", interpreter);
 	
 	// println!("{:?}", entry);

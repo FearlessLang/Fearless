@@ -1,6 +1,6 @@
 use crate::ast::{CallTarget, CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
 use crate::magic::MagicType;
-use crate::pretty_print::PrettyPrint;
+use crate::pretty_print::{Format, PrettyPrint};
 use crate::rc::format_rc;
 use crate::schema_capnp::RC;
 use hashbrown::HashMap;
@@ -81,9 +81,8 @@ impl<'a> Interpreter<'a> {
 			max_depth,
 		}
 	}
-	pub fn run(&mut self, entry: MCall) -> Result<()> {
-		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry))?;
-		let InterpreterE::MCall(entry) = entry else { unreachable!("non-call main expression") };
+	pub fn run(&mut self, entry: &MCall) -> Result<()> {
+		let entry = Self::allocate_m_call_captures(&CaptureContext::new(), entry)?;
 		let res = self.eval_call(entry);
 		match res {
 			Ok(res) => {
@@ -219,21 +218,9 @@ impl<'a> Interpreter<'a> {
 					panic!("X not found: {:?}", xt)
 				},
 			},
-			E::MCall(call) => {
-				let recv_value = Self::allocate_captures(c, &call.recv)?;
-				let args: Vec<InterpreterE> = call.args.iter()
-					.map(|arg| Self::allocate_captures(c, arg))
-					.collect::<Result<_>>()?;
-				let allocated_call = AllocatedMCall {
-					recv: Box::new(recv_value),
-					rc: call.rc,
-					meth: call.meth,
-					args: args.into_iter().collect(),
-					return_type: call.return_type.clone(),
-				};
-
-				Ok(InterpreterE::MCall(allocated_call))
-			},
+			E::MCall(call) =>
+				Self::allocate_m_call_captures(c, call)
+					.map(|call| InterpreterE::MCall(call)),
 			E::CreateObj(k) => {
 				let fat_meths = k.meths.iter()
 					.map(|(meth_id, meth)| {
@@ -256,13 +243,26 @@ impl<'a> Interpreter<'a> {
 			E::Computed(v) => Ok(InterpreterE::Value(v.clone())),
 		}
 	}
-	
-	pub(crate) fn inline(&mut self, e: &E) -> Result<Value> {
-		let allocated = Self::allocate_captures(&CaptureContext::new(), e)?;
-		match allocated {
-			InterpreterE::Value(value) => Ok(value),
-			InterpreterE::MCall(call) => self.eval_call(call),
-		}
+
+	fn allocate_m_call_captures(c: &CaptureContext, call: &MCall) -> Result<AllocatedMCall> {
+		let recv_value = Self::allocate_captures(c, &call.recv)?;
+		let args: Vec<InterpreterE> = call.args.iter()
+			.map(|arg| Self::allocate_captures(c, arg))
+			.collect::<Result<_>>()?;
+		let allocated_call = AllocatedMCall {
+			recv: Box::new(recv_value),
+			rc: call.rc,
+			meth: call.meth,
+			args: args.into_iter().collect(),
+			return_type: call.return_type.clone(),
+		};
+		Ok(allocated_call)
+	}
+
+	pub(crate) fn inline(&mut self, call: &MCall) -> Result<Value> {
+		// let mut ctx = CaptureContext::with_capacity(call.args.len() + 1);
+		let call = Self::allocate_m_call_captures(&CaptureContext::new(), call)?;
+		self.eval_call(call)
 	}
 }
 impl Display for Interpreter<'_> {
