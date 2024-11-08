@@ -10,6 +10,7 @@ use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Debug)]
@@ -40,22 +41,46 @@ impl StackFrame {
 }
 
 #[derive(Debug, Clone)]
-pub struct Interpreter {
-	program: Rc<Program>,
+enum ProgramBox<'a> {
+	Owned(Rc<Program>),
+	Borrowed(&'a Program),
+}
+impl<'a> Deref for ProgramBox<'a> {
+	type Target = Program;
+	fn deref(&self) -> &Self::Target {
+		match self {
+			ProgramBox::Owned(p) => &*p,
+			ProgramBox::Borrowed(p) => p,
+		}
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct Interpreter<'a> {
+	program: ProgramBox<'a>,
 	stack: VecDeque<StackFrame>,
 	depth: u32,
 	max_depth: u32,
 }
-impl Interpreter {
+impl Interpreter<'static> {
 	pub fn new(program: Program, max_depth: u32) -> Self {
 		Self {
-			program: Rc::new(program),
+			program: ProgramBox::Owned(Rc::new(program)),
 			stack: Default::default(),
 			depth: 0,
 			max_depth,
 		}
 	}
-
+}
+impl<'a> Interpreter<'a> {
+	pub fn with(program: &'a Program, max_depth: u32) -> Self {
+		Self {
+			program: ProgramBox::Borrowed(program),
+			stack: Default::default(),
+			depth: 0,
+			max_depth,
+		}
+	}
 	pub fn run(&mut self, entry: MCall) -> Result<()> {
 		let entry = Self::allocate_captures(&CaptureContext::new(), &E::MCall(entry))?;
 		let InterpreterE::MCall(entry) = entry else { unreachable!("non-call main expression") };
@@ -228,10 +253,19 @@ impl Interpreter {
 			},
 			E::SummonObj(k) => Ok(InterpreterE::Value(Value::summoned_obj(k))),
 			E::MagicValue(_, ty) => Ok(InterpreterE::Value(Value::Magic(ty.clone()))),
+			E::Computed(v) => Ok(InterpreterE::Value(v.clone())),
+		}
+	}
+	
+	pub(crate) fn inline(&mut self, e: &E) -> Result<Value> {
+		let allocated = Self::allocate_captures(&CaptureContext::new(), e)?;
+		match allocated {
+			InterpreterE::Value(value) => Ok(value),
+			InterpreterE::MCall(call) => self.eval_call(call),
 		}
 	}
 }
-impl Display for Interpreter {
+impl Display for Interpreter<'_> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		for frame in self.stack.iter() {
 				match self.program.lookup_type_by_hash(&frame.def) {
@@ -262,7 +296,7 @@ fn type_name_or_hash(program: &Program, obj: &Value) -> String {
 		.unwrap_or(obj.def().to_string())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
 	Obj(Rc<Obj>),
 	Magic(MagicType),
@@ -405,13 +439,13 @@ impl PrettyPrint for AllocatedMCall {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Obj {
 	k: Literal,
 	/// `mc` from our reduction, the capture context per-method
 	fat_meths: HashMap<blake3::Hash, CaptureContext<'static>>
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Literal {
 	Summoned(SummonObj),
 	Obj(Box<CreateObj>),
@@ -451,7 +485,7 @@ impl PrettyPrint for Literal {
 }
 
 /// `c` from our reduction, a capture context
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(transparent)]
 struct CaptureContext<'a> {
 	inner: HashMap<u32, Cow<'a, Value>>

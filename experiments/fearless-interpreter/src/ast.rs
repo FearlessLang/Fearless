@@ -360,6 +360,7 @@ pub enum E {
 	CreateObj(CreateObj),
 	SummonObj(SummonObj),
 	MagicValue(RC, magic::MagicType),
+	Computed(Value),
 }
 impl E {
 	fn parse<'ctx>(ctx: &mut ParseCtx<'ctx>, reader: schema_capnp::e::Reader<'ctx>) -> Result<Self> {
@@ -401,6 +402,7 @@ impl HasType for E {
 			E::CreateObj(k) => k.t(),
 			E::SummonObj(k) => k.t(),
 			E::MagicValue(rc, ty) => Type { rc: *rc, rt: RawType::Magic(ty.clone()) },
+			E::Computed(_) => unimplemented!("Computed value types should gotten in the interpreter"),
 		}
 	}
 }
@@ -420,6 +422,7 @@ impl PrettyPrint for E {
 				f.write_str(")")
 			},
 			E::MagicValue(_, ty) => ty.pretty_print(f, program),
+			E::Computed(v) => v.pretty_print(f, program),
 		}
 	}
 }
