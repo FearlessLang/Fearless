@@ -46,24 +46,24 @@ record ToJavaProgram(LogicMainJava main, MIR.Program program){
   }
   private ArrayList<JavaFile> generateFiles(){
     var res= new ArrayList<JavaFile>();
-    var gen= new JavaSingleCodegen(program);
+    var gen= new JavaTarget(program);
     for (MIR.Package pkg : program.pkgs()) {
       if (main.cachedPkg().contains(pkg.name())){ continue; }
       for (MIR.TypeDef def : pkg.defs().values()) {
         var funs= pkg.funs().stream()
           .filter(f->f.name().d().equals(def.name()))
           .toList();
-        String typeDefContent= gen.visitTypeDef(pkg.name(), def, funs);
+        gen.visitTypeDef(pkg.name(), def, funs);
+        var generated = gen.consume();
+        var typeDefContent = generated.buffer().toString();
         if(typeDefContent.isEmpty()){ continue; }
         String name= gen.id.getSimpleName(def.name());
         res.add(toFile(pkg.name(), name, typeDefContent));
+        generated.records().forEach((key, content) -> {
+          String implName = gen.id.getSimpleName(key)+"Impl";
+          res.add(toFile(key.pkg(), implName, content));
+        });
       }
-    }
-    for(var e : gen.freshRecords.entrySet()){
-      String pkg    = e.getKey().pkg();
-      String name   = gen.id.getSimpleName(e.getKey())+"Impl";
-      String content= e.getValue();
-      res.add(toFile(pkg, name, content));
     }
     return res;
   }

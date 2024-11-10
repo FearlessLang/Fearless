@@ -9,7 +9,7 @@ import ast.Program;
 import id.Id;
 import id.Mdf;
 
-final class StringIds{
+public final class StringIds{
   public static final StringIds $self = new StringIds();
   public Optional<String> getLiteral(Program p, Id.DecId d) {
     return p.superDecIds(d).stream()
@@ -98,7 +98,7 @@ final class StringIds{
     };
   private static final Map<String,String> keywordsMap = Stream.of(keywords)
     .collect(Collectors.toMap(e->e,e->"$"+e));
-  public String varName(String name){
+  public String varName(String name) {
     return Optional.ofNullable(keywordsMap.get(name))
       .orElse(name.replace("'","$")+"_m$");
   }

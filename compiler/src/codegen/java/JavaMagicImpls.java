@@ -725,8 +725,8 @@ public record JavaMagicImpls(
   private String getJavaRet(MIR.MT expectedT) {
     String ret = getTName.apply(expectedT);
     return switch (ret) {
-      default -> "(%s) null".formatted(ret);
       case "Long", "long", "Double", "double" -> "(%s) 0".formatted(ret);
+      default -> "(%s) null".formatted(ret);
     };
   }
 }

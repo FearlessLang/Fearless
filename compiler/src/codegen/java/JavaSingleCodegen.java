@@ -240,7 +240,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
   public String visitCreateObjNoSingleton(MIR.CreateObj createObj, boolean checkMagic){
     var name= createObj.concreteT().id();
-    var recordName= id.getSimpleName(name)+"Impl"; 
+    var recordName= id.getSimpleName(name)+"Impl";
     addFreshRecord(createObj, name, recordName);
     var captures= seq(createObj.captures(),x->visitX(x, checkMagic),", ");
     return "new "+recordName+"("+captures+")";
