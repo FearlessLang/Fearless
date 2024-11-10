@@ -1583,4 +1583,14 @@ public class TestJavaProgram {
     alias base.UTF8 as UTF8,
     Test: Main{sys -> sys.io.println(UTF8.fromBytes(List#(-28 .byte))!)}
     """, Base.mutBaseAliases);}
+
+  @Test void boolExprBlock() {ok(new Res(), """
+    package test
+    alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
+    alias base.True as True,
+    Test: base.Main{_ -> True ? {
+      .then -> Block#.return {Void},
+      .else -> Block#.return {Void},
+      }}
+    """);}
 }
