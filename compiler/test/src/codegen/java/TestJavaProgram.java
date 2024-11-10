@@ -136,6 +136,7 @@ public class TestJavaProgram {
     Test:Main{ _ -> Assert!(False, 9223372036854775808 .str, { Void }) }
     """);}
   @Test void veryLongLongIntFail() { fail("""
+    In position [###]/Dummy0.fear:4:31
     [E31 invalidNum]
     The number +9223372036854775808 is not a valid Int
     """, """
@@ -145,6 +146,7 @@ public class TestJavaProgram {
     Test:Main{ _ -> Assert!(False, +9223372036854775808 .str, { Void }) }
     """);}
   @Test void veryLongLongNatFail() { fail("""
+    In position [###]/Dummy0.fear:4:31
     [E31 invalidNum]
     The number 10000000000000000000000 is not a valid Nat
     """, """
@@ -152,6 +154,12 @@ public class TestJavaProgram {
     alias base.Main as Main, alias base.Assert as Assert, alias base.True as True, alias base.False as False,
     alias base.Void as Void,
     Test:Main{ _ -> Assert!(False, 10000000000000000000000 .str, { Void }) }
+    """);}
+  @Test void veryLongByteOverflow() { ok(new Res(), """
+    package test
+    alias base.Main as Main, alias base.Assert as Assert, alias base.True as True, alias base.False as False,
+    alias base.Void as Void, alias base.Block as Block,
+    Test:Main{ _ -> Block#(1000 .byte .assertEq(232 .byte)) }
     """);}
   @Test void negativeToStr() { ok(new Res("", "-123456789", 1), """
     package test
@@ -209,6 +217,12 @@ public class TestJavaProgram {
     alias base.Main as Main, alias base.Assert as Assert, alias base.True as True, alias base.False as False,
     alias base.Void as Void,
     Test:Main{ _ -> Assert!(False, (-0 - +2) .str, { Void }) }
+    """);}
+  @Test void floatSubtractionNeg() { ok(new Res("", "-2.3", 1), """
+    package test
+    alias base.Main as Main, alias base.Assert as Assert, alias base.True as True, alias base.False as False,
+    alias base.Void as Void,
+    Test:Main{ _ -> Assert!(False, (-0.0 - +2.3) .str, { Void }) }
     """);}
   @Test void subtractionUnderflow() { ok(new Res("", "9223372036854775807", 1), """
     package test

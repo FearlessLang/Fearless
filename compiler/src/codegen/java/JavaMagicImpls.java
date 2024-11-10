@@ -30,14 +30,9 @@ public record JavaMagicImpls(
 
       @Override public Optional<String> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return lit
-            .map(lambdaName->lambdaName.startsWith("+") ? lambdaName.substring(1) : lambdaName)
-            .map(lambdaName->Long.parseLong(lambdaName.replace("_", ""), 10)+"L")
-            .orElseGet(()->"((long)"+e.accept(gen, true)+")").describeConstable();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Int");
-        }
+        return lit
+          .map(lambdaName->Long.parseLong(lambdaName.replace("_", ""), 10)+"L")
+          .orElseGet(()->"((long)"+e.accept(gen, true)+")").describeConstable();
       }
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
         return Optional.ofNullable(_call(m, args));
@@ -101,13 +96,9 @@ public record JavaMagicImpls(
     return new MagicTrait<>() {
       @Override public Optional<String> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return lit
-            .map(lambdaName->Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+"L")
-            .orElseGet(()->"((long)"+e.accept(gen, true)+")").describeConstable();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Nat");
-        }
+        return lit
+          .map(lambdaName->Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+"L")
+          .orElseGet(()->"((long)"+e.accept(gen, true)+")").describeConstable();
       }
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
         return Optional.of(_call(m, args));
@@ -175,13 +166,9 @@ public record JavaMagicImpls(
 
       @Override public Optional<String> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return lit
-            .map(lambdaName->Double.parseDouble(lambdaName.replace("_", ""))+"d")
-            .orElseGet(()->"((double)"+e.accept(gen, true)+")").describeConstable();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Float");
-        }
+        return lit
+          .map(lambdaName->Double.parseDouble(lambdaName.replace("_", ""))+"d")
+          .orElseGet(()->"((double)"+e.accept(gen, true)+")").describeConstable();
       }
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
         return Optional.of(_call(m, args));
@@ -239,14 +226,9 @@ public record JavaMagicImpls(
     return new MagicTrait<>() {
       @Override public Optional<String> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          // Parse bytes as a long because Fearless bytes are u8 (unsigned), Java bytes are i8 (signed).
-          return lit
-            .map(lambdaName->"((byte)"+Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+")")
-            .orElseGet(()->"((byte)"+e.accept(gen, true)+")").describeConstable();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Byte");
-        }
+        return lit
+          .map(lambdaName->"((byte)"+Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+")")
+          .orElseGet(()->"((byte)"+e.accept(gen, true)+")").describeConstable();
       }
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
         return Optional.of(_call(m, args));

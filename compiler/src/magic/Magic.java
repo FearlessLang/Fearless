@@ -106,10 +106,10 @@ public class Magic {
   public static Optional<String> getLiteral(Program p, Id.DecId d) {
     if (isLiteral(d.name())) {return Optional.of(d.name());}
     var supers = p.superDecIds(d);
-    return supers.stream().filter(dec -> {
-      var name = dec.name();
-      return isLiteral(name);
-    }).map(Id.DecId::name).findFirst();
+    return supers.stream()
+      .map(Id.DecId::name)
+      .filter(Magic::isLiteral)
+      .findFirst();
   }
 
   public static boolean isLiteral(String name) {
@@ -127,7 +127,25 @@ public class Magic {
   public static Optional<CompileError> validateLiteral(Id.DecId id) {
     assert isLiteral(id.name());
     try {
-      getLiteralKind(id);
+      var kind = getLiteralKind(id);
+      // getLiteralKind is generous in what it allows, for some numeric types we need to be more strict.
+      // In general our rules match Java's, so we can delegate to Java's parsing (yes even with a prefix +)
+      try {
+        switch (kind) {
+          case Int -> {
+            var _ = Long.parseLong(id.name().replace("_", ""), 10);
+          }
+          case Nat -> {
+            var _ = Long.parseUnsignedLong(id.name().replace("_", ""), 10);
+          }
+          case Float -> {
+            var _ = Double.parseDouble(id.name().replace("_", ""));
+          }
+          case Str -> {}
+        }
+      } catch (NumberFormatException _) {
+        return Optional.of(Fail.invalidNum(id.name(), kind.toString()));
+      }
     } catch (InvalidLiteralException err) {
       return Optional.of(Fail.syntaxError(id + " is not a valid type name."));
     }

@@ -195,6 +195,7 @@ public class TestJavaProgramImm {
     Test:Main{ _ -> Assert!(False, 9223372036854775808 .str, { "" }) }
     """);}
   @Test void veryLongLongIntFail() { fail("""
+    In position [###]/Dummy0.fear:4:31
     [E31 invalidNum]
     The number +9223372036854775808 is not a valid Int
     """, """
@@ -204,6 +205,7 @@ public class TestJavaProgramImm {
     Test:Main{ _ -> Assert!(False, +9223372036854775808 .str, { "" }) }
     """);}
   @Test void veryLongLongNatFail() { fail("""
+    In position [###]/Dummy0.fear:4:31
     [E31 invalidNum]
     The number 10000000000000000000000 is not a valid Nat
     """, """

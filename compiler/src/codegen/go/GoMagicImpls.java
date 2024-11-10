@@ -24,14 +24,10 @@ public record GoMagicImpls(PackageCodegen gen, ast.Program p) implements magic.M
     return new MagicTrait<>() {
       @Override public Optional<Res> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return new Res(lit
-            .map(lambdaName->"int64("+(lambdaName.startsWith("+") ? lambdaName.substring(1) : lambdaName)+")")
-            .map(lambdaName->"int64("+Long.parseLong(lambdaName.replace("_", ""), 10)+"L)")
-            .orElseGet(()->"((long)"+e.accept(gen, true)+")")).opt();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Int");
-        }
+        return new Res(lit
+          .map(lambdaName->"int64("+(lambdaName.startsWith("+") ? lambdaName.substring(1) : lambdaName)+")")
+          .map(lambdaName->"int64("+Long.parseLong(lambdaName.replace("_", ""), 10)+"L)")
+          .orElseGet(()->"((long)"+e.accept(gen, true)+")")).opt();
       }
 
       @Override public Optional<Res> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
@@ -79,13 +75,9 @@ public record GoMagicImpls(PackageCodegen gen, ast.Program p) implements magic.M
     return new MagicTrait<>() {
       @Override public Optional<Res> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return new Res(lit
-            .map(lambdaName->"uint64("+Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+")")
-            .orElseGet(()->"uint64("+e.accept(gen, true)+")")).opt();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Nat");
-        }
+        return new Res(lit
+          .map(lambdaName->"uint64("+Long.parseUnsignedLong(lambdaName.replace("_", ""), 10)+")")
+          .orElseGet(()->"uint64("+e.accept(gen, true)+")")).opt();
       }
 
       @Override public Optional<Res> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
@@ -132,13 +124,9 @@ public record GoMagicImpls(PackageCodegen gen, ast.Program p) implements magic.M
     return new MagicTrait<>() {
       @Override public Optional<Res> instantiate() {
         var lit = getLiteral(p, name);
-        try {
-          return new Res(lit
-            .map(lambdaName->"float64("+Double.parseDouble(lambdaName.replace("_", ""))+")")
-            .orElseGet(()->"float64("+e.accept(gen, true)+")")).opt();
-        } catch (NumberFormatException ignored) {
-          throw Fail.invalidNum(lit.orElse(name.toString()), "Float");
-        }
+        return new Res(lit
+          .map(lambdaName->"float64("+Double.parseDouble(lambdaName.replace("_", ""))+")")
+          .orElseGet(()->"float64("+e.accept(gen, true)+")")).opt();
       }
 
       @Override public Optional<Res> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
