@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import static codegen.MethExprKind.Kind.*;
 import static magic.Magic.getLiteral;
 
+/// @deprecated This is the old Java codegen, see [JavaTarget] for the new one.
 public class JavaSingleCodegen implements MIRVisitor<String> {
   protected final MIR.Program p;
   protected final Map<MIR.FName, MIR.Fun> funMap;

@@ -8,7 +8,7 @@ import id.Id;
 
 import java.util.Optional;
 
-public interface JavaCodegenType extends CodegenType<JavaCodegenState> {
+public interface JavaCodegenType extends CodegenType<JavaCodegenState, JavaTarget> {
   @Override JavaTarget target();
   @Override default boolean canHandle(MIR.MT exprType) {
     return Optional.ofNullable(this.magicDec())
@@ -18,11 +18,11 @@ public interface JavaCodegenType extends CodegenType<JavaCodegenState> {
       })
       .orElse(false);
   }
-  @Override default void instantiate(MIR.MT t, JavaCodegenState state) {
-    target().standardType().instantiate(t, state);
+  @Override default void instantiate(MIR.MT t, MIR.CreateObj k, JavaCodegenState state) {
+    target().standardType().instantiate(t, k, state);
   }
   default void instantiateNoSingleton(MIR.MT t, MIR.CreateObj k, JavaCodegenState state) {
-    target().standardType().instantiate(t, state);
+    this.instantiate(t, k, state);
   }
   @Override default void call(MIR.MT t, MIR.MCall call, JavaCodegenState state) {
     target().standardType().call(t, call, state);
@@ -36,5 +36,9 @@ public interface JavaCodegenType extends CodegenType<JavaCodegenState> {
   }
   default Id.DecId magicDec() {
     return null;
+  }
+
+  interface MethImpl<S> {
+    void of(MIR.MT t, MIR.MCall call, JavaCodegenState state, S self);
   }
 }

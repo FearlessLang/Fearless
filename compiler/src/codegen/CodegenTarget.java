@@ -3,12 +3,14 @@ package codegen;
 import visitors.MIRVisitor;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-public interface CodegenTarget<T> extends MIRVisitor<Void> {
-  List<? extends CodegenType<T>> typeHandlers();
-  CodegenType<T> standardType();
+public interface CodegenTarget<T, S extends CodegenTarget<T, S>> extends MIRVisitor<Void> {
+  List<? extends CodegenType<T, S>> typeHandlers();
+  CodegenType<T, S> standardType();
   MIR.Program p();
-  default CodegenType<T> getHandler(MIR.MT t) {
+  void withState(T state, Consumer<S> task);
+  default CodegenType<T, S> getHandler(MIR.MT t) {
     return this.typeHandlers().stream()
       .filter(h->h.canHandle(t))
       .findFirst()

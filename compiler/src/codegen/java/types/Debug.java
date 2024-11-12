@@ -7,7 +7,7 @@ import id.Id;
 import magic.Magic;
 
 public record Debug(JavaTarget target) implements JavaCodegenType {
-  @Override public void instantiate(MIR.MT t, JavaCodegenState state) {
+  @Override public void instantiate(MIR.MT t, MIR.CreateObj k, JavaCodegenState state) {
     state.buffer().append("rt.Debug.$self");
   }
 

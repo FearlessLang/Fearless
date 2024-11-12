@@ -53,17 +53,18 @@ record ToJavaProgram(LogicMainJava main, MIR.Program program){
         var funs= pkg.funs().stream()
           .filter(f->f.name().d().equals(def.name()))
           .toList();
-        gen.visitTypeDef(pkg.name(), def, funs);
-        var generated = gen.consume();
-        var typeDefContent = generated.buffer().toString();
+        var typeDefContent = gen.visitTypeDef(pkg.name(), def, funs);
         if(typeDefContent.isEmpty()){ continue; }
         String name= gen.id.getSimpleName(def.name());
         res.add(toFile(pkg.name(), name, typeDefContent));
-        generated.records().forEach((key, content) -> {
-          String implName = gen.id.getSimpleName(key)+"Impl";
-          res.add(toFile(key.pkg(), implName, content));
-        });
       }
+      var generated = gen.consume();
+      assert generated.buffer().isEmpty();
+      generated.records().forEach((key, content) -> {
+        assert key.pkg().equals(pkg.name());
+        String implName = gen.id.getSimpleName(key)+"Impl";
+        res.add(toFile(generated.pkg(), implName, content));
+      });
     }
     return res;
   }

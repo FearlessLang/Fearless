@@ -58,6 +58,7 @@ public class Id {
   public record MethName(Optional<Mdf> mdf, String name, int num){
     public MethName{ assert validM(name) && num>=0; }
     public MethName(String name, int num) { this(Optional.empty(), name, num); }
+    public MethName(Mdf mdf, String name, int num) { this(Optional.of(mdf), name, num); }
     public MethName withMdf(Optional<Mdf> mdf) { return new MethName(mdf, name, num); }
     @Override public String toString(){
       var base = name+"/"+num;

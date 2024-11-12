@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static magic.Magic.getLiteral;
 
+/// @deprecated Part of the old Java codegen system. See [JavaTarget] for the new one.
 public record JavaMagicImpls(
     MIRVisitor<String> gen,
     Function<MIR.MT,String> getTName,

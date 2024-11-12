@@ -7,6 +7,7 @@ import codegen.MIR;
 import id.Id;
 import magic.Magic;
 
+/// @deprecated Part of the old Java codegen system. See [JavaTarget] for the new one.
 record TypeIds(JavaMagicImpls magic, StringIds id){
   public String getTName(MIR.MT t, boolean isRet) {
     var res= switch (t) {
