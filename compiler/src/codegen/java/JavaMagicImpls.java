@@ -152,7 +152,7 @@ public record JavaMagicImpls(
           return "base._NatAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+", "+args.get(1).accept(gen, true)+", null)";
         }
         if (m.equals(new Id.MethName(".hash", 1))) {
-          return args.getFirst().accept(gen, true) + ".int$mut(" + instantiate().orElseThrow() + ")";
+          return args.getFirst().accept(gen, true) + ".nat$mut(" + instantiate().orElseThrow() + ")";
         }
         if (m.equals(new Id.MethName(".offset", 1))) {
           return instantiate().orElseThrow()+" + "+args.getFirst().accept(gen, true);
