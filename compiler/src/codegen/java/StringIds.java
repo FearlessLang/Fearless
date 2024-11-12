@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ast.Program;
+import codegen.MIR;
 import id.Id;
 import id.Mdf;
 
@@ -47,6 +48,9 @@ public final class StringIds{
   }
   public String getMName(Mdf mdf, Id.MethName m) {
     return getBase(m.name())+"$"+mdf;
+  }
+  public String getFName(MIR.FName name) {
+    return getMName(name.mdf(), name.m())+"$fun";
   }
 
   public String getBase(String name) {

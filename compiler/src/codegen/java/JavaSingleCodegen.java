@@ -80,8 +80,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
     return "public interface "+shortName+impls+"{\n"
       + singletonGet + sigs + staticFuns + "}";
   }
-  public String visitSig(
-      MIR.Sig sig, Map<Id.MethName, MIR.Sig> leastSpecific) {
+  public String visitSig(MIR.Sig sig, Map<Id.MethName, MIR.Sig> leastSpecific) {
     // If params are different in my parent, we need to objectify
     var overriddenSig= this.overriddenSig(sig, leastSpecific);
     if (overriddenSig.isPresent()) {
@@ -96,7 +95,6 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
   public String visitMeth(MIR.Meth meth, MethExprKind kind, Map<Id.MethName, MIR.Sig> leastSpecific) {
     var overriddenSig = this.overriddenSig(meth.sig(), leastSpecific);
-
     var toSkip = overriddenSig.isPresent();
     var deleMeth = meth;
     if (toSkip){

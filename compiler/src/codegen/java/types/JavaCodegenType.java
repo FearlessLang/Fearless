@@ -31,6 +31,9 @@ public interface JavaCodegenType extends CodegenType<JavaCodegenState> {
   @Override default void type(MIR.MT t, JavaCodegenState state) {
     target().standardType().type(t, state);
   }
+  default void boxedType(MIR.MT t, JavaCodegenState state) {
+    type(t, state);
+  }
   default Id.DecId magicDec() {
     return null;
   }

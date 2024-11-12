@@ -1,7 +1,5 @@
 package codegen;
 
-import java.util.List;
-
 public interface CodegenType<T> {
   boolean canHandle(MIR.MT t);
   void instantiate(MIR.MT t, T apply);

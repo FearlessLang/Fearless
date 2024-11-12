@@ -1,19 +1,25 @@
 package codegen.java;
 
 import codegen.CodegenTarget;
-import codegen.CodegenType;
 import codegen.MIR;
 import codegen.ParentWalker;
+import codegen.Seq;
 import codegen.java.types.Debug;
 import codegen.java.types.JavaCodegenType;
 import codegen.java.types.Standard;
+import id.Id;
 import utils.Bug;
+import utils.Streams;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 
 public class JavaTarget implements CodegenTarget<JavaCodegenState> {
   public final StringIds id = new StringIds();
+  public final Map<MIR.FName, MIR.Fun> funMap;
   private final MIR.Program p;
   private final List<JavaCodegenType> typeHandlers;
   private final Standard standard;
@@ -21,6 +27,9 @@ public class JavaTarget implements CodegenTarget<JavaCodegenState> {
   private String pkg = "";
 
   public JavaTarget(MIR.Program p) {
+    this.funMap = p.pkgs().stream()
+      .flatMap(pkg->pkg.funs().stream())
+      .collect(Collectors.toMap(MIR.Fun::name, f->f));
     this.p = p;
     this.standard = new Standard(this);
     this.typeHandlers = List.of(
@@ -60,16 +69,33 @@ public class JavaTarget implements CodegenTarget<JavaCodegenState> {
     state.buffer().append(" {\n");
     def.singletonInstance().ifPresent(objK->{
       var handler = getHandler(objK.t());
-      state.buffer().append(shortName);
-      state.buffer().append(" $self = ");
+      state.buffer().append(shortName).append(" $self = ");
       handler.instantiateNoSingleton(objK.t(), objK, state);
       state.buffer().append(";\n");
     });
     var leastSpecific = ParentWalker.leastSpecificSigs(p, def);
-    // TODO: sigs
-    // TODO: Static funs
+    Seq.of(state.buffer(), "\n", def.sigs(), sig->visitSig(sig, leastSpecific));
+    Seq.of(state.buffer(), "\n", funs, this::visitFun);
     state.buffer().append("}\n");
+  }
 
+  public void visitSig(MIR.Sig sig, Map<Id.MethName, MIR.Sig> leastSpecific) {
+    // If params are different in my parent, we need to objectify
+    var overriddenSig= this.overriddenSig(sig, leastSpecific);
+    if (overriddenSig.isPresent()) {
+      visitSig(overriddenSig.get(), Map.of());
+      return;
+    }
+
+    getHandler(sig.rt()).boxedType(sig.rt(), state);
+    state.buffer().append(" ");
+    state.buffer().append(id.getMName(sig.mdf(), sig.name()));
+    state.buffer().append("(");
+    Seq.of(state.buffer(), sig.xs(), x->writeTypePair(state.buffer(), x));
+    state.buffer().append(");\n");
+  }
+
+  public void visitFun(MIR.Fun fun) {
     throw Bug.todo();
   }
 
@@ -88,6 +114,11 @@ public class JavaTarget implements CodegenTarget<JavaCodegenState> {
     return null;
   }
 
+  public void writeTypePair(StringBuilder buffer, MIR.X x) {
+    getHandler(x.t()).type(x.t(), new JavaCodegenState(state.pkg(), state.records(), buffer));
+    buffer.append(" ").append(id.varName(x.name()));
+  }
+
   private void writeImplsStr(MIR.TypeDef def, String fullName) {
     var its = def.impls().stream()
       .map(MIR.MT.Plain::id)
@@ -101,7 +132,19 @@ public class JavaTarget implements CodegenTarget<JavaCodegenState> {
     state.buffer().append(res);
   }
 
+  public Optional<MIR.Sig> overriddenSig(MIR.Sig sig, Map<Id.MethName, MIR.Sig> leastSpecific) {
+    var leastSpecificSig = leastSpecific.get(sig.name());
+    if (leastSpecificSig != null && Streams.zip(sig.xs(),leastSpecificSig.xs()).anyMatch((a, b)->!a.t().equals(b.t()))) {
+      return Optional.of(leastSpecificSig.withRT(sig.rt()));
+    }
+    return Optional.empty();
+  }
+
+  private final Map<MIR.MT, JavaCodegenType> handlerCache = new WeakHashMap<>();
   @Override public JavaCodegenType getHandler(MIR.MT t) {
-    return (JavaCodegenType) CodegenTarget.super.getHandler(t);
+    return handlerCache.computeIfAbsent(
+      t,
+      ti->(JavaCodegenType)CodegenTarget.super.getHandler(ti)
+    );
   }
 }
