@@ -1,6 +1,6 @@
 use crate::ast::{CallTarget, CreateObj, MCall, Meth, MethImpl, Program, RawType, SummonObj, Type, TypePair, E, THIS_X};
 use crate::magic::MagicType;
-use crate::pretty_print::{Format, PrettyPrint};
+use crate::pretty_print::PrettyPrint;
 use crate::rc::format_rc;
 use crate::schema_capnp::RC;
 use hashbrown::HashMap;

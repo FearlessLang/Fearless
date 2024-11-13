@@ -6,8 +6,9 @@
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
-        "linkedProjects": ["rt-libs/native-rt/Cargo.toml"]
+        "linkedProjects": ["native-runtime/Cargo.toml", "experiments/fearless-interpreter/Cargo.toml"]
       }
     }
-  }
+  },
+  "ensure_final_newline_on_save": true
 }

@@ -1,4 +1,4 @@
-use crate::ast::{Meth, MethImpl, MethName, Program};
+use crate::ast::{Meth, MethImpl, MethName};
 use crate::interp;
 use crate::interp::{InterpreterError, Value};
 use crate::magic::magic_meths::add_override;

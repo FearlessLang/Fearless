@@ -10,7 +10,7 @@ use capnp::message::{ReaderOptions, TypedReader};
 use hashbrown::{HashMap, HashSet};
 use itertools::{zip_eq, Itertools};
 use std::borrow::Cow;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 
 pub(crate) const THIS_X: u32 = 0;
 
@@ -378,7 +378,7 @@ impl E {
 							E::SummonObj(SummonObj { rc: t.rc, def: ty })
 						} else {
 							E::CreateObj(CreateObj::parse(ctx, k?, t)?)
-						}	
+						}
 					},
 					RawType::Magic(ty) => E::MagicValue(t.rc, ty),
 					_ => bail!("Expected a plain type for CreateObj: {:?}", t),
@@ -459,7 +459,7 @@ impl MCall {
 		let args = reader.get_args()?.iter()
 			.map(|reader| E::parse(ctx, reader))
 			.collect::<Result<_>>()?;
-		
+
 		Ok(Self {
 			recv,
 			rc: reader.get_rc()?,
