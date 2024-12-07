@@ -13,6 +13,11 @@ blake3 = "1.5.4"
 itertools = "0.13.0"
 dashmap = { version = "6.1.0" }
 regex = "1.11.1"
+# cranelift:
+cranelift = "0.113.1"
+cranelift-module = "0.113.1"
+cranelift-jit = "0.113.1"
+cranelift-native = "0.113.1"
 
 [profile.release]
 lto = true

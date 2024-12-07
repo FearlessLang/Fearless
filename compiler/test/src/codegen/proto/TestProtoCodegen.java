@@ -45,6 +45,17 @@ public class TestProtoCodegen {
 //    Err.strCmp(expected, res.toString());
   }
 
+  @Test void verySimple() { ok("""
+    """, "fake.Fake", false, """
+    package test
+    alias base.Nat as Nat,
+    Usage: { #: Nat -> 42, }
+    """, """
+    package base
+    _NatInstance: Nat{}
+    Nat: {}
+    """); }
+
   @Test void capturing() { ok("""
     """, "fake.Fake", false, Base.minimalBase, """
     package test

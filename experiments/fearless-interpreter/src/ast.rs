@@ -278,7 +278,7 @@ pub struct Type {
 	pub rt: RawType
 }
 impl Type {
-	fn parse(reader: schema_capnp::t::Reader) -> Result<Self> {
+	pub(crate) fn parse(reader: schema_capnp::t::Reader) -> Result<Self> {
 		Ok(Self {
 			rc: reader.get_rc()?,
 			rt: match reader.which()? {
