@@ -1210,8 +1210,6 @@ public class TestJavaProgram {
     """, Base.mutBaseAliases);}
   @Test void linkedHashMap1() { ok(new Res("23\n32", "", 0), """
     package test
-    alias base.Maps as Maps,
-    alias base.LinkedHashMap as LinkedHashMap,
     Test:Main{ s -> Block#
       .let[mut IO] io = {s.io}
       .let[mut LinkedHashMap[Str,Nat]] m = {Maps.hashMap({k1,k2 -> k1 == k2}, {k->k})}

@@ -13,13 +13,32 @@ IsoPod[T:imm,iso]: {
     }},
   mut !: iso T,
   mut .next(val: iso T): Void,
+  /// Consumes the IsoPod, any dependent flows will also be stopped.
+  mut .stop: Void -> Block#(this!),
   read .isDead: Bool -> this.isAlive.not,
   mut .consume[R](f: mut IsoConsumer[T, R]): R -> this.isAlive ? { .then -> f.some(this!), .else -> f.empty },
   mut :=(val: iso T): Void -> this.next(val),
   mut .mutate(f: F[mut T, Void]): mut Action[Void] -> {m -> this.consume{
     .some(x) -> Block#(this.next(_IsoMutator#(f, x)), m.ok{}),
     .empty -> m.info(Infos.msg "The IsoPod was empty"),
-    }}
+    }},
+  /// Runs a flow over the IsoPod, emitting whenever `.next` is called on the IsoPod.
+  /// This does not make parallelism observable to non-OC code because the context the flow is
+  /// run in has an imm view of the world. Only other OCs could observe any parallelism.
+  mut .flow[R](f: F[mut Flow[mut T], mut Flow[R]]): Void,
+  /// Runs a flow over the IsoPod, emitting whenever `.next` is called on the IsoPod.
+  /// This does not make parallelism observable to non-OC code because the context the flow is
+  /// run in has an imm view of the world. Only other OCs could observe any parallelism.
+  /// The flow that this returns will only be nondeterministic if the IsoPod was created by an OC
+  /// (and therefore is an OC itself, and the mut Flow[R] is also an OC and thus is allowed to be
+  /// nondeterministic on mut methods). If the IsoPod was created by a non-OC, then the returned
+  /// flow could not observe nondeterminism/parallelism because only other sequential code could ever
+  /// update the IsoPod. As with `.flow/0`, this method eagerly runs the flow returned by `f`. To avoid
+  /// memory leaks there is a `historySize` option which can be used to limit the number of values that
+  /// are saved to send to anyone who consumes the flow this returns.
+  /// If the historySize is 0, then flows will not see any values that were computed before
+  /// the .flow method was called. By default history size is unbounded.
+  mut .flow[R](f: F[mut Flow[mut T], mut Flow[R]], opts: IsoPodFlowOpts): mut Flow[R],
   }
 IsoConsumer[T:imm,iso, R]:{
   mut .some(x: iso T): R,
@@ -34,13 +53,24 @@ IsoViewer'[T:imm,iso, R]:{
   }
 _IsoMutator:{ #[T,R](f: F[mut T, R], val: mut T): mut T -> Block#(f#val, val) }
 
+IsoPodFlowOpts: {
+  .historySize: HistorySize -> {},
+  }
+HistorySize: {.match[R](m: mut HistorySizeMatch[R]): R -> m.unbounded}
+HistorySizeMatch[R]: {
+  mut .unbounded: R,
+  mut .bounded(n: Nat): R,
+  }
+
 _MagicIsoPodImpl: {
   #[T:iso](val: iso T): mut _MagicIsoPodImpl[iso T] -> Magic!,
   .toIsoPod[T:iso](inner: mut _MagicIsoPodImpl[iso T]): mut IsoPod[iso T] -> {
-    read .isAlive: Bool -> inner.isAlive,
+    .isAlive -> inner.isAlive,
     read .peek[R](f: mut IsoViewer[iso T, R]): R -> inner.peek[R](f),
-    mut !: iso T -> inner!,
-    mut .next(val: iso T): Void -> inner.next(val),
+    ! -> inner!,
+    .next(val) -> inner.next(val),
+    .flow(f) -> inner.flow(f),
+    .flow(f, opts) -> inner.flow(f, opts),
     },
   }
 _MagicIsoPodImpl[T:imm,iso]: {
@@ -48,6 +78,8 @@ _MagicIsoPodImpl[T:imm,iso]: {
   read .peek[R](f: mut IsoViewer[T, R]): R -> Magic!,
   mut !: iso T -> Magic!,
   mut .next(val: iso T): Void -> Magic!,
+  mut .flow[R](f: F[mut Flow[mut T], mut Flow[R]]): Void -> Magic!,
+  mut .flow[R](f: F[mut Flow[mut T], mut Flow[R]], opts: IsoPodFlowOpts): mut Flow[R] -> Magic!,
   }
 
 // TODO The idea:

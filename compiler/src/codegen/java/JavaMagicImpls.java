@@ -426,24 +426,7 @@ public record JavaMagicImpls(
       @Override public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
         if (m.equals(new Id.MethName(Optional.of(Mdf.imm), "#", 1))) {
           MIR.E x = args.getFirst();
-          return Optional.of(String.format("""
-            new base.caps._MagicIsoPodImpl_1(){
-              private Object x = %s;
-              private boolean isAlive = true;
-
-              public base.Bool_0 isAlive$read() { return this.isAlive ? base.True_0.$self : base.False_0.$self; }
-              public Object peek$read(base.caps.IsoViewer_2 f) { return this.isAlive ? ((base.caps.IsoViewer_2)f).some$mut(this.x) : ((base.caps.IsoViewer_2)f).empty$mut(); }
-              public Object $exclamation$mut() {
-                if (!this.isAlive) {
-                  base.Error_0.$self.msg$imm(rt.Str.fromJavaStr("Cannot consume an empty IsoPod."));
-                  return null;
-                }
-                this.isAlive = false;
-                return this.x;
-              }
-              public base.Void_0 next$mut(Object x) { this.isAlive = true; this.x = x; return new base.Void_0(){}; }
-            }
-            """, x.accept(gen, true)));
+          return Optional.of(String.format("new rt.IsoPod(%s)", x.accept(gen, true)));
         }
         return Optional.empty();
       }

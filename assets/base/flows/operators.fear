@@ -45,6 +45,7 @@ _Filter: {
 //    .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
+      .isFinite -> upstream.isFinite,
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
@@ -76,6 +77,7 @@ _Map: {
   #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return  {{'op
+      .isFinite -> upstream.isFinite,
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
@@ -108,6 +110,7 @@ _FlatMap: {
     .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
+      .isFinite -> upstream.isFinite,
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
@@ -154,6 +157,7 @@ _With: {
     .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[A]]]] sink = {Var#{}}
     .return{{'op
+      .isFinite -> upstream.isFinite,
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
