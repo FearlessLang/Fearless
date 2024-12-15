@@ -6,20 +6,18 @@ import base.caps.IsoPodFlowOpts_0;
 import base.caps.IsoViewer_2;
 import base.flows.*;
 import rt.flows.FlowCreator;
-import rt.flows.pipelineParallel.PipelineParallelFlowK;
 
 import java.util.IdentityHashMap;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
   private static final Info_0 consumeErrorInfo = Infos_0.$self.msg$imm(Str.fromJavaStr("Cannot consume an empty IsoPod."));
 
   private Object x;
-  private IdentityHashMap<FlowOp, FlowOp> flows = new IdentityHashMap<>();
+  private final IdentityHashMap<FlowOp, FlowOp> flows = new IdentityHashMap<>();
   public IsoPod(Object x) {
     assert x != null;
     this.x = x;
@@ -32,6 +30,7 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
     var res = x;
     x = null;
     flows.values().forEach(FlowOp::stop$mut);
+    flows.clear();
     return res;
   }
 
@@ -50,7 +49,7 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
   }
 
   @Override public Void_0 flow$mut(F_2 f_m$) {
-    var op = new FlowOp(new UnboundedBuffer(), op_->flows.remove(op_));
+    var op = new FlowOp(new UnboundedBuffer());
     flows.put(op, op);
     var flow = (Flow_1)f_m$.$hash$read(FlowCreator.fromFlowOp(_SeqFlow_0.$self, op, -1));
     var flowOp = flow.unwrapOp$mut(_UnwrapFlowToken_0.$self);
@@ -79,7 +78,7 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
         return new BoundedBuffer(n_m$);
       }
     });
-    var op = new FlowOp(buffer, op_->flows.remove(op_));
+    var op = new FlowOp(buffer);
     flows.put(op, op);
     var flow = (Flow_1)f_m$.$hash$read(FlowCreator.fromFlowOp(_SeqFlow_0.$self, op, -1));
     Thread.ofVirtual().start(()->flow.unwrapOp$mut(_UnwrapFlowToken_0.$self).forRemaining$mut(new _Sink_1() {
@@ -99,12 +98,10 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
   }
 
   private static class FlowOp implements FlowOp_1 {
-    private Buffer buffer;
+    private final Buffer buffer;
     private boolean isRunning = true;
-    Consumer<FlowOp> onStop;
-    FlowOp(Buffer buffer, Consumer<FlowOp> onStop) {
+    FlowOp(Buffer buffer) {
       this.buffer = buffer;
-      this.onStop = onStop;
     }
 
     public void next(Object e) {
@@ -119,8 +116,6 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
     }
     @Override public Void_0 stop$mut() {
       isRunning = false;
-      buffer = null;
-      onStop.accept(this);
       return Void_0.$self;
     }
     @Override public Bool_0 isRunning$mut() {
@@ -146,15 +141,15 @@ public class IsoPod implements base.caps._MagicIsoPodImpl_1 {
   private static class BoundedBuffer implements Buffer {
     private static class Node {
       final Object value;
-      volatile Node prev;
-      volatile Node next;
+      Node prev;
+      Node next;
       Node(Object value) {
         this.value = value;
       }
     }
 
-    private volatile Node head = null;
-    private volatile Node tail = null;
+    private Node head = null;
+    private Node tail = null;
     private final long capacity;
     private int size = 0;
 
