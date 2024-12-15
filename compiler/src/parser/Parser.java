@@ -28,9 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public record Parser(Path fileName,String content){
-  public Parser of(String fileName){ return of(Paths.get(fileName)); }
+  public static Parser of(String fileName){ return of(Paths.get(fileName)); }
   public static final Path dummy = Path.of("Dummy.fear");
-  public Parser of(Path path){
+  public static Parser of(Path path){
     assert Files.exists(path);
     assert !Files.isDirectory(path);
     try{ return new Parser(path,codeFromPath(path)); }
@@ -97,7 +97,7 @@ public record Parser(Path fileName,String content){
     FearlessParser.NudeTContext res = p.nudeT();
     var ok = errorst.isEmpty() && errorsp.isEmpty();
     if(ok){ return new FullEAntlrVisitor(fileName,s->Optional.empty()).visitNudeT(res); }
-    throw Bug.unreachable();
+    throw Fail.syntaxError(errorsp.toString());
   }
   
   public boolean parseX(){ return parseId(p->p.nudeX().getText());}

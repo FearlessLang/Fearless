@@ -31,6 +31,11 @@ Flow[E]: Sealed, Extensible[Flow[E]], _NonTerminalOps[E], _TerminalOps[E]{
     .return {cont#(splitResult, selfFlow)},
   mut .join(j: Joinable[E]): E -> j.join(this),
   mut .unwrapOp(unwrap: mut _UnwrapFlowToken): mut FlowOp[E],
+  mut .only: mut Action[E] -> {res -> Block#
+    .let found = {this.limit(2).list}
+    .if {found.size == 1} .return {res.ok(found.get(0))}
+    .return {res.info(Infos.msg("Expected exactly one element, found " + (found.size.str)))}
+    },
   }
 _UnwrapFlowToken: {}
 
@@ -38,8 +43,9 @@ _NonTerminalOps[E]: {
   mut .filter(predicate: read F[E, Bool]): mut Flow[E],
   mut .map[R](f: read F[E, R]): mut Flow[R],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
-//  mut .chain(other: mut Flow[R]): mut Flow[R], // TODO: maybe
-
+  /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
+  /// flows stop.
+  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
   mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
 
@@ -53,6 +59,9 @@ _NonTerminalOps[E]: {
     )}),
   }
 _TerminalOps[E]: Sealed{
+  // has to be magic because of strong exception safety (flows are mut and thus cannot be in a Try)
+//  mut .action[R:iso,imm,mut,mutH,read,readH](terminalOp: read F[mut Flow[E],R]): mut Action[R] -> Todo!,
+
   mut .first: mut Opt[E],
   mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R],
   mut .fold[S](acc: S, f: read F[S,E,S]): S,
@@ -75,7 +84,7 @@ _TerminalOps[E]: Sealed{
       .greater -> max,
       }
     }})
-  }
+    }
 
 // TODO: move all of these extension methods onto the data-types, i.e. myflow#"," to join with "," or myflow#(Int.sum) for summing
 _FlowExtensions: {
@@ -87,10 +96,17 @@ _FlowExtensions: {
   .sum: mut Extension[mut Flow[Int], Int] -> {flow -> flow.fold[Int](+0, {acc, e -> acc + e})},
   .uSum: mut Extension[mut Flow[Nat], Nat] -> {flow -> flow.fold[Nat](0, {acc, e -> acc + e})},
   .fSum: mut Extension[mut Flow[Float], Float] -> {flow -> flow.fold[Float](0.0, {acc, e -> acc + e})},
+
+  .enumerate[E:imm]: mut Extension[mut Flow[E], mut Flow[Enumerated[E]]] -> {flow ->
+    flow.actor[mut Count[Nat],Enumerated[E]](Count.nat(0), {downstream, i, e ->
+      Block#(downstream#(_Enumerateds#(i++, e)), {})
+      })
+    },
   }
 
 EmptyFlow[E]: Flow[E]{
   .filter(p) -> this,
+  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> mut EmptyFlow[imm R],
@@ -117,3 +133,10 @@ _LimitSize: {#(n: Nat, size: Opt[Nat]): Opt[Nat] ->
     beforeLimit > n ? { .then -> n, .else -> beforeLimit, }
     }
   }
+
+_Enumerateds: {#[E:imm](i: Nat, e: E): Enumerated[E] -> Enumerated[E:imm]: {
+  .i: Nat -> i,
+  .e: E -> e,
+  }}
+
+Pair[A,B]: {mut .a: A, mut .b: B}

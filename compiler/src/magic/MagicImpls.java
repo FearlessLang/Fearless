@@ -10,6 +10,7 @@ public interface MagicImpls<R> {
     if (isMagic(Magic.Int, e)) { return Optional.ofNullable(int_(e)); }
     if (isMagic(Magic.Nat, e)) { return Optional.ofNullable(nat(e)); }
     if (isMagic(Magic.Float, e)) { return Optional.ofNullable(float_(e)); }
+    if (isMagic(Magic.Byte, e)) { return Optional.ofNullable(byte_(e)); }
     if (isMagic(Magic.Str, e)) { return Optional.ofNullable(str(e)); }
     if (isMagic(Magic.Bool, e)) { return Optional.ofNullable(bool(e)); }
     if (isMagic(Magic.Debug, e)) { return Optional.ofNullable(debug(e)); }
@@ -26,6 +27,11 @@ public interface MagicImpls<R> {
     if (isMagic(Magic.ListK, e)) { return Optional.ofNullable(listK(e)); }
     if (isMagic(Magic.FlowRange, e)) { return Optional.ofNullable(flowRange(e)); }
     if (isMagic(Magic.CheapHash, e)) { return Optional.ofNullable(cheapHash(e)); }
+    if (isMagic(Magic.RegexK, e)) { return Optional.ofNullable(regexK(e)); }
+    if (isMagic(Magic.UTF8, e)) { return Optional.ofNullable(utf8(e)); }
+    if (isMagic(Magic.UTF16, e)) { return Optional.ofNullable(utf16(e)); }
+    if (isMagic(Magic.MapK, e)) { return Optional.ofNullable(mapK(e)); }
+    if (isMagic(Magic.BlackBox, e)) { return Optional.ofNullable(blackBox(e)); }
     return Magic.ObjectCaps.stream()
       .filter(target->isMagic(target, e))
       .map(target->Optional.ofNullable(objCap(target, e)))
@@ -47,6 +53,7 @@ public interface MagicImpls<R> {
   MagicTrait<MIR.E,R> int_(MIR.E e);
   MagicTrait<MIR.E,R> nat(MIR.E e);
   MagicTrait<MIR.E,R> float_(MIR.E e);
+  MagicTrait<MIR.E,R> byte_(MIR.E e);
   MagicTrait<MIR.E,R> str(MIR.E e);
   MagicTrait<MIR.E,R> asciiStr(MIR.E e);
   MagicTrait<MIR.E,R> debug(MIR.E e);
@@ -54,6 +61,10 @@ public interface MagicImpls<R> {
   MagicTrait<MIR.E,R> isoPodK(MIR.E e);
   MagicTrait<MIR.E,R> assert_(MIR.E e);
   MagicTrait<MIR.E,R> cheapHash(MIR.E e);
+  MagicTrait<MIR.E,R> regexK(MIR.E e);
+  default MagicTrait<MIR.E,R> blackBox(MIR.E e) { return null; }
+  default MagicTrait<MIR.E,R> utf8(MIR.E e) { return null; }
+  default MagicTrait<MIR.E,R> utf16(MIR.E e) { return null; }
   default MagicTrait<MIR.E,R> bool(MIR.E e) { return null; }
   default MagicTrait<MIR.E,R> abort(MIR.E e) { return null; }
   default MagicTrait<MIR.E,R> magicAbort(MIR.E e) { return null; }
@@ -65,6 +76,7 @@ public interface MagicImpls<R> {
   default MagicTrait<MIR.E,R> pipelineParallelSinkK(MIR.E e) { return null; }
   default MagicTrait<MIR.E,R> dataParallelFlowK(MIR.E e) { return null; }
   default MagicTrait<MIR.E,R> objCap(Id.DecId magicTrait, MIR.E e) { return null; }
+  default MagicTrait<MIR.E,R> mapK(MIR.E e) { return null; }
   default MagicCallable<MIR.E,R> variantCall(MIR.E e) { return null; }
   ast.Program p();
 

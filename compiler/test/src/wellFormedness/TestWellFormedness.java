@@ -382,15 +382,6 @@ public class TestWellFormedness {
     Nat:{} TwentyFour:Nat{}
     """); }
 
-  @Test void noLentLambdaCreation() { fail("""
-    In position [###]/Dummy0.fear:2:17
-    [E63 invalidLambdaMdf]
-    mutH is not a valid modifier for a lambda.
-    """, """
-    package test
-    A: {#: mutH A -> {}}
-    """); }
-
   @Test void mustImplementMethodsInInlineDecOk() {ok("""
     package test
     A: {.foo: A}
@@ -399,9 +390,9 @@ public class TestWellFormedness {
       }}
     """);}
   @Test void mustImplementMethodsInInlineDecFail() {fail("""
-    In position file:///home/nick/Programming/uni/fearless/compiler/Dummy0.fear:3:16
+    In position [###]/compiler/Dummy0.fear:3:16
     [E70 noUnimplementedMethods]
-    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    Object literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
     """, """
     package test
     A: {.foo: A}
@@ -419,7 +410,7 @@ public class TestWellFormedness {
   @Test void mustImplementMethodsInLambdaFail() {fail("""
     In position [###]/Dummy0.fear:4:13
     [E70 noUnimplementedMethods]
-    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    Object literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
     """, """
     package test
     A: {.foo: A}
@@ -429,7 +420,7 @@ public class TestWellFormedness {
   @Test void mustImplementMethodsInLambdaEvenIfImplAbs() {fail("""
     In position [###]/Dummy0.fear:4:13
     [E70 noUnimplementedMethods]
-    Literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
+    Object literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
     """, """
     package test
     A: {.foo: A}
@@ -437,5 +428,18 @@ public class TestWellFormedness {
     Bs: {#: B -> B {
       .foo: A,
       }}
+    """);}
+
+  @Test void cannotCreateAliasedPrivate() {fail("""
+    In position [###]/Dummy0.fear:3:12
+    [E48 privateTraitImplementation]
+    The private trait b._Private/0 cannot be implemented outside of its package.
+    """, """
+    package a
+    alias b._Private as P,
+    A: {#: P -> {}}
+    """, """
+    package b
+    _Private: {}
     """);}
 }

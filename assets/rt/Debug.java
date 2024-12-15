@@ -2,13 +2,16 @@ package rt;
 
 import base.Void_0;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class Debug implements base.Debug_0 {
   public static final Debug $self = new Debug();
 
   @Override public Void_0 println$imm(Object x) {
-    NativeRuntime.println(toStr(x).utf8());
+    NativeRuntime.printlnErr(toStr(x).utf8());
     return Void_0.$self;
   }
 
@@ -17,7 +20,7 @@ public final class Debug implements base.Debug_0 {
   }
 
   @Override public Object $hash$imm(Object x) {
-    NativeRuntime.println(toStr(x).utf8());
+    NativeRuntime.printlnErr(toStr(x).utf8());
     return x;
   }
 
@@ -39,6 +42,16 @@ public final class Debug implements base.Debug_0 {
     }
   }
 
+  public static String demangleStackTrace(StackTraceElement[] stackTrace) {
+    return Arrays.stream(stackTrace)
+      .map(frame -> {
+        var typeName = typeNameFromClassName(frame.getClassName()).orElse("<runtime %s>".formatted(frame.getClassName()));
+        // TODO: method names etc.
+        return typeName;
+      })
+      .collect(Collectors.joining("\n"));
+  }
+
   private static final Pattern FEARLESS_TYPE_NAME = Pattern.compile("(.+)_(\\d+)(Impl)?(\\[.*])?$");
   private static Str demangle(Object x) {
     var strValue = x.toString();
@@ -47,12 +60,17 @@ public final class Debug implements base.Debug_0 {
     }
 
     var className = x.getClass().getName();
+    var typeName = typeNameFromClassName(className)
+      .orElseThrow(() -> new RuntimeException("Cannot extract type name from "+strValue));
+    return Str.fromJavaStr(typeName);
+  }
+  private static Optional<String> typeNameFromClassName(String className) {
     var matcher = FEARLESS_TYPE_NAME.matcher(className);
     if (!matcher.matches()) {
-      throw new RuntimeException("Cannot extract type name from "+strValue);
+      return Optional.empty();
     }
     var typeName = matcher.group(1);
     var nGens = Integer.parseInt(matcher.group(2), 10);
-    return Str.fromJavaStr(typeName+"/"+nGens);
+    return (typeName+"/"+nGens).describeConstable();
   }
 }

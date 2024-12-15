@@ -1,11 +1,9 @@
 package failure;
 
 
+import errmsg.BetterErrMsgs;
 import files.Pos;
-import org.antlr.v4.runtime.ANTLRErrorListener;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 
@@ -29,6 +27,13 @@ public record ParserErrors(URI fileName) implements ANTLRErrorListener {
   }
 
   public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+    TokenStream input = ((Parser) recognizer).getInputStream();
+    try {
+      String betterMsg = new BetterErrMsgs(input.getText(), offendingSymbol, msg).syntaxError();
+      throw Fail.syntaxError(betterMsg).pos(Pos.of(this.fileName, line, charPositionInLine));
+    } catch (AssertionError err) {
+      System.err.println("Error in BetterErrMsgs, falling back: " + err + " with message: " + err.getMessage());
+    }
     throw Fail.syntaxError(msg).pos(Pos.of(this.fileName, line, charPositionInLine));
   }
 

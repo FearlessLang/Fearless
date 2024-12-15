@@ -66,6 +66,7 @@ record MultiSigBuilder(
   boolean filterExpectedRes(T resToAdd){
     if(expectedRes.isEmpty()){ return true; }
     return expectedRes.stream()
+      .filter(t -> t.isGX() == resToAdd.isGX())
       .map(T::mdf)
       .anyMatch(mi->mdfSubtypeWithBounds(mi,resToAdd));
   }
@@ -98,7 +99,7 @@ record MultiSigBuilder(
       recvMdfs.add(recvMdf);
       rets.add(addRet);
       transformMuts(mutIdx);
-      kinds.add(STR."MutHPromPar(\{mutIdx})");
+      kinds.add("MutHPromPar(" + mutIdx + ")");
     }
   }
   void transformMuts(int toTransform) {
@@ -157,7 +158,7 @@ record MultiSigBuilder(
     assert m.isSyntaxMdf():
       "["+m+"]";
     return switch(m){
-      case mut->Mdf.iso;
+      case mut,mutH->Mdf.iso;
       case read, readH ->Mdf.imm;
       default ->m;
     };

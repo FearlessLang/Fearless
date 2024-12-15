@@ -9,7 +9,7 @@ public interface Random {
 		private final static SecureRandom rng = new SecureRandom();
 		@Override public Long $hash$mut() {
 			long res;
-			do { res = ByteBuffer.wrap(rng.generateSeed(8)).getLong(); } while (res == 0);
+			do { res = rt.Str.wrap(rng.generateSeed(8)).getLong(); } while (res == 0);
 			return res;
 		}
 	}

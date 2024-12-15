@@ -4,11 +4,8 @@ package failure;
 import ast.E;
 import ast.Program;
 import ast.T;
-import id.Id;
-import id.Mdf;
+import errmsg.typeSystem.TypeSystemMsg;
 import program.typesystem.MultiSig;
-import program.typesystem.XBs;
-import utils.Bug;
 
 import java.net.URI;
 import java.util.List;
@@ -22,7 +19,7 @@ public record TypingAndInferenceErrors(Program p, URI fileName) {
     var errorProcessor = new TypingAndInferenceErrors(p, error.posOrUnknown().fileName());
     return switch (ErrorCode.fromCode(error.code())) {
       // TODO: match on error types you want to improve
-      case undefinedMethod -> new PlainError(errorProcessor.undefinedMeth(error));
+      case undefinedMethod -> TypeSystemMsg.undefinedMeth(error, p);
       default -> error;
     };
   }
@@ -32,23 +29,10 @@ public record TypingAndInferenceErrors(Program p, URI fileName) {
     var errorProcessor = new TypingAndInferenceErrors(p, error.posOrUnknown().fileName());
     return switch (ErrorCode.fromCode(error.code())) {
       // TODO: match on error types you want to improve
-      case undefinedMethod -> new PlainError(errorProcessor.undefinedMeth(error));
-      case invalidMethodArgumentTypes -> errorProcessor.invalidMethodArgumentTypes(error);
+      case undefinedMethod -> TypeSystemMsg.undefinedMeth(error, p).parentPos(error.pos());
+      case invalidMethodArgumentTypes -> errorProcessor.invalidMethodArgumentTypes(error).parentPos(error.pos());
       default -> error;
     };
-  }
-
-  public String undefinedMeth(CompileError rawError) {
-    // TODO: improve this error in some way
-    ast.T recvT = switch (rawError.attributes.get("recvT")) {
-      case astFull.T t -> t.toAstT();
-      case ast.T t -> t;
-      default -> throw Bug.unreachable();
-    };
-    var name = (Id.MethName) rawError.attributes.get("name");
-    var ms = p().meths(XBs.empty(), Mdf.recMdf, recvT.itOrThrow(), 0);
-
-    return rawError+"\nextra info for experts:\n"+ms;
   }
 
   public CompileError invalidMethodArgumentTypes(CompileError rawError) {
@@ -60,16 +44,16 @@ public record TypingAndInferenceErrors(Program p, URI fileName) {
     var sigs = (MultiSig) rawError.attributes.get("sigs");
     var e = (E.MCall) rawError.attributes.get("mCall");
     List<String> argTypesWithImpls = addImplsToArgTypes(argTypes);
-    var msg= STR."Method \{e.name()} called in position \{e.posOrUnknown()} can not be called with current parameters of types:\n\{argTypesWithImpls}";
+    var msg= "Method " + e.name() + " called in position " + e.posOrUnknown() + " cannot be called with current parameters of types:\n" + argTypesWithImpls;
     return of(msg+"\n"+sigs);
   }
   private List<String> addImplsToArgTypes(List<T> argTypes) {
     return argTypes.stream()
-      .map(t->t.<String>match(
+      .map(t->t.match(
         _ -> t.toString(),
-        it -> STR."\{t} (\{p.of(it.name()).lambda().its().stream()
-          .map(iti->iti.name().toString())
-          .collect(Collectors.joining(", "))})"
+        it -> t + " (" + p.of(it.name()).lambda().its().stream()
+          .map(iti -> iti.name().toString())
+          .collect(Collectors.joining(", ")) + ")"
       ))
       .toList();
   }

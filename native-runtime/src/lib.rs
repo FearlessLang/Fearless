@@ -3,3 +3,4 @@ pub mod strings;
 pub mod compiler;
 #[cfg(feature = "runtime-only")]
 pub mod vpf;
+pub mod regex;

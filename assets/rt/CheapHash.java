@@ -1,6 +1,5 @@
 package rt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public final class CheapHash implements base.CheapHash_0 {
@@ -21,8 +20,15 @@ public final class CheapHash implements base.CheapHash_0 {
     result = ((result << 5) - result) + Double.hashCode(x);
     return this;
   }
-  @Override public CheapHash str$mut(rt.Str x) {
-    result = ((result << 5) - result) + Arrays.hashCode(x.utf8());
+  @Override public CheapHash byte$mut(byte x) {
+    result = ((result << 5) - result) + Byte.hashCode(x);
     return this;
+  }
+  @Override public CheapHash str$mut(rt.Str x) {
+    result = ((result << 5) - result) + x.utf8().hashCode();
+    return this;
+  }
+  @Override public base.Hasher_0 hash$mut(base.ToHash_0 x) {
+    return x.hash$read(this);
   }
 }

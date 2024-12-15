@@ -169,7 +169,7 @@ public class Fail{
       "sigs", sigs,
       "expected", expected
     );
-    var msg= STR."Method \{e.name()} called in position \{e.posOrUnknown()} can not be called with current parameters of types: \{t1n}";
+    var msg= "Method " + e.name() + " called in position " + e.posOrUnknown() + " cannot be called with current parameters of types: " + t1n;
     return of(msg+"\n"+sigs, attributes);
   }
 
@@ -191,11 +191,8 @@ public class Fail{
 //    var expected_ = expected.map(ast.T::toString).orElse("?");
     var expectedRets = expectedT.isEmpty()
       ? ""
-      : STR."\nThe expected return types were \{expectedT}, the method's return type was \{formalRet}.";
-    return of(STR."""
-    There is no possible candidate for the method call to \{name}.
-    The receiver's reference capability was \{mdf0}, the method's reference capability was \{formalMdf}.\{expectedRets}
-    """);
+      : "\nThe expected return types were " + expectedT + ", the method's return type was " + formalRet + ".";
+    return of("There is no possible candidate for the method call to " + name + ".\nThe receiver's reference capability was " + mdf0 + ", the method's reference capability was " + formalMdf + "." + expectedRets + "\n");
   }
 
   public static CompileError sealedCreation(Id.DecId sealedDec, String pkg) {
@@ -235,6 +232,11 @@ public class Fail{
     var callableMs = callableMethods.map(cm->cm.mdf()+" "+cm.name()).collect(Collectors.joining(", "));
     if (callableMs.isEmpty()) { callableMs = "N/A"; }
     return of(name+" does not exist in "+recv+". The following methods exist on that type: "+callableMs, attributes);
+  }
+
+  /** This is called by TypeSystemMsg.undefinedMeth */
+  public static CompileError undefinedMethod(String message){
+    return of(message);
   }
 
   public static CompileError noSubTypingRelationship(ast.T it1, ast.T it2){
@@ -333,99 +335,18 @@ public class Fail{
   }
 
   public static CompileError genericMismatch(List<ast.T> actualArgs, List<Id.GX<ast.T>> formalParams) {
-    return of(STR."Expected \{formalParams.size()} generic type arguments, got \{actualArgs}.");
+    return of("Expected " + formalParams.size() + " generic type arguments, got " + actualArgs + ".");
   }
 
   public static CompileError noUnimplementedMethods(List<Id.MethName> unimplemented) {
     var unimplementedList = unimplemented.stream()
       .map(m->m.mdf().orElseThrow()+" "+m)
       .collect(Collectors.joining(", "));
-    return of("Literals must implement all callable methods. The following methods are unimplemented: "+unimplementedList+".");
+    return of("Object literals must implement all callable methods. The following methods are unimplemented: "+unimplementedList+".");
   }
 
   private static String aVsAn(Mdf mdf) {
     if (mdf.isImm()) { return "an "+mdf; }
     return "a "+mdf;
-  }
-}
-
-//only add to the bottom
-enum ErrorCode {
-  conflictingAlias,
-  conflictingDecl,
-  concreteTypeInFormalParams,
-  modifierOnInferredLambda,
-  invalidMdfBound,
-  explicitThis,
-  conflictingMethParams,
-  cyclicImplRelation,
-  shadowingX,
-  shadowingGX,
-  invalidMdf,
-  typeError,
-  implInlineDec,
-  expectedConcreteType,
-  missingDecl,
-  invalidMethMdf,
-  conflictingMethNames,
-  uncomposableMethods,
-  cannotInferSig,
-  traitNotFound,
-  inferFailed,
-  cannotInferAbsSig,
-  methTypeError,
-  unimplementedInLambda,
-  cyclicSubType,
-  recMdfInNonRecMdf,
-  recMdfInImpls,
-  undefinedName,
-  noDupImpls,
-  badCapture,
-  invalidNum,
-  noCandidateMeths,
-  callTypeError,
-  conflictingSealedImpl,
-  sealedCreation,
-  undefinedMethod,
-  noSubTypingRelationship,
-  uncallableMeths,
-  incompatibleMdfs,
-  mutCapturesHyg,
-  ioError,
-  fsError,
-  invalidEntryPoint,
-  ignoredIdentInExpr,
-  multipleIsoUsage,
-  noMdfInFormalParams,
-  privateMethCall,
-  privateTraitImplementation,
-  mustProvideImplsIfMdfProvided,
-  namedTopLevelLambda,
-  couldNotInferCallGenerics,
-  incompatibleGenerics,
-  xTypeError,
-  lambdaTypeError,
-  conflictingDecls,
-  freeGensInLambda,
-  invalidLambdaNameMdfBounds,
-  mismatchedMethodGens,
-  syntaxError,
-  specialPackageConflict,
-  reservedPackageName,
-  lambdaImplementsGeneric,
-  invalidLambdaMdf,
-  Unknown,
-  noMethOnX,
-  invalidMethodArgumentTypes,
-  crossPackageDeclaration,
-  genericMismatch,
-  inferImplementsFailed,
-  noUnimplementedMethods;
-  private static final ErrorCode[] values = values();
-  int code() {
-    return this.ordinal() + 1;
-  }
-  static ErrorCode fromCode(int code) {
-    return values[code - 1];
   }
 }

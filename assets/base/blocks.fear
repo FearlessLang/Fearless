@@ -72,5 +72,15 @@ _DecidedBlock:{
     .return(_) -> res,
     .do(_) -> self,
     .let(_, _) -> res,
+    .letIso(_, _) -> res,
+    .var(_, _) -> res,
+    .assert(_) -> self,
+    .assert(_, _) -> self,
+    .if(_) -> {
+      .return(_) -> self,
+      .do(_) -> self,
+      .error(_) -> self,
+      },
+    .loop(_) -> self,
     }
   }

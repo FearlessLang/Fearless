@@ -1,5 +1,5 @@
 package base.caps
-alias base.LList[base.Str] as Path,
+alias base.List[base.Str] as Path,
 
 /// Capability for reading and writing to files and devices, including stdout and stderr.
 /// This capability is for local IO, there is a different capability for network IO and IPC IO.
@@ -8,19 +8,37 @@ IO: {
   mut .println(msg: Str): Void,
   mut .printErr(msg: Str): Void,
   mut .printlnErr(msg: Str): Void,
-//  mut .path(path: Path): mut base.caps.fs.FS,
+  mut .accessR(path: Path): mut ReadPath,
+  mut .accessW(path: Path): mut WritePath,
+  mut .accessRW(path: Path): mut ReadWritePath,
+  mut .clone: iso IO,
   }
-UnrestrictedIO:F[mut System, mut IO],Sealed{
+UnrestrictedIO: F[mut System, mut IO],Sealed{
   s -> {
     .print(msg) -> Magic!,
     .println(msg) -> Magic!,
     .printErr(msg) -> Magic!,
     .printlnErr(msg) -> Magic!,
-//    .path(path) -> {
-//      // ...
-//      },
-//    mut .fopen(path: Path, mode: FileHandleMode): mut base.caps.fs.RawFileHandle -> Magic!,
+    .accessR(path) -> Magic!,
+    .accessW(path) -> Magic!,
+    .accessRW(path) -> Magic!,
+    .clone -> UnrestrictedIO#(s.clone),
     }
+  }
+
+ReadPath: {
+  mut .accessR(path: Path): mut ReadPath,
+//  mut .lines: mut Action[mut Flow[Str]],
+  mut .readStr: mut Action[Str],
+  mut .clone: iso ReadPath,
+  }
+WritePath: {
+  mut .accessW(path: Path): mut WritePath,
+  mut .clone: iso WritePath,
+  }
+ReadWritePath: ReadPath,WritePath{
+  mut .accessRW(path: Path): mut ReadWritePath,
+  mut .clone: iso ReadWritePath,
   }
 
 FileHandleMode:Stringable,Sealed{}

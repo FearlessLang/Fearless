@@ -1,10 +1,10 @@
 package base
-Str:Sealed {
+Str: Stringable,Sealed{
   // Str is not Stringable due to limitations of the Java codegen target
   read .str: Str,
   .size: Nat,
   .isEmpty: Bool,
-  +(other: Str): Str,
+  +(other: Stringable): Str,
   ==(other: Str): Bool,
   .assertEq(other: Str): Void,
   .assertEq(message: Str, other: Str): Void,
@@ -12,7 +12,7 @@ Str:Sealed {
 Stringable: {
   read .str: Str,
   }
-_StrInstance:Str {
+_StrInstance: Str{
   .size -> Magic!,
   .isEmpty -> Magic!,
   .str -> Magic!,
@@ -25,6 +25,6 @@ _StrInstance:Str {
 _StrHelpers: {
   .assertEq(expected: Str, actual: Str): Void ->
     Assert!(expected == actual, "Expected: "+expected+"\nActual: "+actual, {{}}),
-  .assertEq(message: Str, expected: Str, actual: Str): Void ->
+  .assertEq(expected: Str, actual: Str, message: Str): Void ->
     Assert!(expected == actual, message+"\nExpected: "+expected+"\nActual: "+actual, {{}}),
   }

@@ -6,10 +6,7 @@ import rt.FearlessError;
 import rt.flows.dataParallel.BufferSink;
 import rt.flows.dataParallel.SplitTasks;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static rt.flows.dataParallel.eod.EODStrategies.PARALLELISM_POTENTIAL;
 
@@ -21,53 +18,45 @@ import static rt.flows.dataParallel.eod.EODStrategies.PARALLELISM_POTENTIAL;
  */
 public final class EODWorker implements Runnable {
   public static void forRemaining(FlowOp_1 source, _Sink_1 downstream, int size) {
-    var splitData = SplitTasks.of(source, Math.max(PARALLELISM_POTENTIAL / 2, 1));
+    var splitData = SplitTasks.of(source, Math.max(PARALLELISM_POTENTIAL / 2, 2));
     var nTasks = splitData.size();
 
     int realSize = size >= 0 ? size : nTasks;
-    new EODStrategies(downstream, realSize, splitData, nTasks).run(nTasks);
+    new EODStrategies(downstream, realSize, splitData, nTasks).runFlow(nTasks);
   }
 
 
   private final FlowOp_1 source;
   private final BufferSink downstream;
-  private final AtomicInteger info;
-
-  EODWorker(FlowOp_1 source, _Sink_1 downstream, int size, AtomicInteger info) {
-    this(
-      source,
-      downstream,
-      info,
-      // size isn't always going to be the correct answer here but in most cases it will be.
-      size >= 0 ? new ArrayList<>(size) : new ArrayList<>()
-    );
-  }
-  private EODWorker(FlowOp_1 source, _Sink_1 downstream, AtomicInteger info, List<Object> buffer) {
+  private final CountDownLatch sync;
+  public boolean releaseOnDone = false;
+  public EODWorker(FlowOp_1 source, _Sink_1 downstream, int sizeHint, BufferSink.FlushWorker flusher, CountDownLatch sync) {
     this.source = source;
-    this.info = info;
-    this.downstream = new BufferSink(downstream, buffer);
+    this.downstream = new BufferSink(downstream, flusher, sizeHint);
+    this.sync = sync;
   }
 
-  @SuppressWarnings("preview")
   @Override public void run() {
-    ScopedValue
-      .where(EODStrategies.INFO, info)
-      .run(()->{
-        try {
-          source.forRemaining$mut(downstream);
-        } catch (FearlessError err) {
-          downstream.pushError$mut(err.info);
-        }
-      });
+    impl();
+  }
+
+  public void impl() {
+    try {
+      source.forRemaining$mut(downstream);
+    } catch (FearlessError err) {
+      downstream.pushError$mut(err.info);
+    } catch (ArithmeticException err) {
+      downstream.pushError$mut(base.Infos_0.$self.msg$imm(rt.Str.fromJavaStr(err.getMessage())));
+    } finally {
+      this.flush();
+      this.sync.countDown();
+      if (releaseOnDone) {
+        EODStrategies.AVAILABLE_PARALLELISM.release();
+      }
+    }
   }
 
   public void flush() {
     this.downstream.flush();
   }
-//
-//  public void release() {
-//    if (!HAS_RELEASED.isBound()) {
-//      AVAILABLE_PARALLELSIM.release(1);
-//    }
-//  }
 }

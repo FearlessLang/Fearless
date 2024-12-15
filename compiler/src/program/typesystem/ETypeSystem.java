@@ -2,16 +2,12 @@ package program.typesystem;
 
 import ast.E;
 import ast.T;
-import failure.CompileError;
-import failure.Fail;
 import failure.FailOr;
 import program.Program;
 import visitors.Visitor;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 public interface ETypeSystem extends Visitor<FailOr<T>> {
   Program p();
@@ -20,17 +16,17 @@ public interface ETypeSystem extends Visitor<FailOr<T>> {
   ConcurrentHashMap<Long, TsT> resolvedCalls();
   List<T> expectedT();
   int depth(); // used to call Program.meths with normalisation done correctly
+  TypeSystemCache cache();
   default FailOr<T> visitX(E.X e){
-    try{ return FailOr.res(g().get(e)); }
-    catch (CompileError err){ return err.fail(); }
+    return g().get(e);
   }
 
-  static ETypeSystem of(Program p, Gamma g, XBs xbs, List<T> expectedT, ConcurrentHashMap<Long, TsT> resolvedCalls, int depth){
-    record Ts(Program p, Gamma g, XBs xbs, List<T> expectedT, ConcurrentHashMap<Long, TsT> resolvedCalls, int depth) implements EMethTypeSystem, ELambdaTypeSystem{}
-    return new Ts(p,g,xbs,expectedT,resolvedCalls,depth);
+  static ETypeSystem of(Program p, Gamma g, XBs xbs, List<T> expectedT, ConcurrentHashMap<Long, TsT> resolvedCalls, TypeSystemCache cache, int depth){
+    record Ts(Program p, Gamma g, XBs xbs, List<T> expectedT, ConcurrentHashMap<Long, TsT> resolvedCalls, TypeSystemCache cache, int depth) implements EMethTypeSystem, ELambdaTypeSystem{}
+    return new Ts(p,g,xbs,expectedT,resolvedCalls,cache,depth);
   }
-  default ETypeSystem withExpectedTs(List<T> expectedT){ return of(p(), g(), xbs(), expectedT, resolvedCalls(), depth()); }
-  default ETypeSystem withGamma(Gamma g){ return of(p(), g, xbs(), expectedT(), resolvedCalls(), depth()); }
-  default ETypeSystem withXBs(XBs xbs){ return of(p(), g(), xbs, expectedT(), resolvedCalls(), depth()); }
-  default ETypeSystem withProgram(Program p){ return of(p, g(), xbs(), expectedT(), resolvedCalls(), depth()); }
+  default ETypeSystem withExpectedTs(List<T> expectedT){ return of(p(), g(), xbs(), expectedT, resolvedCalls(), cache(), depth()); }
+  default ETypeSystem withGamma(Gamma g){ return of(p(), g, xbs(), expectedT(), resolvedCalls(), cache(), depth()); }
+  default ETypeSystem withXBs(XBs xbs){ return of(p(), g(), xbs, expectedT(), resolvedCalls(), cache(), depth()); }
+  default ETypeSystem withProgram(Program p){ return of(p, g(), xbs(), expectedT(), resolvedCalls(), cache(), depth()); }
 }

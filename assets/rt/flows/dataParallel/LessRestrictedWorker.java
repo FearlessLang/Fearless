@@ -7,6 +7,7 @@ import base.flows._Sink_1;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class LessRestrictedWorker implements Runnable {
   private static final int N_CPUS = Runtime.getRuntime().availableProcessors();
@@ -35,10 +36,17 @@ final class LessRestrictedWorker implements Runnable {
 
     var doneSignal = new CountDownLatch(i);
     var workers = new LessRestrictedWorker[i];
+    AtomicReference<RuntimeException> exception = new AtomicReference<>();
+    final Thread.UncaughtExceptionHandler handler = (_,err) -> {
+      var message = err.getMessage();
+      if (err instanceof StackOverflowError) { message = "Stack overflowed"; }
+      exception.compareAndSet(null, new RuntimeException(message, err));
+    };
+    var flusher = BufferSink.FlushWorker.start(handler);
     for (int j = 0; j < i; ++j) {
       var subSource = splitData[j];
       assert subSource != null;
-      var worker = new LessRestrictedWorker(subSource, downstream, perWorkerSize, doneSignal);
+      var worker = new LessRestrictedWorker(subSource, downstream, perWorkerSize, doneSignal, flusher);
       Thread.ofVirtual().start(worker);
       workers[j] = worker;
     }
@@ -51,24 +59,18 @@ final class LessRestrictedWorker implements Runnable {
       if (worker == null) { break; }
       worker.downstream.flush();
     }
+    var actualException = exception.getAcquire();
+    if (actualException != null) {
+      throw actualException;
+    }
   }
 
   private final FlowOp_1 source;
   private final BufferSink downstream;
   private final CountDownLatch doneSignal;
-  public LessRestrictedWorker(FlowOp_1 source, _Sink_1 downstream, int size, CountDownLatch doneSignal) {
-    this(
-      source,
-      downstream,
-      size,
-      doneSignal,
-      // size isn't always going to be the correct answer here but in most cases it will be.
-      size >= 0 ? new ArrayList<>(size) : new ArrayList<>()
-    );
-  }
-  public LessRestrictedWorker(FlowOp_1 source, _Sink_1 downstream, int size, CountDownLatch doneSignal, List<Object> buffer) {
+  public LessRestrictedWorker(FlowOp_1 source, _Sink_1 downstream, int size, CountDownLatch doneSignal, BufferSink.FlushWorker flusher) {
     this.source = source;
-    this.downstream = new BufferSink(downstream, buffer);
+    this.downstream = new BufferSink(downstream, flusher);
     this.doneSignal = doneSignal;
   }
 

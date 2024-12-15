@@ -12,6 +12,7 @@ _SeqFlow: _FlowFactory{
     mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] ->
       this.fromOp(_Actor.anyRet[S,E,R](_Sink, source, state, f), {}),
     .limit(n) -> this.fromOp(_Limit#(_Sink, source, n), _LimitSize#(n, size)),
+    .with(other) -> this.fromOp(_With#(_Sink, source, other.unwrapOp(mut _UnwrapFlowToken)), {}),
 
     // terminals
     mut .first: mut Opt[E] -> Block#
@@ -50,9 +51,13 @@ _SeqFlow: _FlowFactory{
     mut .fold[S](acc: S, f: read F[S,E,S]): S -> Block#
       .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
       .let[mut Var[S]] acc' = {Var#acc}
+      .let stopped = {Var#[Bool]False}
       .do {source.forRemaining(mut _Sink[E]{
-        .stop -> {},
-        .pushError(info) -> Error!info,
+        .stop -> stopped := True,
+        .pushError(info) -> stopped* ? {
+          .then -> {},
+          .else -> Error!info,
+          },
         #(e) -> acc' := (f#(acc'.get, e)),
         })}
       .do {source.stop}

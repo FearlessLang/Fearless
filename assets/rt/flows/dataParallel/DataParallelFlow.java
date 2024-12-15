@@ -4,6 +4,7 @@ import base.*;
 import base.flows.*;
 import rt.flows.dataParallel.eod.EODWorker;
 import rt.flows.FlowCreator;
+import rt.flows.dataParallel.heartbeat.HeartbeatFlowWorker;
 
 import java.util.Objects;
 
@@ -44,15 +45,19 @@ public final class DataParallelFlow implements Flow_1 {
   }
 
   public Flow_1 actorMut$mut(Object state_m$, ActorImplMut_3 f_m$) {
-    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size$mut()).actorMut$mut(state_m$, f_m$);
+    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size).actorMut$mut(state_m$, f_m$);
   }
 
   public Flow_1 actor$mut(Object state_m$, ActorImpl_3 f_m$) {
-    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size$mut()).actor$mut(state_m$, f_m$);
+    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size).actor$mut(state_m$, f_m$);
   }
 
   public Flow_1 limit$mut(long n_m$) {
-    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size$mut()).limit$mut(n_m$);
+    return FlowCreator.fromFlowOp(rt.flows.pipelineParallel.PipelineParallelFlowK.$self, source_m$, this.size).limit$mut(n_m$);
+  }
+
+  public Flow_1 with$mut(Flow_1 other_m$) {
+    return $this.fromOp$imm(_With_0.$self.$hash$imm(_Sink_0.$self, source_m$, other_m$.unwrapOp$mut(null)), Opt_1.$self);
   }
 
   public Opt_1 first$mut() {
@@ -85,6 +90,10 @@ public final class DataParallelFlow implements Flow_1 {
 
   public Object fold$mut(Object acc_m$, F_3 f_m$) {
     return _SeqFlow_0.$self.fromOp$imm(new ParallelSource(), size_m$).fold$mut(acc_m$, f_m$);
+  }
+
+  public Action_1 only$mut() {
+    return _SeqFlow_0.$self.fromOp$imm(new ParallelSource(), size_m$).only$mut();
   }
 
   public Flow_1 map$mut(F_2 f_m$) {
@@ -174,6 +183,7 @@ public final class DataParallelFlow implements Flow_1 {
 
     @Override public Void_0 forRemaining$mut(_Sink_1 downstream_m$) {
       EODWorker.forRemaining(source_m$, downstream_m$, (int) size);
+//      HeartbeatFlowWorker.forRemaining(source_m$, downstream_m$, (int) size);
 //      nestLevel.incrementAndGet();
 //      if (stats == null) {
 //        stats = size >= 0 ? new Stats(size) : new Stats();

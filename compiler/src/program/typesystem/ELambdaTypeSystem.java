@@ -39,11 +39,14 @@ interface ELambdaTypeSystem extends ETypeSystem{
     }
     return litT(lit);
   }
+
   private FailOr<T> litT(E.Lambda lit) {
-    Dec d= new Dec(lit);
-    var self= (ELambdaTypeSystem) withProgram(p().withDec(d));
-    var err1= self.implMethErrors(lit);
-    return err1.flatMap(_ ->self.bothT(d));
+    return cache().litT(p(), lit, ()->{
+      Dec d= new Dec(lit);
+      var self= (ELambdaTypeSystem) withProgram(p().withDec(d));
+      var err1= self.implMethErrors(lit);
+      return err1.flatMap(_ ->self.bothT(d));
+    });
   }
   private List<E.Meth> filteredByMdf(E.Lambda b){
     return b.meths().stream()
@@ -102,7 +105,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
     litT = litT.mdf().isMdf() ? litT.withMdf(Mdf.mut) : litT;
     var boundedTypeSys =(ELambdaTypeSystem) ETypeSystem.of(
         p(), g(), xbs,
-        expectedT(), resolvedCalls(), depth());
+        expectedT(), resolvedCalls(), cache(), depth());
     try { return boundedTypeSys.mOk(selfName, selfT, litT, mi); }
     catch (CompileError err) { return err.fail(); }
     //TODO: will die soon since we avoid all the throws?
@@ -141,18 +144,20 @@ interface ELambdaTypeSystem extends ETypeSystem{
     var isoPromotion = mOkIsoPromotion(selfName, selfT, litT, m, sig);
     if(ret.mdf().isIso() || isoPromotion.isEmpty()){ return FailOr.opt(isoPromotion); }
 
-    Mdf selfTMdf = gg.get(selfName).mdf();
+    var selfTRes = gg.get(selfName);
+    if (!selfTRes.isRes()) { return selfTRes.cast(); }
+    Mdf selfTMdf = selfTRes.get().mdf();
     return FailOr.opt(mOkImmPromotion(selfName, selfT, litT, m, sig, selfTMdf)
       .flatMap(ignored->baseCase));
   }
 
   default Optional<Supplier<CompileError>> mOkReadPromotion(String selfName, T selfT, T litT, E.Meth m, E.Sig sig) {
     var readOnlyAsReadG = new Gamma() {
-      @Override public Optional<T> getO(String x) {
-        return g().getO(x).map(t->{
+      @Override public FailOr<Optional<T>> getO(String x) {
+        return g().getO(x).map(res->res.map(t->{
           if (t.mdf().isMdf()) { return t.withMdf(Mdf.iso); }
           return t.mdf().isReadH() ? t.withMdf(Mdf.read) : t;
-        });
+        }));
       }
       @Override public List<String> dom() { return g().dom(); }
       @Override public String toString() { return "readOnlyAsReadG"+g().toString(); }
@@ -174,8 +179,8 @@ interface ELambdaTypeSystem extends ETypeSystem{
       return t;
     };
     var mutAsLentG = new Gamma() {
-      @Override public Optional<T> getO(String x) {
-        return g().getO(x).filter(t->!t.mdf().isMdf()).map(mdfTransform);
+      @Override public FailOr<Optional<T>> getO(String x) {
+        return g().getO(x).map(res->res.filter(t->!t.mdf().isMdf()).map(mdfTransform));
       }
       @Override public List<String> dom() { return g().dom(); }
       @Override public String toString() { return "readOnlyAsReadG"+g().toString(); }
@@ -183,8 +188,11 @@ interface ELambdaTypeSystem extends ETypeSystem{
     };
     // TODO: relaxation, before we captured gamma as if it were mutH, but because we don't have mutH methods we rely on an explicit gamma transform here.
 //    var mMdf = mdfTransform.apply(selfT.withMdf(m.mdf())).mdf();
-    var methSelfT = g().add(selfName, selfT).ctxAwareGamma(p(), xbs(), litT, m.mdf()).get("this");
-    var g0 = mutAsLentG.ctxAwareGamma(p(), xbs(), litT, m.mdf()).add(selfName, mdfTransform.apply(methSelfT));
+    var methSelfTRes = g().add(selfName, selfT).ctxAwareGamma(p(), xbs(), litT, m.mdf()).get("this");
+    if (!methSelfTRes.isRes()) {
+      return methSelfTRes.asOpt();
+    }
+    var g0 = mutAsLentG.ctxAwareGamma(p(), xbs(), litT, m.mdf()).add(selfName, mdfTransform.apply(methSelfTRes.get()));
     var gg  = Streams.zip(
       m.xs(),
       sig.ts().stream().map(mdfTransform).toList()
@@ -194,8 +202,8 @@ interface ELambdaTypeSystem extends ETypeSystem{
 
   default Optional<Supplier<CompileError>> mOkImmPromotion(String selfName, T selfT, T litT, E.Meth m, E.Sig sig, Mdf selfTMdf) {
     var noMutyG = new Gamma() {
-      @Override public Optional<T> getO(String x) {
-        return g().getO(x).filter(t->!(t.mdf().isLikeMut() || t.mdf().isRecMdf() || t.mdf().isMdf()));
+      @Override public FailOr<Optional<T>> getO(String x) {
+        return g().getO(x).map(res->res.filter(t->!(t.mdf().isLikeMut() || t.mdf().isRecMdf() || t.mdf().isMdf())));
       }
       @Override public List<String> dom() { return g().dom(); }
       @Override public String toString() { return "noMutyG"+g().toString(); }
@@ -214,15 +222,12 @@ interface ELambdaTypeSystem extends ETypeSystem{
   default Optional<Supplier<CompileError>> isoAwareJudgment(Gamma g, E.Meth m, E e, T expected) {//TODO: below is terrible and needs refactoring
     var res1= okWithSubType(g, m, e, expected).asOpt();
     return res1.or(()->g.dom().stream()
-      .filter(x->{
-        try {
-          var xT = g.get(x);
-          return xT.mdf().isIso() || (xT.isMdfX() && xbs().get(xT.gxOrThrow()).contains(Mdf.iso));
-        } catch (CompileError err) {
+      .filter(x->
+        switch (g.get(x).map(xT->xT.mdf().isIso() || (xT.isMdfX() && xbs().get(xT.gxOrThrow()).contains(Mdf.iso)))) {
+          case FailOr.Res<Boolean> res -> res.get();
           // we cannot capture something it's not in our domain, so skip it
-          return false;
-        }
-      })
+          case FailOr.Fail<Boolean> _ -> false;
+        })
       .map(x -> countIsoUsages(e,x))
       .filter(Optional::isPresent)
       .findFirst()
@@ -259,7 +264,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
   }
 
   private FailOr<Void> okWithSubType(Gamma g, E.Meth m, E e, T expected) {
-    var methodBodyTypeSystem = ETypeSystem.of(p(), g, xbs(), List.of(expected), resolvedCalls(), depth()+1);
+    var methodBodyTypeSystem = ETypeSystem.of(p(), g, xbs(), List.of(expected), resolvedCalls(), cache(), depth()+1);
     FailOr<T> res = e.accept(methodBodyTypeSystem);
     return res.flatMap(t->methSubType(t,expected)).mapErr(err->()->err.get().parentPos(e.pos()));
     // We pass the expected type of the expression down because different method body promotions

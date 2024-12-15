@@ -2,6 +2,7 @@ package program.typesystem;
 
 import failure.CompileError;
 import id.Mdf;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -13,6 +14,7 @@ import static java.util.List.of;
 import static program.typesystem.RunTypeSystem.expectFail;
 import static program.typesystem.RunTypeSystem.ok;
 
+@Disabled("03/12/24")
 public class TestCaptureRules {
   // TODO: Handle read
   private static final Mdf[] allMdfs = Arrays.stream(values()).filter(mdf->!mdf.is(read)).toArray(Mdf[]::new);

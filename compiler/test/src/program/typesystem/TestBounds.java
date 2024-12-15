@@ -1,6 +1,11 @@
 package program.typesystem;
 
+import id.Mdf;
+import net.jqwik.api.*;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static program.typesystem.RunTypeSystem.fail;
 import static program.typesystem.RunTypeSystem.ok;

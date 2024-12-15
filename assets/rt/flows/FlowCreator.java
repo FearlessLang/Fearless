@@ -1,5 +1,6 @@
 package rt.flows;
 
+import base.Opt_1;
 import base.Opts_0;
 import base.flows.*;
 import rt.flows.dataParallel.DataParallelFlowK;
@@ -19,8 +20,11 @@ public interface FlowCreator {
   }
 
   static Flow_1 fromFlowOp(_FlowFactory_0 intended, FlowOp_1 op, long size) {
-//    System.out.println("from "+original+" intended "+intended);
+    if (size < 0) { return intended.fromOp$imm(op, Opt_1.$self); }
     var optSize = Opts_0.$self.$hash$imm(size);
+//    if (true) {
+//      return _SeqFlow_0.$self.fromOp$imm(op, optSize);
+//    }
 //    if (op.canSplit$read() == base.False_0.$self && intended instanceof DataParallelFlowK) {
 //      return _SeqFlow_0.$self.fromOp$imm(op, optSize);
 //    }

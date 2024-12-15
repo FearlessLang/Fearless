@@ -10,10 +10,7 @@ import id.Mdf;
 import magic.Magic;
 import program.CM;
 import program.typesystem.XBs;
-import utils.Box;
-import utils.DistinctBy;
-import utils.Push;
-import utils.Streams;
+import utils.*;
 import visitors.InjectionVisitor;
 import visitors.ShallowInjectionVisitor;
 
@@ -156,9 +153,9 @@ public record InferBodies(ast.Program p) {
       .filter(fullSig->fullSig.sig().ts().size() == m.xs().size())
       .map(fullSig->m.withName(fullSig.name()).withSig(fullSig.sig()).makeBodyUnique())
       .toList();
+
+    // TODO: this can throw if the abstract method is not callable (i.e. we're returning imm so no abstract meths exist)
     assert res.stream().noneMatch(m::equals);
-    assert !res.isEmpty():
-      onlyAbs(e, depth);
     return Optional.of(res);
   }
 

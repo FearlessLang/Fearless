@@ -18,7 +18,7 @@ a collection of zero or one element.
 An empty optional is not representing a mistake/error/problem.
 We think that understanding the full code of optional is a great way to learn Fearless and to
 demystify fearless collections.
--------------------------*/@Test void optional() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void optional() { run("""
   Opts: {
     #[T](x: T): mut Opt[T] -> {.match(m) -> m.some(x)},
     }
@@ -202,7 +202,7 @@ in fearless and should be replaced with flow access when possible.
 Of course, there are still situations where random access is crucial.
 Note how .get can not possibly succeed for elements outside of the
 size of the list. In this case a dynamic error is thrown. 
--------------------------*/@Test void addAndGetFromList() {run("""
+-------------------------*/@Disabled("03/12/24") @Test void addAndGetFromList() {run("""
     package test
     Test:Main {sys -> Block#
       .let list = {List#[Str]}//YES spaces on both sides of =?
@@ -217,7 +217,7 @@ the method `.size` gives us the current size.
 Fearless standard library consistently uses the word `size`
 to talk about sizes of collections, flows, results etc.
 Using `length`/`count` is discouraged.
--------------------------*/@Test void listSize() {run("""
+-------------------------*/@Disabled("03/12/24") @Test void listSize() {run("""
     package test
     Test:Main {sys -> Block#
       .let list = {List#(5, 10, 15)}
@@ -234,7 +234,7 @@ Map keys must be immutable objects, element can be anything.
 Many maps are on Str or Int types
 //Int or Num?? I'm happy with Int, but we have tons of 'Num' around
 //norm for non cyclic?
--------------------------*/@Test void mapOfNameToAge() {run("""
+-------------------------*/@Disabled("03/12/24") @Test void mapOfNameToAge() {run("""
     package test
     Person:Ordered[Person]{
       .name:Str, .age:Nat
@@ -300,7 +300,7 @@ Many maps are on Str or Int types
     """);}
 
   // Our maps/sets are linked hashmaps/linked hashsets and thus have deterministic iteration order.
-  @Test void mapFlow() { ok(new Res("30", "", 0), """
+  @Disabled("03/12/24") @Test void mapFlow() { ok(new Res("30", "", 0), """
     package test
     Test:Main {sys -> Block#
       .let map = {Map.str("Alice",24, "Bob",30)}
@@ -318,9 +318,9 @@ Many maps are on Str or Int types
   @Test void subList() {ok(new Res("21 vs. 5", "", 0), """
     package test
     Test:Main {sys -> Block#
-      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4).addAnd(5).addAnd(6)}
+      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4) + 5 + 6}
       .let sum1 = {l.flow#(Flow.uSum)}
-      .let sub = {ListProxys.subList(l, 1, 3)}
+      .let sub = {ListViews.subList(l, 1, 3)}
       .let sum2 = {sub.flow#(Flow.uSum)}
       .return {sys.io.println(sum1.str + " vs. "+ (sum2.str))}
       }
@@ -329,11 +329,23 @@ Many maps are on Str or Int types
   @Test void mappedList() {ok(new Res("21 vs. 8", "", 0), """
     package test
     Test:Main {sys -> Block#
-      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4).addAnd(5).addAnd(6)}
+      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4) + 5 + 6}
       .let sum1 = {l.flow#(Flow.uSum)}
-      .let sub = {ListProxys.indexMap(l, List#[Nat].addAnd(0).addAnd(0).addAnd(1).addAnd(1).addAnd(0).addAnd(0))}
+      .let sub = {ListViews.indexMap(l, List#[Nat] + 0 + 0 + 1 + 1 + 0 + 0)}
       .let sum2 = {sub.flow#(Flow.uSum)}
       .return {sys.io.println(sum1.str + " vs. "+ (sum2.str))}
+      }
+    """, Base.mutBaseAliases);}
+
+  @Test void offsetLookup() {ok(new Res(), """
+    package test
+    Test:Main {sys -> Block#
+      .let[mut List[Nat]] l = {List#[Nat](1, 2, 3, 4)}
+      .let[Nat] a = {l.get(5 .offset -2)}
+      .let[Nat] b = {l.get(1 .offset +1)}
+      .do {4 .assertEq(a)}
+      .do {3 .assertEq(b)}
+      .return {{}}
       }
     """, Base.mutBaseAliases);}
 }

@@ -20,8 +20,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Program implements program.Program  {
-  private final Map<Id.DecId, T.Dec> ds;
-  private final Map<Id.DecId, T.Dec> inlineDs;
+  protected final Map<Id.DecId, T.Dec> ds;
+  protected final Map<Id.DecId, T.Dec> inlineDs;
   private final TypeSystemFeatures tsf;
   public Program(TypeSystemFeatures tsf, Map<Id.DecId, T.Dec> ds, Map<Id.DecId, T.Dec> inlineDs) {
     this.tsf = tsf;
@@ -36,7 +36,9 @@ public class Program implements program.Program  {
 
   public Map<Id.DecId, T.Dec> ds() { return Collections.unmodifiableMap(this.ds); }
   public Map<Id.DecId, T.Dec> inlineDs() { return Collections.unmodifiableMap(this.inlineDs); }
-  public List<ast.E.Lambda> lambdas() { return this.ds().values().stream().map(T.Dec::lambda).toList(); }
+  public List<ast.E.Lambda> lambdas() {
+    return this.ds().values().stream().map(T.Dec::lambda).toList();
+  }
 
   public void typeCheck(ConcurrentHashMap<Long, TsT> resolvedCalls) {
     var errors = new StringBuilder();

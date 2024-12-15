@@ -375,7 +375,7 @@ public class TestJavaProgramImm {
     alias base.Int as Int, alias base.Nat as Nat, alias base.Float as Float,
     alias base.Str as Str,
     
-    Test: Main{_ -> Yeet#("a".assertEq("oh no", "b"))}
+    Test: Main{_ -> Yeet#("a".assertEq("b", "oh no"))}
     Yeet: {#[X](x: X): Str -> ""}
     """);}
 

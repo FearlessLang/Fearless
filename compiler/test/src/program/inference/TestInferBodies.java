@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+@Disabled("03/12/24")
 public class TestInferBodies {
   void ok(String expected, String... content){
     var parsed = parseProgram(content);

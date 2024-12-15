@@ -7,7 +7,12 @@ import java.util.Optional;
 
 public enum Mdf{
   read,mut,mutH,readH,iso,recMdf,mdf,imm,readImm;
-  public boolean is(Mdf... valid){ return Arrays.stream(valid).anyMatch(v->this==v); }
+  public boolean is(Mdf... valid){
+    for (Mdf mdf : valid) {
+      if (this == mdf) { return true; }
+    }
+    return false;
+  }
   public boolean isMut(){return this == mut;}
   public boolean isMutH(){return this == mutH;}
   public boolean isReadH(){return this == readH;}

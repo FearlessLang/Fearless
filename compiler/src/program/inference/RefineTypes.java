@@ -37,13 +37,13 @@ public record RefineTypes(ast.Program p, TypeRename.FullTTypeRename renamer) {
     if (lambda.selfName() == null) {
       lambda = lambda.withSelfName(E.X.freshName());
     }
-    var lambda_ = lambda;
-    if (lambda_.meths().stream().anyMatch(m->m.sig().isEmpty())) {
-      return lambda_;
+    if (lambda.meths().stream().anyMatch(m->m.sig().isEmpty())) {
+      return lambda;
     }
 
-    var c = lambda_.it().orElseThrow();
+    var c = lambda.it().orElseThrow();
 
+    var lambda_ = lambda;
     List<E.Meth> lambdaOnlyMeths = lambda_.meths().stream()
       .filter(m->{
         try {

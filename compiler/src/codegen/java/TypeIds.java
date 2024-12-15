@@ -14,12 +14,13 @@ record TypeIds(JavaMagicImpls magic, StringIds id){
       case MIR.MT.Plain plain -> auxGetTName(plain.id());
       case MIR.MT.Usual usual -> auxGetTName(usual.it().name());
     };
-    return isRet?boxOf(res):res;
+    return isRet ? boxOf(res) : res;
   }
   public String auxGetTName(Id.DecId name) {
     return switch (name.name()) {
       case "base.Int", "base.Nat" -> "long";
       case "base.Float" -> "double";
+      case "base.Byte" -> "byte";
       case "base.Str" -> "rt.Str";
       default -> magicName(name);
       };
@@ -28,7 +29,7 @@ record TypeIds(JavaMagicImpls magic, StringIds id){
     if (magic.isMagic(Magic.Int, name)) { return "long"; }
     if (magic.isMagic(Magic.Nat, name)) { return "long"; }
     if (magic.isMagic(Magic.Float, name)) { return "double"; }
-    if (magic.isMagic(Magic.Float, name)) { return "double"; }
+    if (magic.isMagic(Magic.Byte, name)) { return "byte"; }
     if (magic.isMagic(Magic.Str, name)) { return "rt.Str"; }
     return id.getFullName(name);
   }

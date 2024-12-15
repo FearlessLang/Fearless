@@ -1,9 +1,11 @@
 package base
 Bool: Sealed,Stringable,ToImm[Bool]{
   .and(b: Bool): Bool,
-  &&(b: Bool): Bool -> this.and(b),
+  &&(b: mut MF[Bool]): Bool -> this.and(b#),
+  &(b: Bool): Bool -> this.and(b),
   .or(b: Bool): Bool,
-  ||(b: Bool): Bool -> this.or(b),
+  |(b: Bool): Bool -> this.or(b),
+  ||(b: mut MF[Bool]): Bool -> this.or(b#),
   .not: Bool,
   .if[R:read,mut,imm,iso](f: mut ThenElse[R]): R,
   ?[R:read,mut,imm,iso](f: mut ThenElse[R]): R -> this.if(f),

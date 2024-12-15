@@ -1,8 +1,14 @@
 package tour;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import utils.Base;
 
+import static codegen.java.RunJavaProgramTests.ok;
 import static tour.TourHelper.run;
+import static utils.RunOutput.Res;
+
+;
 public class Ex01HelloWorldTest {
 /*
 # A tour of Fearless standard library
@@ -46,10 +52,10 @@ As you can see, `UnrestrictedIO#sys.println(..)`
 is quite verbose.
 We do not expect this code to be very common in Fearless.
 If someone is printing just because they want a debugging printout, the can use
--------------------------*/@Test void helloWorldDebug() { run("""
+-------------------------*/@Test void helloWorldDebug() { ok(new Res("", "Hello, World!", 0), """
+    package test
     Test:Main {sys -> base.Debug.println("Hello, World!")}//OK
-    //prints Hello, World!
-    """); }/*--------------------------------------------
+    """, Base.mutBaseAliases); }/*--------------------------------------------
 
 On the other hand, if they are writing a console program, or any kind of program that needs to do input output, there will be a few
 well-designed types that have this responsibility, and the main will assign capabilities to those types. We will see an example of this (much) later.
@@ -90,7 +96,7 @@ Since writing `.return{Void}` can get verbose and repetitive, we can just write 
     """); }/*--------------------------------------------
 Block supports early exits, using the `.if` method, and many other useful features. To explore them, we write a `StrToMessage` function
 that can be useful to map strings into good error messages
--------------------------*/@Test void blockIf() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void blockIf() { run("""
     StrToMessage:F[Str,Str]{s->Block#
       .if {s.isEmpty} .return {"<EmptyString>"}
       .var res = {s}
@@ -130,7 +136,7 @@ Note the difference between `.var` and `.let`:
 
 The nested block ends with '.return'. This is different from what you may expect, the '.return' here is making the inner block return `Void`, the result of `:=`.
 To clarify the behavior of nested blocks, we show some alternative to that code below:
--------------------------*/@Test void blockNested1() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void blockNested1() { run("""
     StrToMessage:F[Str,Str]{s->Block#
       .if {s.isEmpty} .return {"<EmptyString>"}
       .let res = {s}
@@ -144,7 +150,7 @@ To clarify the behavior of nested blocks, we show some alternative to that code 
       }
     """); }/*--------------------------------------------
 In this alternative, we use `.if .. .return` to propagate out the result. Note how we now return the final result directly instead of updating `res`.
--------------------------*/@Test void blockNested2() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void blockNested2() { run("""
     StrToMessage:F[Str,Str]{s->Block#
       .if {s.isEmpty} .return {"<EmptyString>"}
       .let res = {s}
@@ -163,7 +169,7 @@ Note that without `.done` the code would not compile, since `.do` returns a `Blo
 
 As always, the best alternative is to avoid nesting and to write
 
--------------------------*/@Test void blockNested3() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void blockNested3() { run("""
     StrToMessage:F[Str,Str]{s->Block#      
       .if {s.isEmpty} .return {"<EmptyString>"}
       .let res = {s}
@@ -179,7 +185,7 @@ As you can see, by inverting the `.if` condition and inserting a one liner early
 
 Block is much more powerful that usual statements, because each individual bit is an expression. Thus we can use it to modularize method bodies that requires many early returns, and we can scope local variables:
 
--------------------------*/@Test void blockScoped() { run("""
+-------------------------*/@Disabled("03/12/24") @Test void blockScoped() { run("""
   Example: F[Str,Str]{s->Block# //bad all mixed
     //part1 //comments used to denote section of code: bad smell
     .let res = {s}

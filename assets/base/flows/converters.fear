@@ -112,6 +112,12 @@ _SafeSource: {
           .return {{}},
         .else -> Block#(downstream.stop, self.stop),
         },
+      .forRemaining(downstream) -> Block#
+        .loop {Block#
+          .if {cursor.get >= (endCursor.get)} .return {Block#(downstream.stop, self.stop, ControlFlow.break)}
+          .do {downstream#(list.get(cursor++))}
+          .return {ControlFlow.continue}
+          }.return {{}},
       .split -> self.canSplit ? {
         .else -> {},
         .then -> Block#

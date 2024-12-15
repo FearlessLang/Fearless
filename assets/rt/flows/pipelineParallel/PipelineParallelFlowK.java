@@ -36,8 +36,13 @@ public interface PipelineParallelFlowK extends _PipelineParallelFlow_0 {
     @Override public Void_0 step$mut(_Sink_1 sink_m$) {
       try {
         return original.step$mut(sink_m$);
+      } catch (PipelineParallelFlow.DeterministicFearlessError err) {
+        throw err;
       } catch (FearlessError err) {
         sink_m$.pushError$mut(err.info);
+        return Void_0.$self;
+      } catch (ArithmeticException err) {
+        sink_m$.pushError$mut(base.Infos_0.$self.msg$imm(rt.Str.fromJavaStr(err.getMessage())));
         return Void_0.$self;
       }
     }
@@ -53,8 +58,13 @@ public interface PipelineParallelFlowK extends _PipelineParallelFlow_0 {
     @Override public Void_0 forRemaining$mut(_Sink_1 downstream_m$) {
       try {
         return original.forRemaining$mut(downstream_m$);
+      } catch (PipelineParallelFlow.DeterministicFearlessError err) {
+        throw err;
       } catch (FearlessError err) {
         downstream_m$.pushError$mut(err.info);
+        return Void_0.$self;
+      } catch (ArithmeticException err) {
+        downstream_m$.pushError$mut(base.Infos_0.$self.msg$imm(rt.Str.fromJavaStr(err.getMessage())));
         return Void_0.$self;
       }
     }

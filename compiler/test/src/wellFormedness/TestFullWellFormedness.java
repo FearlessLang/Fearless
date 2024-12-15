@@ -1,9 +1,7 @@
 package wellFormedness;
 
 import failure.CompileError;
-import id.Mdf;
 import main.Main;
-import net.jqwik.api.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
@@ -114,7 +112,7 @@ public class TestFullWellFormedness {
     """, """
     package test
     A[X]:{ .foo(x: X): X -> B{ x }.argh }
-    B:{ recMdf .argh: recMdf X } // should fail because X is not defined here
+    B:{ read .argh: read/imm X } // should fail because X is not defined here
     """); }
   @Test void useUndefinedIdent() { fail("""
     In position [###]/Dummy0.fear:2:33
@@ -123,94 +121,6 @@ public class TestFullWellFormedness {
     """, """
     package test
     A[X]:{ .foo(x: X): X -> this.foo(b) }
-    """); }
-
-  @Test void recMdfAllowedInRecMdf() { ok("""
-    package base
-    A[X]:{ recMdf .foo(): recMdf X }
-    C[X]:{ recMdf .foo(c: recMdf X): recMdf X -> c }
-    """); }
-  @Test void recMdfAllowedInSubRecMdf() { ok("""
-    package base
-    A[X]:{ .foo(x: X): X -> B[X]{ x }.argh }
-    B[X]:{ recMdf .argh: recMdf X }
-    """); }
-  @Test void noRecMdfInNonReadRet() { fail("""
-    In position [###]/Dummy0.fear:2:7
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf X.
-    recMdf may only be used in recMdf methods. The method .foo/0 has the imm modifier.
-    """, """
-    package base
-    A[X]:{ .foo(): recMdf X }
-    """); }
-  @Test void noRecMdfInNonReadRetNested() { fail("""
-    In position [###]/Dummy0.fear:2:7
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf X.
-    recMdf may only be used in recMdf methods. The method .foo/0 has the imm modifier.
-    """, """
-    package base
-    A[X]:{ .foo(): A[recMdf X] }
-    """); }
-  @Test void noRecMdfInNonRecMdfArgs() { fail("""
-    In position [###]/Dummy0.fear:3:7
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf base.Foo[].
-    recMdf may only be used in recMdf methods. The method .foo/1 has the imm modifier.
-    """, """
-    package base
-    Foo:{}
-    A[X]:{ .foo(f: recMdf Foo): Foo -> f }
-    """); }
-  @Test void noRecMdfInNonReadArgsNested() { fail("""
-    In position [###]/Dummy0.fear:3:7
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf X.
-    recMdf may only be used in recMdf methods. The method .foo/1 has the imm modifier.
-    """, """
-    package base
-    Foo:{}
-    A[X]:{ .foo(f: A[recMdf X]): Foo -> f }
-    """); }
-  @Test void complexValidRecMdf() { ok("""
-    package test
-    alias base.NoMutHyg as NoMutHyg,
-    Opts:{ #[T](x: T): mut Opt[T] -> { .match(m) -> m.some(x) } }
-    Opt[T]:NoMutHyg[T]{
-      recMdf .match[R](m: mut OptMatch[recMdf T, R]): R -> m.none,
-      recMdf .map[R](f: mut OptMap[recMdf T, R]): mut Opt[R] -> this.match{ .some(x) -> Opts#(f#x), .none -> {} },
-      recMdf .flatMap[R](f: mut OptMap[recMdf T, recMdf Opt[R]]): mut Opt[R] -> this.match{
-        .some(x) -> f#x,
-        .none -> {}
-        },
-      }
-    OptMatch[T,R]:NoMutHyg[R]{ mut .some(x: T): R, mut .none: R }
-    OptMap[T,R]:{ mut #(x: T): R }
-    """, """
-    package base
-    NoMutHyg[X]:{}
-    """); }
-
-  @Test void explicitMdfLambdaRecMdf1(){ ok("""
-    package test
-    Foo:{}
-    Bar:{ recMdf .a: recMdf Foo -> recMdf Foo }
-    """); }
-  @Test void explicitMdfLambdaRecMdfONonHyg1(){ fail("""
-    In position [###]/Dummy0.fear:3:6
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf test.Foo[].
-    recMdf may only be used in recMdf methods. The method .a/0 has the imm modifier.
-    """, """
-    package test
-    Foo:{}
-    Bar:{ .a: recMdf Foo -> recMdf Foo }
-    """); }
-  @Test void recMdfOkayInNonSigs(){ ok("""
-    package test
-    Foo:{}
-    Bar:{ .a: Foo -> recMdf Foo }
     """); }
 
   @Test void noShadowingSelfName(){ fail("""
@@ -225,7 +135,6 @@ public class TestFullWellFormedness {
         }
       }
     """); }
-
 
   @Test void noTopLevelSelfName() { fail("""
     In position [###]/Dummy0.fear:2:2
@@ -450,28 +359,4 @@ public class TestFullWellFormedness {
     A[X:mut]: {}
     BreakOuter[Z:mut]: {#: BreakInner -> BreakInner: A[Z]}
     """);}
-
-  @Property void recMdfOnlyOnRecMdf(@ForAll("methMdfs") Mdf mdf) {
-    var code = String.format("""
-    package test
-    A:{ %s .foo: recMdf Res }
-    Res:{}
-    """, mdf);
-
-    if (mdf.isRecMdf()) {
-      ok(code);
-      return;
-    }
-
-    fail(String.format("""
-    In position [###]/Dummy0.fear:2:4
-    [E26 recMdfInNonRecMdf]
-    Invalid modifier for recMdf test.Res[].
-    recMdf may only be used in recMdf methods. The method .foo/0 has the %s modifier.
-    """, mdf), code);
-  }
-
-  @Provide Arbitrary<Mdf> methMdfs() {
-    return Arbitraries.of(Arrays.stream(Mdf.values()).filter(mdf->!mdf.is(Mdf.mdf, Mdf.iso, Mdf.mutH, Mdf.readH, Mdf.readImm)).toList());
-  }
 }

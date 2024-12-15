@@ -5,7 +5,7 @@ public interface ParallelStrategies {
   void oneParOneSeq();
   void manyPar();
 
-  default void run(int nTasks) {
+  default void runFlow(int nTasks) {
     if (nTasks == 2) {
 //      oneParOneSeq();
       manyPar();

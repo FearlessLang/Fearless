@@ -134,7 +134,7 @@ public interface EMethTypeSystem extends ETypeSystem {
       .findFirst();
     return sel
       .map(i->successType(e,selected,i,multi))
-      .orElse(FailOr.err(()->Fail.invalidMethodArgumentTypes(e,t1n,multi,expectedT())));
+      .orElse(FailOr.err(()->Fail.invalidMethodArgumentTypes(e,t1n,multi,expectedT()).pos(e.pos())));
   }
   private FailOr<T> successType(E.MCall e, CM selected, int i, MultiSig multi){
     Mdf mdf = multi.recvMdfs().get(i);

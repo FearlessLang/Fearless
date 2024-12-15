@@ -49,7 +49,12 @@ public sealed interface E extends HasPos {
     }
 
     @Override public Lambda withT(T t) {
-      var mdf = Optional.ofNullable(t.isInfer() ? null:t.mdf());
+      var mdf = Optional.ofNullable(t.isInfer() ? null:t.mdf())
+        .map(mdf_->switch (mdf_) {
+          case mutH -> Mdf.mut;
+          case readH -> Mdf.read;
+          default -> mdf_;
+        });
       if (!t.isInfer() && t.match(gx->true, it->false)) {
         throw Fail.lambdaImplementsGeneric(t).pos(pos);
       }
@@ -135,6 +140,9 @@ public sealed interface E extends HasPos {
         return next;
       });
       return "fear" + n + "$";
+    }
+    public static boolean isFresh(String name) {
+      return name.startsWith("fear") && name.endsWith("$");
     }
     public X(T t){
       this(freshName(), t, Optional.empty());

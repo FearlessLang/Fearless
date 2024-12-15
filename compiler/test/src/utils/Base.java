@@ -66,7 +66,7 @@ public interface Base {
     alias base.caps.FEnv as FEnv,
     alias base.caps.FRandomSeed as FRandomSeed,
     alias base.caps.RandomSeed as RandomSeed,
-    alias base.caps.CapTries as CapTries,
+    alias base.caps.CapTrys as CapTrys,
     alias base.caps.CapTry as CapTry,
     
     alias base.caps.System as System,
@@ -74,7 +74,9 @@ public interface Base {
     alias base.Res as Res,
     
     alias base.LinkedLens as LinkedLens,
+    alias base.LinkedHashMap as LinkedHashMap,
     alias base.Map as Map,
+    alias base.Maps as Maps,
     alias base.EmptyMap as EmptyMap,
     alias base.Lens as Lens,
     
@@ -103,7 +105,7 @@ public interface Base {
     
     alias base.LList as LList,
     alias base.List as List,
-    alias base.ListProxys as ListProxys,
+    alias base.ListViews as ListViews,
     alias base.Collection as Collection,
     
     alias base.As as As,

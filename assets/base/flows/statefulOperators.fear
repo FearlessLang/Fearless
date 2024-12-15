@@ -8,7 +8,7 @@ _Limit: {
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return {{ 'runner
       .stop -> Block#(remaining := 0, upstream.stop),
-      .isRunning -> remaining* > 0 && (upstream.isRunning),
+      .isRunning -> remaining* > 0 & (upstream.isRunning),
 //      .stop -> upstream.stop,
 //      .isRunning -> upstream.isRunning,
       .isFinite -> True,
@@ -60,10 +60,11 @@ _InternalActor: {
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#
+          .let[mut _ActorSink[imm R]] actorSink = {_ActorSinks#downstream}
           .do {sink := (Opts#(sinkFactory#[E]{
             .stop -> Block#(downstream.stop, op.stop),
             #(e) -> isRunning.get ? {
-              .then -> f#(downstream, state, e).match{
+              .then -> f#(actorSink, state, e).match{
                 .continue -> {},
                 .stop -> Block#(downstream.stop, isRunning := False),
                 },
@@ -92,7 +93,7 @@ _InternalActor: {
         .empty -> Block#
           .do {sink := (Opts#(sinkFactory#[E]{
             .stop -> Block#(downstream.stop, op.stop),
-            #(e) -> f#(downstream, state, e).match{
+            #(e) -> f#(_ActorSinks#downstream, state, e).match{
               .continue -> {},
               .stop -> Block#(downstream.stop, isRunning := False),
               },
@@ -106,8 +107,8 @@ _InternalActor: {
       }},
   }
 
-ActorImpl[S,E,R]: { read #(downstream: mut _Sink[imm R], state: S, e: E): ActorRes }
-ActorImplMut[S,E,R]: { read #(downstream: mutH _Sink[R], state: mutH S, e: E): ActorRes }
+ActorImpl[S,E,R]: { read #(downstream: mut _ActorSink[imm R], state: S, e: E): ActorRes }
+ActorImplMut[S,E,R]: { read #(downstream: mutH _ActorSink[R], state: mutH S, e: E): ActorRes }
 // Alternatively, we could use an isopod and check if the isopod still has content before/after running
 // the actor. Of course, the actor could send the isopod downstream, which would enable parallelism to be observed
 // by virtue of it crashing. This could happen anyway in parallel so I think it'd be fine.
@@ -119,3 +120,8 @@ ActorRes: Sealed{
   .stop: ActorRes -> {.match(m) -> m.stop},
   }
 ActorResMatch[R]: { mut .continue: R, mut .stop: R, }
+
+_ActorSinks: {#[T](sink: mut _Sink[T]): mut _ActorSink[T] -> mut _ActorSink[T]: {
+  mut #(x: T): Void -> sink#x,
+  mut .pushError(info: Info): Void -> sink.pushError(info),
+  }}

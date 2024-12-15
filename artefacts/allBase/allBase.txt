@@ -667,7 +667,7 @@ alias base.caps.UnrestrictedIO as UnrestrictedIO, alias base.caps.IO as IO,
 alias base.Opt as Opt,
 alias base.Info as Info,
 alias base.flows.Flow as Flow,
-alias base.caps.CapTries as CapTries, alias base.caps.CapTry as CapTry,
+alias base.caps.CapTrys as CapTrys, alias base.caps.CapTry as CapTry,
 
 //---File test/testRunner.fear
 package base.test
@@ -683,7 +683,7 @@ FTestRunner: F[mut System, mut TestRunner]{sys -> Block#
   .let[mut List[Test]] tests = {List#}
   .let[mut List[mut TestSuite]] suites = {List#}
   .let[mut List[mut ResultReporter]] reporters = {List#}
-  .let[mut CapTry] try = {CapTries#sys}
+  .let[mut CapTry] try = {CapTrys#sys}
   .return {{'self
     .suite(title, registerTests) -> Block#
       .do {suites.add({.title -> title, .runner -> registerTests#(FTestRunner#sys)})}
@@ -2211,7 +2211,7 @@ FRandomSeed: F[mut System, mut RandomSeed]{s -> {
 //---File caps/tryCatch.fear
 package base.caps
 
-CapTries: F[mut System, mut CapTry]{sys -> mut CapTry: {
+CapTrys: F[mut System, mut CapTry]{sys -> mut CapTry: {
   mut #[R](try: read TryBody[R]): mut Res[R, Info] -> Magic!,
   mut #[T:iso,imm,mut,read,R](data: iso T, try: read TryBody[T,R]): mut Res[R, Info] -> Magic!,
   }}

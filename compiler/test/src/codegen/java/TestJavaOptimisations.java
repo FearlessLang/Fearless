@@ -70,13 +70,38 @@ public class TestJavaOptimisations {
      }
     """);}
 
+  @Test void boolExprBlock() { ok("""
+    package test;
+    public interface Test_0 extends base.Main_0{
+    Test_0 $self = new Test_0Impl();
+    base.Void_0 $hash$imm(base.caps.System_0 fear[###]$_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear[###]$_m$, test.Test_0 $this) {
+      return ((base.True_0.$self == base.True_0.$self ? (switch (1) {default -> {
+      yield base.Void_0.$self;
+    }})
+     : (switch (1) {default -> {
+      yield base.Void_0.$self;
+    }})
+    ));
+    }
+    }
+    """, "test/Test_0.java", """
+    package test
+    alias base.Int as Int, alias base.Str as Str, alias base.Block as Block, alias base.Void as Void,
+    alias base.True as True,
+    Test: base.Main{_ -> True ? {
+      .then -> Block#.return {Void},
+      .else -> Block#.return {Void},
+      }}
+    """);}
+
   @Test void incrementLoop() { ok("""
     package test;
     public interface Test_0 extends base.Main_0{
     Test_0 $self = new Test_0Impl();
     base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
     static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
-      var n_m$ = base.Count_0.$self.int$imm(0L);
+      var n_m$ = ((base.Count_1)base.Count_0.$self.int$imm(0L));
     while (true) {
       var res = new Fear[###]$_0Impl(n_m$).$hash$mut();
       if (res == base.ControlFlowContinue_0.$self || res == base.ControlFlowContinue_1.$self) { continue; }
@@ -106,7 +131,7 @@ public class TestJavaOptimisations {
     Foo_0 $self = new Foo_0Impl();
     rt.Str $hash$imm();
     static rt.Str $hash$imm$fun(test.Foo_0 $this) {
-      var n_m$ = base.Count_0.$self.int$imm(0L);
+      var n_m$ = ((base.Count_1)base.Count_0.$self.int$imm(0L));
     while (true) {
       var res = new Fear[###]$_0Impl(n_m$).$hash$mut();
       if (res == base.ControlFlowContinue_0.$self || res == base.ControlFlowContinue_1.$self) { continue; }
@@ -136,7 +161,7 @@ public class TestJavaOptimisations {
     Foo_0 $self = new Foo_0Impl();
     rt.Str $hash$imm();
     static rt.Str $hash$imm$fun(test.Foo_0 $this) {
-      var n_m$ = base.Count_0.$self.int$imm(0L);
+      var n_m$ = ((base.Count_1)base.Count_0.$self.int$imm(0L));
     while (true) {
       var res = new Fear[###]$_0Impl(n_m$).$hash$mut();
       if (res == base.ControlFlowContinue_0.$self || res == base.ControlFlowContinue_1.$self) { continue; }
@@ -175,12 +200,12 @@ public class TestJavaOptimisations {
     Test_0 $self = new Test_0Impl();
     base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
     static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
-      return rt.IO.$self.println$mut(((rt.Str)rt.dataParallel.DataParallelFlowK.$self.fromOp$imm(str$3297469917561599766$str$.$self._flow$imm(), base.Opt_1.$self).map$mut(test.Fear[###]_0.$self).join$mut(str$14492805990617963705$str$.$self)));
+      return rt.IO.$self.println$mut(((rt.Str)((base.flows.Flow_1)((base.flows.Flow_1)rt.flows.FlowCreator.fromFlow(rt.flows.dataParallel.DataParallelFlowK.$self, str$3297469917561599766$str$.$self.flow$imm())).map$mut(test.Fear[###]$_0.$self)).join$mut(str$14492805990617963705$str$.$self)));
     }
     }
     """, "/test/Test_0.java", """
     package test
-    Test: Main{sys -> FIO#sys.println("Hello".flow
+    Test: Main{sys -> UnrestrictedIO#sys.println("Hello".flow
       .map{ch -> ch == "H" ? {.then -> "J", .else -> ch}}
       .join ""
       )}

@@ -2,8 +2,7 @@ package typing;
 
 import failure.CompileError;
 import id.Mdf;
-import net.jqwik.api.ForAll;
-import net.jqwik.api.Property;
+import net.jqwik.api.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,6 +11,8 @@ import program.Program;
 import program.typesystem.XBs;
 import utils.Err;
 import utils.FromContent;
+
+import java.util.Arrays;
 
 public class TestSubTyping {
   void ok(String t1, String t2, boolean res, String ...code){
@@ -33,11 +34,13 @@ public class TestSubTyping {
     }
   }
 
-  @Property public void mdfIsCommonSupertype(@ForAll Mdf mdf) {
-    ok(mdf+" a.A", "readOnly a.A", true, "package a\nA:{}");
+  @Provide Arbitrary<Mdf> syntaxMdfs() {
+    return Arbitraries.of(Arrays.stream(Mdf.values()).filter(Mdf::isSyntaxMdf).toList());
   }
-
-  @Property public void isoIsCommonSubtype(@ForAll Mdf mdf) {
+  @Property public void mdfIsCommonSupertype(@ForAll("syntaxMdfs") Mdf mdf) {
+    ok(mdf+" a.A", "readH a.A", true, "package a\nA:{}");
+  }
+  @Property public void isoIsCommonSubtype(@ForAll("syntaxMdfs") Mdf mdf) {
     ok("iso a.A", mdf+" a.A", true, "package a\nA:{}");
   }
 
@@ -106,7 +109,7 @@ public class TestSubTyping {
   final String pointEx = """
     package a
     List[T]:{
-      recMdf .get: recMdf T
+      read .get: read/imm T
     }
     SortedList[T]:List[T]
     Int:{}
@@ -114,14 +117,14 @@ public class TestSubTyping {
     ColouredPoint:Point{ .colour: Int }
     """;
   @Test void sortedListOfTExtendsListTOfT() { ok("a.SortedList[a.Int]","a.List[a.Int]",true,pointEx); }
-  @Test void sortedListOfTExtendsListTOfTMdfFail() { ok("a.SortedList[a.Int]","a.List[mut a.Int]",true,pointEx); }
-  @Test void sortedListOfTExtendsListTOfTMdf() { ok("a.SortedList[a.Int]","a.List[read a.Int]",true,pointEx); }
-  @Test void sortedListOfTExtendsListTOfTMdfReflexive() { ok("a.SortedList[read a.Int]","a.List[a.Int]",true,pointEx); }
+  @Test void sortedListOfTExtendsListTOfTMdfFail() { ok("a.SortedList[a.Int]","a.List[mut a.Int]",false,pointEx); }
+  @Test void sortedListOfTExtendsListTOfTMdf() { ok("a.SortedList[a.Int]","a.List[read a.Int]",false,pointEx); }
+  @Test void sortedListOfTExtendsListTOfTMdfReflexive() { ok("a.SortedList[read a.Int]","a.List[a.Int]",false,pointEx); }
   @Test void sortedListOfTExtendsListTOfX() { ok("a.SortedList[X]","a.List[X]",true,pointEx); }
   @Test void sortedListOfTExtendsListTOfNot1() { ok("a.SortedList[a.Int]","a.List[X]",false,pointEx); }
   @Test void sortedListOfTExtendsListTOfNot2() { ok("a.SortedList[X]","a.List[a.Int]",false,pointEx); }
   @Test void sortedListOfTExtendsListTOfNot3() { ok("a.SortedList[X]","a.List[a.List[a.Int]]",false,pointEx); }
-  @Test void sortedListMixedGens() { ok("a.SortedList[a.ColouredPoint]","a.SortedList[a.Point]",true,pointEx); }
+  @Test void sortedListMixedGens() { ok("a.SortedList[a.ColouredPoint]","a.SortedList[a.Point]",false,pointEx); }
   @Test void inverseSortedListMixedGens() { ok("a.SortedList[a.Point]","a.SortedList[a.ColouredPoint]",false,pointEx); }
 
   final String pointEx2 = """
@@ -136,13 +139,13 @@ public class TestSubTyping {
     """;
   @Test void sortedListOfTExtendsListTOfT2() { ok("a.SortedList[a.Int]","a.List[a.Int]",true,pointEx2); }
   @Test void sortedListOfTExtendsListTOfTMdfFail2() { ok("a.SortedList[a.Int]","a.List[mut a.Int]",false,pointEx2); }
-  @Test void sortedListOfTExtendsListTOfTMdf2() { ok("a.SortedList[a.Int]","a.List[read a.Int]",true,pointEx2); }
-  @Test void sortedListOfTExtendsListTOfTMdfReflexive2() { ok("a.SortedList[read a.Int]","a.List[a.Int]",true,pointEx2); }
+  @Test void sortedListOfTExtendsListTOfTMdf2() { ok("a.SortedList[a.Int]","a.List[read a.Int]",false,pointEx2); }
+  @Test void sortedListOfTExtendsListTOfTMdfReflexive2() { ok("a.SortedList[read a.Int]","a.List[a.Int]",false,pointEx2); }
   @Test void sortedListOfTExtendsListTOfX2() { ok("a.SortedList[X]","a.List[X]",true,pointEx2); }
   @Test void sortedListOfTExtendsListTOfNot12() { ok("a.SortedList[a.Int]","a.List[X]",false,pointEx2); }
   @Test void sortedListOfTExtendsListTOfNot22() { ok("a.SortedList[X]","a.List[a.Int]",false,pointEx2); }
   @Test void sortedListOfTExtendsListTOfNot32() { ok("a.SortedList[X]","a.List[a.List[a.Int]]",false,pointEx2); }
-  @Test void sortedListMixedGens2() { ok("a.SortedList[a.ColouredPoint]","a.SortedList[a.Point]",true,pointEx2); }
+  @Test void sortedListMixedGens2() { ok("a.SortedList[a.ColouredPoint]","a.SortedList[a.Point]",false,pointEx2); }
   @Test void inverseSortedListMixedGens2() { ok("a.SortedList[a.Point]","a.SortedList[a.ColouredPoint]",false,pointEx2); }
 
   @Test void mdfXNotSubtypeOfIT() {ok("X", "read a.Foo", false, """

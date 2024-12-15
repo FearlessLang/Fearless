@@ -3,6 +3,8 @@ package rt;
 import utils.ResolveResource;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
@@ -33,18 +35,46 @@ public final class NativeRuntime {
     }
   }
 
+  private static final Cleaner cleaner = Cleaner.create();
+
+  // Strings
   public static class StringEncodingError extends RuntimeException {
     public StringEncodingError(String message) {
       super(message);
     }
   }
+  public static native void validateStringOrThrow(ByteBuffer utf8Str) throws StringEncodingError;
+  public static native int[] indexString(ByteBuffer utf8Str);
+  public static native void print(ByteBuffer utf8Str);
+  public static native void println(ByteBuffer utf8Str);
+  public static native void printlnErr(ByteBuffer utf8Str);
+  public static native void printErr(ByteBuffer utf8Str);
+  public static native byte[] normaliseString(ByteBuffer utf8Str);
+  public static native long hashString(ByteBuffer utf8Str);
 
-  public static native void validateStringOrThrow(byte[] utf8Str) throws StringEncodingError;
-  public static native int[] indexString(byte[] utf8Str);
-  public static native void print(byte[] utf8Str);
-  public static native void println(byte[] utf8Str);
-  public static native void printlnErr(byte[] utf8Str);
-  public static native void printErr(byte[] utf8Str);
-  public static native byte[] normaliseString(byte[] utf8Str);
-  public static native long hashString(byte[] utf8Str);
+  // Regex
+  public static final class Regex {
+    record CleaningState(long pattern) implements Runnable {
+      @Override public void run() {
+        NativeRuntime.dropRegexPattern(pattern);
+      }
+    }
+
+    private final long patternPtr;
+    public Regex(ByteBuffer patternStr) {
+      this.patternPtr = NativeRuntime.compileRegexPattern(patternStr);
+      cleaner.register(this, new CleaningState(patternPtr));
+    }
+    public boolean doesRegexMatch(ByteBuffer utf8Str) {
+      return NativeRuntime.doesRegexMatch(patternPtr, utf8Str);
+    }
+    public static class InvalidRegexError extends RuntimeException {
+      public InvalidRegexError(String message) {
+        super(message);
+      }
+    }
+  }
+  private static native long compileRegexPattern(ByteBuffer utf8Str);
+  private static native void dropRegexPattern(long pattern);
+  private static native boolean doesRegexMatch(long pattern, ByteBuffer utf8Str);
 }

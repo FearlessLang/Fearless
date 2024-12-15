@@ -1,28 +1,39 @@
 package rt;
 
-import base.False_0;
-import base.True_0;
-import base._StrHelpers_0;
+import base.*;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public interface Str extends base.Str_0 {
-	byte[] utf8();
+	ByteBuffer utf8();
 	int[] graphemes();
 
+	static ByteBuffer wrap(byte[] array) {
+		return ByteBuffer
+			.allocateDirect(array.length)
+			.put(array)
+			.position(0);
+	}
+	static String toJavaStr(ByteBuffer utf8) {
+		var dst = new byte[utf8.remaining()];
+		utf8.get(dst);
+		return new String(dst, StandardCharsets.UTF_8);
+	}
+
+	Str EMPTY = fromTrustedUtf8(ByteBuffer.allocateDirect(0));
 	static Str fromJavaStr(String str) {
 		var utf8 = str.getBytes(StandardCharsets.UTF_8);
-		return fromTrustedUtf8(utf8);
+		return fromTrustedUtf8(wrap(utf8));
 	}
-	static Str fromUtf8(byte[] utf8) {
+	static Str fromUtf8(ByteBuffer utf8) {
 		NativeRuntime.validateStringOrThrow(utf8);
 		return fromTrustedUtf8(utf8);
 	}
-	static Str fromTrustedUtf8(byte[] utf8) {
+	static Str fromTrustedUtf8(ByteBuffer utf8) {
 		return new Str(){
 			private int[] GRAPHEMES = null;
-			@Override public byte[] utf8() { return utf8; }
+			@Override public ByteBuffer utf8() { return utf8; }
 			@Override public int[] graphemes() {
 				if (GRAPHEMES == null) { GRAPHEMES = NativeRuntime.indexString(utf8); }
 				return GRAPHEMES;
@@ -34,14 +45,15 @@ public interface Str extends base.Str_0 {
 		return this;
 	}
 	@Override default base.Bool_0 $equals$equals$imm(Str other$) {
-		return Arrays.equals(this.utf8(), other$.utf8()) ? True_0.$self : False_0.$self;
+		return this.utf8().equals(other$.utf8()) ? True_0.$self : False_0.$self;
 	}
-	@Override default Str $plus$imm(Str other$) {
+	@Override default Str $plus$imm(base.Stringable_0 other$) {
 		var a = this.utf8();
-		var b = other$.utf8();
-		var res = new byte[a.length + b.length];
-		System.arraycopy(a, 0, res, 0, a.length);
-		System.arraycopy(b, 0, res, a.length, b.length);
+		var b = other$.str$read().utf8();
+		var res = ByteBuffer.allocateDirect(a.remaining() + b.remaining());
+		res.put(a.duplicate());
+		res.put(b.duplicate());
+		res.position(0);
 		return fromTrustedUtf8(res);
 	}
 	@Override default Long size$imm() {
@@ -50,10 +62,10 @@ public interface Str extends base.Str_0 {
 	@Override default base.Void_0 assertEq$imm(Str other$) {
 		return _StrHelpers_0.$self.assertEq$imm(this, other$);
 	}
-	@Override default base.Void_0 assertEq$imm(Str message$, Str other$) {
-		return _StrHelpers_0.$self.assertEq$imm(message$, this, other$);
+	@Override default base.Void_0 assertEq$imm(Str other$, Str message$) {
+		return _StrHelpers_0.$self.assertEq$imm(this, other$, message$);
 	}
-	@Override default base.Bool_0 isEmpty$read() {
-		return this.utf8().length == 0 ? True_0.$self : False_0.$self;
+	@Override default base.Bool_0 isEmpty$imm() {
+		return this.utf8().remaining() == 0 ? True_0.$self : False_0.$self;
 	}
 }

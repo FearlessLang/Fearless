@@ -4,70 +4,71 @@ import base.Bool_0;
 import base.False_0;
 import base.True_0;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public final class MutStr implements Str {
-  private final List<Str> buffer = new ArrayList<>();
-  private Str immStr;
+  private ByteBuffer buffer = ByteBuffer.allocateDirect(16);
+  private volatile int[] graphemes = null;
 
   public MutStr(Str str) {
-    buffer.add(str);
-    immStr = str;
+    assert str != null;
+    put(str);
   }
 
-  @Override public byte[] utf8() {
-    if (immStr == null) {
-      immStr = freeze();
-    }
-    return immStr.utf8();
+  @Override public ByteBuffer utf8() {
+    return buffer.slice(0, buffer.position());
   }
 
   @Override public int[] graphemes() {
-    if (immStr == null) {
-      immStr = freeze();
+    var graphemes = this.graphemes;
+    if (graphemes != null) {
+      return graphemes;
     }
-    return immStr.graphemes();
+    graphemes = NativeRuntime.indexString(utf8());
+    this.graphemes = graphemes;
+    return graphemes;
   }
 
   @Override public Bool_0 isEmpty$read() {
-    for (var str : buffer) {
-      if (str.isEmpty$read() == False_0.$self) {
-        return False_0.$self;
-      }
-    }
-    return True_0.$self;
+    return buffer.position() == 0 ? True_0.$self : False_0.$self;
   }
 
-  @Override public MutStr append$mut(base.Stringable_0 other$) {
-    buffer.add(other$.str$read());
-    immStr = null;
+  @Override public MutStr $plus$mut(base.Stringable_0 other$) {
+    var other = other$.str$read();
+    assert other != null;
+    put(other);
     return this;
   }
 
+  @Override public base.Void_0 append$mut(base.Stringable_0 other$) {
+    this.$plus$mut(other$);
+    return base.Void_0.$self;
+  }
+
   @Override public base.Void_0 clear$mut() {
-    buffer.clear();
-    immStr = Str.EMPTY;
+    buffer = ByteBuffer.allocateDirect(16);
     return base.Void_0.$self;
   }
 
   @Override public rt.Str str$read() {
-    if (immStr == null) {
-      immStr = freeze();
-    }
-    return immStr;
+    return rt.Str.fromTrustedUtf8(utf8());
   }
 
-  private Str freeze() {
-    byte[] utf8 = new byte[buffer.parallelStream().mapToInt(s -> s.utf8().length).sum()];
-    int idx = 0;
-    for (var str : buffer) {
-      System.arraycopy(str.utf8(), 0, utf8, idx, str.utf8().length);
-      idx = idx + str.utf8().length;
+  private void put(Str str) {
+    graphemes = null;
+    var toAdd = str.utf8();
+    assert toAdd.position() == 0;
+    if (buffer.remaining() < toAdd.capacity()) {
+      var minSizeIncrease = (buffer.capacity() * 3) / 2 + 1;
+      var newBuffer = ByteBuffer.allocateDirect(Math.max(minSizeIncrease, buffer.capacity() + toAdd.capacity()));
+      newBuffer.put(this.utf8());
+      buffer = newBuffer;
     }
-    var res = Str.fromTrustedUtf8(utf8);
-    buffer.clear(); // cant just set to null, because we use .freeze for just normal reading too (not just for ->imm)
-    buffer.add(res);
-    return res;
+    buffer.put(toAdd.duplicate());
   }
 }

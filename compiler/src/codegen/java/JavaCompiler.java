@@ -26,7 +26,7 @@ public record JavaCompiler(Verbosity verbosity, InputOutput io){
       "-cp", io.cachedBase().toAbsolutePath().toString(),
       "-Xdiags:verbose",
       "--enable-preview",
-      "--release", "22"
+      "--release", "23"
       );
     var errors = new Box<Diagnostic<?>>(null);
     boolean success = compiler.getTask(

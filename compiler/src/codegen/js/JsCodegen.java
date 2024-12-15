@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 public class JsCodegen implements MIRVisitor<String> {
   protected final MIR.Program p;
-  private final MagicImpls magic;
+  private final JsMagicImpls magic;
   private MIR.Package pkg;
   private HashMap<Id.DecId, String> freshClasses;
 
@@ -24,7 +24,7 @@ public class JsCodegen implements MIRVisitor<String> {
 
   public JsCodegen(MIR.Program p) {
     this.p = p;
-    this.magic = new MagicImpls(this, p.p());
+    this.magic = new JsMagicImpls(this, p.p());
   }
 
   public String visitProgram(Id.DecId entry) {

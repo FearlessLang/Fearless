@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Assertions;
 import program.TypeSystemFeatures;
 import utils.Err;
 import utils.IoErr;
+import utils.ResolveResource;
 import utils.RunOutput;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +23,10 @@ public class RunJavaProgramTests {
 
   public static void ok(RunOutput.Res expected, String... content) {
     okWithArgs(expected, List.of(), content);
+  }
+  public static void ok(RunOutput.Res expected, Path... content) {
+    var contentStr = Arrays.stream(content).map(ResolveResource::read).toArray(String[]::new);
+    okWithArgs(expected, List.of(), contentStr);
   }
   public static void okWithArgs(RunOutput.Res expected, List<String> args, String... content) {
     assert content.length > 0;

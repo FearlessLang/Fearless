@@ -210,7 +210,7 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     if (ctx.topDec() != null) {
       String cName = visitFullCN(ctx.topDec().fullCN());
       if (Magic.isLiteral(cName)) {
-        throw Fail.syntaxError(STR."\{pkg}.\{cName} is not a valid type name.").pos(pos(ctx));
+        throw Fail.syntaxError(pkg + "." + cName + " is not a valid type name.").pos(pos(ctx));
       }
       if (cName.contains(".")) {
         throw Fail.crossPackageDeclaration().pos(pos(ctx));
@@ -379,7 +379,7 @@ public class FullEAntlrVisitor implements generated.FearlessVisitor<Object>{
     check(ctx);
     String cName = visitFullCN(ctx.fullCN());
     if (Magic.isLiteral(cName)) {
-      throw Fail.syntaxError(STR."\{pkg}.\{cName} is not a valid type name.").pos(pos(ctx));
+      throw Fail.syntaxError(pkg + "." + cName + " is not a valid type name.").pos(pos(ctx));
     }
     if (cName.contains(".")) {
       throw Fail.crossPackageDeclaration().pos(pos(ctx));

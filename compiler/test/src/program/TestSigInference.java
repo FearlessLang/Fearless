@@ -80,7 +80,7 @@ public class TestSigInference {
   @Test void inferOneSigGens() { ok("""
     {base.B/0=Dec[name=base.B/0,gxs=[],lambda=[-infer-][base.A[]]{
       'this
-      .fullType/0([]):Sig[gens=[X$0],ts=[],ret=immX$0]->this:infer.fullType/0[-]([]):infer}],
+      .fullType/0([]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[],ret=immX$0]->this:infer.fullType/0[-]([]):infer}],
     base.A/0=Dec[name=base.A/0,gxs=[],lambda=[-infer-][]{'this.fullType/0([]):Sig[gens=[X],ts=[],ret=immX]->[-]}]}
     """, """
     package base
@@ -93,7 +93,7 @@ public class TestSigInference {
       .fullType/0([]):Sig[gens=[X],ts=[],ret=immX]->[-]}],
     base.B/1=Dec[name=base.B/1,gxs=[X],lambda=[-infer-][base.A[]]{'this
       .bla/0([]):Sig[gens=[],ts=[],ret=immX]->[-],
-      .fullType/0([]):Sig[gens=[X$0],ts=[],ret=immX$0]->this:infer.fullType/0[-]([]):infer}]}
+      .fullType/0([]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[],ret=immX$0]->this:infer.fullType/0[-]([]):infer}]}
     """, """
     package base
     A:{ .fullType[X]: imm X }
@@ -117,7 +117,7 @@ public class TestSigInference {
   @Test void inferOneSigGensAndParams() { ok("""
     {base.B/0=Dec[name=base.B/0,gxs=[],lambda=[-infer-][base.A[]]{
       'this
-      .fullType/1([y]):Sig[gens=[X$0],ts=[immX$0],ret=immbase.A[]]->[-imm base.B[]-][base.B[]]{}}],
+      .fullType/1([y]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[immX$0],ret=immbase.A[]]->[-imm base.B[]-][base.B[]]{}}],
       base.A/0=Dec[name=base.A/0,gxs=[],lambda=[-infer-][]{'this.fullType/1([x]):Sig[gens=[X],ts=[immX],ret=immbase.A[]]->[-]}]}
     """, """
     package base
@@ -171,12 +171,12 @@ public class TestSigInference {
 
   @Test void onlyAbsGens() { ok("""
     {base.B/0=Dec[name=base.B/0,gxs=[],lambda=[-infer-][base.A[immbase.B[]]]{'this
-      .fullType/0([]):Sig[gens=[],ts=[],ret=immbase.B[]]->[-imm base.B[]-][base.B[]]{}}],
+      .fullType/0([]):Sig[gens=[],ts=[],ret=immbase.B[]]->[-immbase.B[]-][base.B[]]{}}],
+    base.Void/0=Dec[name=base.Void/0,gxs=[],lambda=[-infer-][]{'this}],
     base.A/1=Dec[name=base.A/1,gxs=[X],lambda=[-infer-][]{'this
       .fullType/0([]):Sig[gens=[],ts=[],ret=immX]->[-]}],
     base.A/0=Dec[name=base.A/0,gxs=[],lambda=[-infer-][]{'this
-      .fullType/0([]):Sig[gens=[],ts=[],ret=immbase.Void[]]->[-]}],
-    base.Void/0=Dec[name=base.Void/0,gxs=[],lambda=[-infer-][]{'this}]}
+      .fullType/0([]):Sig[gens=[],ts=[],ret=immbase.Void[]]->[-]}]}
     """, """
     package base
     Void:{}
@@ -216,7 +216,7 @@ public class TestSigInference {
     a.Id/0=Dec[name=a.Id/0,gxs=[],lambda=[-infer-][]{'this
       .id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}],
     a.C/0=Dec[name=a.C/0,gxs=[],lambda=[-infer-][a.A[],a.B[imma.A[]]]{'this
-      .id/1([a]):Sig[gens=[X$0],ts=[immX$0],ret=immX$0]->a:infer}]}
+      .id/1([a]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[immX$0],ret=immX$0]->a:infer}]}
     """, """
     package a
     Id:{ .id[X](x:imm X):imm X }
@@ -225,14 +225,11 @@ public class TestSigInference {
     C:A,B[A]{.id a->a}
     """); }//So, how do we 'accept' that the version with X and the version with X0 are compatible
   @Test void diamondRenameNotComposable() { ok("""
-    {a.B/1=Dec[name=a.B/1,gxs=[Y],lambda=[-infer-][a.Id2[]]{'this}],
-    a.A/0=Dec[name=a.A/0,gxs=[],lambda=[-infer-][a.Id1[]]{'this}],
-    a.Id2/0=Dec[name=a.Id2/0,gxs=[],lambda=[-infer-][]{'this
-      .id/1([x]):Sig[gens=[Z],ts=[immZ],ret=immZ]->[-]}],
-    a.C/0=Dec[name=a.C/0,gxs=[],lambda=[-infer-][a.A[],a.B[imma.A[]]]{'this
-      .id/1([a]):Sig[gens=[X$0],ts=[immX$0],ret=immX$0]->a:infer}],
-    a.Id1/0=Dec[name=a.Id1/0,gxs=[],lambda=[-infer-][]{'this
-      .id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}]}
+    {a.A/0=Dec[name=a.A/0,gxs=[],lambda=[-infer-][a.Id1[]]{'this}],
+    a.B/1=Dec[name=a.B/1,gxs=[Y],lambda=[-infer-][a.Id2[]]{'this}],
+    a.Id2/0=Dec[name=a.Id2/0,gxs=[],lambda=[-infer-][]{'this.id/1([x]):Sig[gens=[Z],ts=[immZ],ret=immZ]->[-]}],
+    a.C/0=Dec[name=a.C/0,gxs=[],lambda=[-infer-][a.A[],a.B[imma.A[]]]{'this.id/1([a]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[immX$0],ret=immX$0]->a:infer}],
+    a.Id1/0=Dec[name=a.Id1/0,gxs=[],lambda=[-infer-][]{'this.id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}]}
     """, """
     package a
     Id1:{ .id[X](x:imm X):imm X }
@@ -242,12 +239,12 @@ public class TestSigInference {
     C:A,B[A]{.id a->a}
     """); }//So, how do we 'accept' that the version with X and the version with X0 are compatible
   @Test void diamondRename2() { ok("""
-    {a.B/1=Dec[name=a.B/1,gxs=[Y],lambda=[-infer-][a.Id2[]]{'this}],
-    a.A/0=Dec[name=a.A/0,gxs=[],lambda=[-infer-][a.Id1[]]{'this}],
+    {a.A/0=Dec[name=a.A/0,gxs=[],lambda=[-infer-][a.Id1[]]{'this}],
+    a.B/1=Dec[name=a.B/1,gxs=[Y],lambda=[-infer-][a.Id2[]]{'this}],
     a.Id2/0=Dec[name=a.Id2/0,gxs=[],lambda=[-infer-][]{'this
       .id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}],
     a.C/0=Dec[name=a.C/0,gxs=[],lambda=[-infer-][a.A[],a.B[imma.A[]]]{'this
-      .id/1([a]):Sig[gens=[X$0],ts=[immX$0],ret=immX$0]->a:infer}],
+      .id/1([a]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[immX$0],ret=immX$0]->a:infer}],
     a.Id1/0=Dec[name=a.Id1/0,gxs=[],lambda=[-infer-][]{'this
       .id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}]}
     """, """
@@ -321,7 +318,7 @@ public class TestSigInference {
         .g/0([]):Sig[gens=[AA],ts=[],ret=immAA]->[-]}],
         base.C/0=Dec[name=base.C/0,gxs=[],lambda=[-infer-][]{'this.g/0([]):Sig[gens=[BB],ts=[],ret=immBB]->[-]}],
         base.A/0=Dec[name=base.A/0,gxs=[],lambda=[-infer-][base.B[],base.C[]]{'this
-          .g/0([]):Sig[gens=[AA$0],ts=[],ret=immAA$0]->this:infer.g/0[-]([]):infer}]}
+          .g/0([]):Sig[gens=[AA$0],bounds={AA$0=[imm,mut,read]},ts=[],ret=immAA$0]->this:infer.g/0[-]([]):infer}]}
       """, """
       package base
       A:B,C{ .g -> this.g }
@@ -343,7 +340,7 @@ public class TestSigInference {
     {a.Id/0=Dec[name=a.Id/0,gxs=[],lambda=[-infer-][]{'this
       .id/1([x]):Sig[gens=[X],ts=[immX],ret=immX]->[-]}],
     a.Id2/0=Dec[name=a.Id2/0,gxs=[],lambda=[-infer-][a.Id[]]{'this
-      .id/1([x]):Sig[gens=[X$0],ts=[immX$0],ret=immX$0]->x:infer}]}
+      .id/1([x]):Sig[gens=[X$0],bounds={X$0=[imm,mut,read]},ts=[immX$0],ret=immX$0]->x:infer}]}
     """, """
     package a
     Id:{ .id[X](x: imm X): imm X }
@@ -414,23 +411,23 @@ public class TestSigInference {
     {base.ThenElse/1=Dec[name=base.ThenElse/1,gxs=[R],lambda=[-infer-][]{'this
       .then/0([]):Sig[gens=[],ts=[],ret=R]->[-],
       .else/0([]):Sig[gens=[],ts=[],ret=R]->[-]}],
+    base.True/0=Dec[name=base.True/0,gxs=[],lambda=[-infer-][base.Bool[]]{'this
+      .and/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->b:infer,
+      .or/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->this:infer,
+      .not/0([]):Sig[gens=[],ts=[],ret=immbase.Bool[]]->[-immbase.False[]-][base.False[]]{},
+      ?/1([f]):Sig[gens=[R$0],bounds={R$0=[imm,mut,read]},ts=[mutbase.ThenElse[R$0]],ret=R$0]->f:infer.then/0[-]([]):infer}],
+    base.False/0=Dec[name=base.False/0,gxs=[],lambda=[-infer-][base.Bool[]]{'this
+      .and/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->this:infer,
+      .or/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->b:infer,
+      .not/0([]):Sig[gens=[],ts=[],ret=immbase.Bool[]]->[-immbase.True[]-][base.True[]]{},
+      ?/1([f]):Sig[gens=[R$0],bounds={R$0=[imm,mut,read]},ts=[mutbase.ThenElse[R$0]],ret=R$0]->f:infer.else/0[-]([]):infer}],
     base.Sealed/0=Dec[name=base.Sealed/0,gxs=[],lambda=[-infer-][]{'this}],
     base.Bool/0=Dec[name=base.Bool/0,gxs=[],lambda=[-infer-][base.Sealed[]]{'this
       .and/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->[-],
       .or/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->[-],
       .not/0([]):Sig[gens=[],ts=[],ret=immbase.Bool[]]->[-],
       ?/1([f]):Sig[gens=[R],ts=[mutbase.ThenElse[R]],ret=R]->[-]}],
-    base.Str/0=Dec[name=base.Str/0,gxs=[],lambda=[-infer-][]{'this}],
-    base.True/0=Dec[name=base.True/0,gxs=[],lambda=[-infer-][base.Bool[]]{'this
-      .and/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->b:infer,
-      .or/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->this:infer,
-      .not/0([]):Sig[gens=[],ts=[],ret=immbase.Bool[]]->[-imm base.False[]-][base.False[]]{},
-      ?/1([f]):Sig[gens=[R$0],ts=[mutbase.ThenElse[R$0]],ret=R$0]->f:infer.then/0[-]([]):infer}],
-    base.False/0=Dec[name=base.False/0,gxs=[],lambda=[-infer-][base.Bool[]]{'this
-      .and/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->this:infer,
-      .or/1([b]):Sig[gens=[],ts=[immbase.Bool[]],ret=immbase.Bool[]]->b:infer,
-      .not/0([]):Sig[gens=[],ts=[],ret=immbase.Bool[]]->[-imm base.True[]-][base.True[]]{},
-      ?/1([f]):Sig[gens=[R$0],ts=[mutbase.ThenElse[R$0]],ret=R$0]->f:infer.else/0[-]([]):infer}]}
+    base.Str/0=Dec[name=base.Str/0,gxs=[],lambda=[-infer-][]{'this}]}
     """, """
     package base
     Sealed:{} Str:{}

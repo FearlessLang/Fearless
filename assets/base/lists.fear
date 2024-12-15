@@ -164,9 +164,20 @@ List: Sealed{
   #[E]: mut List[E] -> Magic!,
   #[E](e1: E): mut List[E] -> Magic!,
   #[E](e1: E, e2: E): mut List[E] -> Magic!,
-  // TODO: this up to 12 or something
   #[E](e1: E, e2: E, e3: E): mut List[E] -> Magic!,
   #[E](e1: E, e2: E, e3: E, e4: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E): mut List[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E, e16: E): mut List[E] -> Magic!,
   .fromLList[E](list: mut LList[E]): mut List[E] -> Magic!,
   .withCapacity[E](capacity: Nat): mut List[E] -> Magic!,
   }
@@ -180,10 +191,29 @@ List[E]: Collection,Sealed{
   imm  .tryGet(i: Nat): mut Opt[imm E],
 
   mut .add(e: E): Void,
-  mut .addAnd(e: E): mut List[E] -> Block#(this.add(e), this),
+  mut +(e: E): mut List[E] -> Block#(this.add(e), this),
   mut .addAll(other: mut List[E]): Void -> other.iter.for{e -> this.add(e)},
 
   mut .clear: Void,
+
+  mut  ==(eq: read F[E, E, Bool], other: mut List[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
+  read ==(eq: read F[read/imm E, read/imm E, Bool], other: read List[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
+  imm  ==(eq: F[imm E, imm E, Bool], other: List[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
 
   mut .flow: mut Flow[E] -> Block#
     .let[mut Count[Nat]] cursor = {Count.nat(0)}
@@ -263,14 +293,14 @@ List[E]: Collection,Sealed{
   }
 
 // Right now this is invalid if the list gets mutated for any reason, Could Repr help?
-ListProxy[E]: List[E]{
+ListView[E]: List[E]{
   read .inner: read List[E],
   /// Get an item with its original RC by providing a reference to the original mutable list.
   read .expose(list: mut List[E], i: Nat): E,
   read .tryExpose(list: mut List[E], i: Nat): mut Opt[E],
   }
-ListProxys: {
-  .subList[E](list: read List[E], from: Nat, to: Nat): read ListProxy[E] -> Block#
+ListViews: {
+  .subList[E](list: read List[E], from: Nat, to: Nat): read ListView[E] -> Block#
     .assert({from <= to}, "Invalid range for the list proxy, "+(from.str)+" is greater than "+(to.str))
     .assert({to <= (list.size)}, "Invalid range for the list proxy, "+(to.str)+" is greater than the list size ("+(list.size.str)+")")
     .return {{'self
@@ -303,7 +333,7 @@ ListProxys: {
         },
       }},
 
-  .indexMap[E](list: read List[E], mappings: List[Nat]): read ListProxy[E] -> Block#
+  .indexMap[E](list: read List[E], mappings: List[Nat]): read ListView[E] -> Block#
     .assert({mappings.size == (list.size)}, "The mappings list must be the same size as the original list ("+(mappings.size.str)+" vs. "+(list.size.str)+")")
     .return {{'self
       .inner -> list,

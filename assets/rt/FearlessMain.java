@@ -1,7 +1,10 @@
 package base;
 
 import base.caps._System_0;
+import rt.Debug;
 import rt.Str;
+import rt.vpf.ConfigureVPF;
+import rt.vpf.VPF;
 
 import java.lang.reflect.Field;
 
@@ -24,16 +27,22 @@ public class FearlessMain {
     assert myMain != null;
 
     FAux.LAUNCH_ARGS = buildArgList(args, 1);
-//    var shutdownVPF = rt.VPF.start(rt.ConfigureVPF.getHeartbeatInterval());
-    var shutdownVPF = rt.VPF.start(3000);
+    var shutdownVPF = VPF.start(ConfigureVPF.getHeartbeatInterval());
     try {
       myMain.$hash$imm(_System_0.$self);
     } catch (StackOverflowError e) {
-      fatal("Program crashed with: Stack overflowed");
-    }
-    catch (Throwable t) {
+      fatal("Program crashed with: Stack overflowed", Debug.demangleStackTrace(e.getStackTrace()));
+    } catch (RuntimeException e) {
+      var t = e.getCause();
+      if (t == null) { t = e; }
+      var msg = t.getMessage() == null ? e.getCause() : t.getMessage();
+      if (msg instanceof StackOverflowError) {
+        msg = "Stack overflowed";
+      }
+      fatal("Program crashed with: "+msg, Debug.demangleStackTrace(t.getStackTrace()));
+    } catch (Throwable t) {
       var msg = t.getMessage() == null ? t.getCause() : t.getMessage();
-      fatal("Program crashed with: "+msg);
+      fatal("Program crashed with: "+msg, Debug.demangleStackTrace(t.getStackTrace()));
     } finally {
       shutdownVPF.run();
     }
@@ -51,7 +60,11 @@ public class FearlessMain {
     return res;
   }
   private static void fatal(String message) {
+    fatal(message, null);
+  }
+  private static void fatal(String message, String stackTrace) {
     System.err.println(message);
+    if (stackTrace != null) { System.err.println("\nStack trace:\n"+stackTrace); }
     System.exit(1);
   }
   public static class FAux { public static base.LList_1 LAUNCH_ARGS; }

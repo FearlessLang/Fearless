@@ -6,7 +6,10 @@ Sealed: {}
 Void: Sealed{}
 
 Abort: Sealed{![R:readH,mutH,read,mut,imm,iso]: R -> this!} // can be optimised to just terminate (goes stuck)
-Magic: Sealed{![R:readH,mutH,read,mut,imm,iso]: R -> this!} // magic'd out to tell us what we forgot to implement
+Magic: Sealed{
+  ![R:readH,mutH,read,mut,imm,iso]: R -> this!, // magic'd out to tell us what we forgot to implement
+  ![R:readH,mutH,read,mut,imm,iso](_: mut System): R -> this!,
+  }
 Debug: Sealed{
   #[T](x: T): T -> x,
   .println[T](x: T): Void -> {},
