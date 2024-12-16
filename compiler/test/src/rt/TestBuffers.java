@@ -3,6 +3,7 @@ package rt;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -158,5 +159,26 @@ public class TestBuffers {
     buffer.offer(7);
     buffer.offer(8);
     assertEquals(8, buffer.take());
+  }
+  @Test void boundedBufferThreaded() {
+    var buffer = new BoundedBuffer(3);
+    buffer.offer(1);
+    buffer.offer(2);
+    buffer.offer(3);
+    buffer.offer(4);
+    assertEquals(2, buffer.take());
+    assertEquals(3, buffer.take());
+    assertEquals(4, buffer.take());
+    var res = new CompletableFuture<Integer>();
+    Thread.ofVirtual().start(()->res.complete((int)buffer.take()));
+    Thread.ofVirtual().start(()->{
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      buffer.offer(5);
+    });
+    assertEquals(5, res.join());
   }
 }
