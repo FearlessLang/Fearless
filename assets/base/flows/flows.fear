@@ -44,7 +44,16 @@ _NonTerminalOps[E]: {
   mut .filter[T:iso,imm,mut,read](data: mut MF[iso T], predicate: read F[iso T, E, Bool]): mut Flow[E],
 
   mut .map[R](f: read F[E, R]): mut Flow[R],
-  mut .map[T:iso,imm,mut,read,R](data: mut MF[iso T], f: read F[iso T, E, R]): mut Flow[R],
+  mut .map[T:iso,imm,mut,read,R](
+    contextSupplier: iso MF[iso T],
+    f: read F[iso T, E, R]
+    ): mut Flow[R],
+  mut .map[T:iso,imm,mut,read,TT:iso,imm,mut,read,R](
+    context: iso T,
+    contextSupplier: F[mut T, iso TT],
+    f: read F[iso TT, E, R]
+    ): mut Flow[R] -> this.map[TT,R](_Ctx#(context, contextSupplier), f),
+//    ): mut Flow[R] -> this.map[TT,R](iso MF[iso TT]{mut #: iso TT -> contextSupplier#context}, f),
 
 //  mut .do(f: read F[E]): mut Flow[E],
 //  mut .do[T](data: mut MF[iso T], f: read F[iso T, E, Void]): mut Flow[E],
@@ -117,7 +126,8 @@ EmptyFlow[E]: Flow[E]{
   .filter(_,_) -> this,
 
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
-  mut .map[T:iso,imm,mut,read,R](data: mut MF[iso T], f: read F[iso T, E, R]): mut Flow[R] -> mut EmptyFlow[R],
+  .map(_,f) -> this.map {x->Unreachable!},
+  .map(_,_,f) -> this.map {x->Unreachable!},
 
   mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
@@ -152,3 +162,8 @@ _Enumerateds: {#[E:imm](i: Nat, e: E): Enumerated[E] -> Enumerated[E:imm]: {
   }}
 
 Pair[A,B]: {mut .a: A, mut .b: B}
+
+_Ctx: {
+  #[T:iso,imm,mut,read, TT:iso,imm,mut,read](ctx: mut T, ctxSupplier: F[mut T, iso TT]): mut MF[iso TT] ->
+    {ctxSupplier#ctx},
+  }
