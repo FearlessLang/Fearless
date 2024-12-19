@@ -5,6 +5,7 @@ _SeqFlow: _FlowFactory{
     .unwrapOp(_) -> source,
     // non-terminals
     .filter(p) -> this.fromOp(_Filter#(_Sink, source, p), {}),
+    .filter(data, p) -> this.fromOp(_Filter#(_Sink, source, data, p), {}),
     .map(f) -> this.fromOp(_Map#(_Sink, source, f), size),
     .flatMap(f) -> this.fromOp(_FlatMap#(_Sink, source, f), {}),
     mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] ->

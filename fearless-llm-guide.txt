@@ -1,0 +1,8 @@
+Fearless does not have an `import` keyword. Instead we use alias to do things like:
+```
+package mypackage
+alias base.True as True,
+alias base.False as False,
+```
+
+Aliases cannot be wildcarded and must always be explicit.

@@ -41,8 +41,15 @@ _UnwrapFlowToken: {}
 
 _NonTerminalOps[E]: {
   mut .filter(predicate: read F[E, Bool]): mut Flow[E],
+  mut .filter[T:iso,imm,mut,read](data: mut MF[iso T], predicate: read F[iso T, E, Bool]): mut Flow[E],
+
   mut .map[R](f: read F[E, R]): mut Flow[R],
-  mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
+//  mut .map[T,R](data: mut MF[iso T], f: read F[iso T, E, Void]): mut Flow[R],
+
+//  mut .do(f: read F[E]): mut Flow[E],
+//  mut .do[T](data: mut MF[iso T], f: read F[iso T, E, Void]): mut Flow[E],
+
+   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
   /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
   /// flows stop.
   mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
@@ -106,7 +113,8 @@ _FlowExtensions: {
   }
 
 EmptyFlow[E]: Flow[E]{
-  .filter(p) -> this,
+  .filter(_) -> this,
+  .filter(_,_) -> this,
   mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],

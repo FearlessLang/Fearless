@@ -41,8 +41,9 @@ _Sink[T]: {
 // IMPORTANT NOTE: REUSE SINK OBJECTS! THE IDENTITY IS IMPORTANT FOR WHEN THEY ARE RAN IN PARALLEL!!!!!
 
 _Filter: {
-  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
-//    .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
+  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] ->
+    this#[Void,E](sinkFactory, upstream, {iso Void}, {_, e -> predicate#e}),
+  #[T:iso,imm,mut,read,E](sinkFactory: _Sink, upstream: mut FlowOp[E], data: mut MF[iso T], predicate: read F[iso T, E, Bool]): mut FlowOp[E] -> Block#
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
@@ -50,7 +51,7 @@ _Filter: {
         .empty -> Block#(
           sink := (Opts#(sinkFactory#[E]{
             .stop -> downstream.stop,
-            #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
+            #(e) -> predicate#(data#, e) ? {.then -> downstream#e, .else -> {}},
             .pushError(info) -> downstream.pushError(info),
             })),
           upstream.step(sink.get!)
@@ -61,7 +62,7 @@ _Filter: {
         .empty -> Block#(
           sink := (Opts#(sinkFactory#[E]{
             .stop -> downstream.stop,
-            #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
+            #(e) -> predicate#(data#, e) ? {.then -> downstream#e, .else -> {}},
             .pushError(info) -> downstream.pushError(info),
             })),
           upstream.forRemaining(sink.get!)
@@ -69,7 +70,7 @@ _Filter: {
         },
       .stop -> upstream.stop,
       .isRunning -> upstream.isRunning,
-      .split -> upstream.split.map{right -> this#(sinkFactory, right, predicate)},
+      .split -> upstream.split.map{right -> this#(sinkFactory, right, data, predicate)},
       }}
   }
 _Map: {

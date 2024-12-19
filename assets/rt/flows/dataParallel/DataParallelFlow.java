@@ -75,6 +75,9 @@ public final class DataParallelFlow implements Flow_1 {
   public Flow_1 filter$mut(F_2 p_m$) {
     return $this.fromOp$imm(_Filter_0.$self.$hash$imm(_Sink_0.$self, source_m$, p_m$), Opt_1.$self);
   }
+  public Flow_1 filter$mut(MF_1 data, F_3 p_m$) {
+    return $this.fromOp$imm(_Filter_0.$self.$hash$imm(_Sink_0.$self, source_m$, data, p_m$), Opt_1.$self);
+  }
 
   public Flow_1 flatMap$mut(F_2 f_m$) {
     return $this.fromOp$imm(_FlatMap_0.$self.$hash$imm(_Sink_0.$self, source_m$, f_m$), Opt_1.$self);
