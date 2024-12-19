@@ -44,7 +44,7 @@ _NonTerminalOps[E]: {
   mut .filter[T:iso,imm,mut,read](data: mut MF[iso T], predicate: read F[iso T, E, Bool]): mut Flow[E],
 
   mut .map[R](f: read F[E, R]): mut Flow[R],
-//  mut .map[T,R](data: mut MF[iso T], f: read F[iso T, E, Void]): mut Flow[R],
+  mut .map[T:iso,imm,mut,read,R](data: mut MF[iso T], f: read F[iso T, E, R]): mut Flow[R],
 
 //  mut .do(f: read F[E]): mut Flow[E],
 //  mut .do[T](data: mut MF[iso T], f: read F[iso T, E, Void]): mut Flow[E],
@@ -115,8 +115,11 @@ _FlowExtensions: {
 EmptyFlow[E]: Flow[E]{
   .filter(_) -> this,
   .filter(_,_) -> this,
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
+
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .map[T:iso,imm,mut,read,R](data: mut MF[iso T], f: read F[iso T, E, R]): mut Flow[R] -> mut EmptyFlow[R],
+
+  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> mut EmptyFlow[imm R],
   mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] -> mut EmptyFlow[R],

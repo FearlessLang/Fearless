@@ -42,7 +42,7 @@ _Sink[T]: {
 
 _Filter: {
   #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] ->
-    this#[Void,E](sinkFactory, upstream, {iso Void}, {_, e -> predicate#e}),
+    this#[Void,E](sinkFactory, upstream, {iso Void}, {_,e -> predicate#e}),
   #[T:iso,imm,mut,read,E](sinkFactory: _Sink, upstream: mut FlowOp[E], data: mut MF[iso T], predicate: read F[iso T, E, Bool]): mut FlowOp[E] -> Block#
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
@@ -74,35 +74,42 @@ _Filter: {
       }}
   }
 _Map: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
-    .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
-    .return  {{'op
-      .step(downstream) -> sink.get.match{
-        .some(sink') -> upstream.step(sink'),
-        .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> downstream.stop,
-            #(e) -> downstream#(f#e),
-            .pushError(info) -> downstream.pushError(info),
-            })),
-          upstream.step(sink.get!)
-          )
-        },
-      .forRemaining(downstream) -> sink.get.match{
-        .some(sink') -> upstream.forRemaining(sink'),
-        .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> downstream.stop,
-            #(e) -> downstream#(f#e),
-            .pushError(info) -> downstream.pushError(info),
-            })),
-          upstream.forRemaining(sink.get!)
-          )
-        },
-      .stop -> upstream.stop,
-      .isRunning -> upstream.isRunning,
-      .split -> upstream.split.map{right -> this#(sinkFactory, right, f)},
-    }}
+  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] ->
+    this#[Void,E,R](sinkFactory, upstream, {iso Void}, {_,e -> f#e}),
+  #[T:iso,imm,mut,read,E,R](
+    sinkFactory: _Sink,
+    upstream: mut FlowOp[E],
+    data: mut MF[iso T],
+    f: read F[iso T, E, R]
+    ): mut FlowOp[R] -> Block#
+      .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
+      .return  {{'op
+        .step(downstream) -> sink.get.match{
+          .some(sink') -> upstream.step(sink'),
+          .empty -> Block#(
+            sink := (Opts#(sinkFactory#[E]{
+              .stop -> downstream.stop,
+              #(e) -> downstream#(f#(data#, e)),
+              .pushError(info) -> downstream.pushError(info),
+              })),
+            upstream.step(sink.get!)
+            )
+          },
+        .forRemaining(downstream) -> sink.get.match{
+          .some(sink') -> upstream.forRemaining(sink'),
+          .empty -> Block#(
+            sink := (Opts#(sinkFactory#[E]{
+              .stop -> downstream.stop,
+              #(e) -> downstream#(f#(data#, e)),
+              .pushError(info) -> downstream.pushError(info),
+              })),
+            upstream.forRemaining(sink.get!)
+            )
+          },
+        .stop -> upstream.stop,
+        .isRunning -> upstream.isRunning,
+        .split -> upstream.split.map{right -> this#(sinkFactory, right, data, f)},
+      }},
   }
 _FlatMap: {
   #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
