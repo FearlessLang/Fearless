@@ -1,0 +1,153 @@
+package base
+
+UList: Sealed{
+  #[E]: mut UList[E] -> Magic!,
+  #[E](e1: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E): mut UList[E] -> Magic!,
+  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E, e16: E): mut UList[E] -> Magic!,
+  .fromLList[E](list: mut LList[E]): mut UList[E] -> Magic!,
+  .fromList[E](list: mut LList[E]): mut UList[E] -> Magic!,
+  .withCapacity[E](capacity: Nat): mut UList[E] -> Magic!,
+  }
+UList[E]: Collection,Sealed{
+  mut  .get(i: Nat): E,
+  read .get(i: Nat): read/imm E,
+  imm  .get(i: Nat): imm E,
+
+  mut  .tryGet(i: Nat): mut Opt[E],
+  read .tryGet(i: Nat): mut Opt[read/imm E],
+  imm  .tryGet(i: Nat): mut Opt[imm E],
+
+  mut .add(e: E): Void,
+  mut .trySet(i: Nat, e: E): mut Action[Void],
+  mut .set(i: Nat, e: E): Void -> this.trySet(i, e)!,
+  mut +(e: E): mut UList[E] -> Block#(this.add(e), this),
+  mut .addAll(other: mut UList[E]): Void -> other.iter.for{e -> this.add(e)},
+
+  mut .clear: Void,
+
+  mut  ==(eq: read F[E, E, Bool], other: mut UList[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
+  read ==(eq: read F[read/imm E, read/imm E, Bool], other: read UList[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
+  imm  ==(eq: F[imm E, imm E, Bool], other: UList[E]): Bool ->
+    this.size == (other.size)
+    && {this.flow
+      .with(other.flow)
+      .all{ab -> eq#(ab.a, ab.b)}
+      },
+
+  mut .flow: mut Flow[E] -> Block#
+    .let[mut Count[Nat]] cursor = {Count.nat(0)}
+    .return {Flow.fromMutSource({'self
+      .isRunning -> cursor* < (this.size),
+      .stop -> cursor := (this.size),
+      .step(downstream) -> this.tryGet(cursor++).match{
+        .some(x) -> Block#
+          .do {downstream#x}
+          .if {cursor.get >= (this.size)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .empty -> Block#(downstream.stop, self.stop),
+        },
+        .forRemaining(downstream) -> Block#
+          .loop {Block#
+            .if {cursor.get >= (this.size)} .return {Block#(downstream.stop, self.stop, ControlFlow.break)}
+            .do {downstream#(this.get(cursor++))}
+            .return {ControlFlow.continue}
+            }.return {{}},
+      }, this.size)},
+  read .flow: mut Flow[read/imm E] -> Flow.fromOp(this._flowread(0, this.size), this.size),
+  read ._flowread(start: Nat, end: Nat): mut FlowOp[read/imm E] -> Block#
+    .let[mut Count[Nat]] cursor = {Count.nat(start)}
+    .let[mut Count[Nat]] endCursor = {Count.nat(end)}
+    .return {{'self
+      .isRunning -> cursor* < (endCursor.get),
+      .stop -> cursor := (endCursor.get),
+      .step(downstream) -> cursor.get < (endCursor.get) ? {
+        .then -> Block#
+          .do {downstream#(this.get(cursor++))}
+          .if {cursor.get >= (endCursor.get)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .else -> Block#(downstream.stop, self.stop),
+        },
+      .forRemaining(downstream) -> Block#
+        .loop {Block#
+          .if {cursor.get >= (endCursor.get)} .return {Block#(downstream.stop, self.stop, ControlFlow.break)}
+          .do {downstream#(this.get(cursor++))}
+          .return {ControlFlow.continue}
+          }.return {{}},
+      .split -> self.canSplit ? {
+        .else -> {},
+        .then -> Block#
+          .let cur = {cursor.get}
+          .let[Nat] mid = {cur + ((endCursor.get - cur) / 2)}
+          .let[Nat] end' = {endCursor.swap(mid)}
+          .return {Opts#(this._flowread(mid, end'))},
+        },
+      .canSplit -> endCursor.get - (cursor.get) > 1,
+      }},
+  imm .flow: mut Flow[imm E] -> Flow.fromOp(this._flowimm(0, this.size), this.size),
+  imm ._flowimm(start: Nat, end: Nat): mut FlowOp[imm E] -> Block#
+    .let[mut Count[Nat]] cursor = {Count.nat(start)}
+    .let[mut Count[Nat]] endCursor = {Count.nat(end)}
+    .return {{'self
+      .isRunning -> cursor* < (endCursor.get),
+      .stop -> cursor := (endCursor.get),
+      .step(downstream) -> cursor.get < (endCursor.get) ? {
+        .then -> Block#
+          .do {downstream#(this.get(cursor++))}
+          .if {cursor.get >= (endCursor.get)} .do {Block#(downstream.stop, self.stop)}
+          .return {{}},
+        .else -> Block#(downstream.stop, self.stop),
+        },
+      .forRemaining(downstream) -> Block#
+        .loop {Block#
+          .if {cursor.get >= (endCursor.get)} .return {Block#(downstream.stop, self.stop, ControlFlow.break)}
+          .do {downstream#(this.get(cursor++))}
+          .return {ControlFlow.continue}
+          }.return {{}},
+      .split -> self.canSplit ? {
+        .else -> {},
+        .then -> Block#
+          .let cur = {cursor.get}
+          .let[Nat] mid = {cur + ((endCursor.get - cur) / 2)}
+          .let[Nat] end' = {endCursor.swap(mid)}
+          .return {Opts#(this._flowimm(mid, end'))},
+        },
+      .canSplit -> endCursor.get - (cursor.get) > 1,
+      }},
+
+  mut .iter: mut Iter[E] -> Let#{
+    .var -> Count.nat(0),
+    .in(cursor) -> { .next -> this.tryGet(cursor++) }
+    },
+  read .iter: mut Iter[read/imm E] -> Let#{
+    .var -> Count.nat(0),
+    .in(cursor) -> { .next -> this.tryGet(cursor++) }
+    },
+  imm .iter: mut Iter[imm E] -> Let#{
+    .var -> Count.nat(0),
+    .in(cursor) -> { .next -> this.tryGet(cursor++) }
+    },
+  }

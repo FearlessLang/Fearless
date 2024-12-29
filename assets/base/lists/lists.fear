@@ -326,7 +326,6 @@ List[E]: Collection,Sealed{
     },
   }
 
-// Right now this is invalid if the list gets mutated for any reason, Could Repr help?
 ListView[E]: List[E]{
   read .inner: read List[E],
   /// Get an item with its original RC by providing a reference to the original mutable list.
