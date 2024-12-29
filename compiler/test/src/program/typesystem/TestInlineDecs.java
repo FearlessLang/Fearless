@@ -69,14 +69,14 @@ public class TestInlineDecs {
     Nat:{} TwentyFour:Nat{}
     """); }
   @Test void inlineBoundsForwardingMethodSig() { fail("""
-    In position [###]/Dummy0.fear:3:67
+    In position [###]/Dummy0.fear:3:57
     [E57 invalidLambdaNameMdfBounds]
     This lambda is missing/has an incompatible set of bounds for its type parameters:
       N: imm
     """, """
     package test
     //Person[N: imm]:{ .name: Str, .age: N }
-    FPerson:{ #[N: imm](name: Str, age: imm N): Person[N] -> Person[N]:{
+    FPerson:{ #[N: imm](name: Str, age: imm N): Person[N] -> Person[N:*]:{
       .name: Str -> name,
       .age: imm N -> age,
       }}
@@ -108,11 +108,12 @@ public class TestInlineDecs {
   @Test void boundsForwardingImplicitBreak() { fail("""
     In position [###]/Dummy0.fear:3:10
     [E5 invalidMdfBound]
+    Type bound related to test.Person[N]:
     The type N is not valid because its capability is not in the required bounds. The allowed modifiers are: imm.
     """, """
     package test
     Person[N: imm]:{ .name: Str, .age: N }
-    FPerson:{ #[N](name: Str, age: imm N): Person[N] -> {
+    FPerson:{ #[N:*](name: Str, age: imm N): Person[N] -> {
       .name -> name,
       .age -> age,
       }}
@@ -161,7 +162,7 @@ public class TestInlineDecs {
   @Test void boundsForwardingExplicit() { ok("""
     package test
     Person[N: imm]:{ .name: Str, .age: N }
-    FPerson:{ #[N](name: Str, age: imm N): Person[imm N] -> Fresh[N]:Person[imm N]{
+    FPerson:{ #[N:*](name: Str, age: imm N): Person[imm N] -> Fresh[N:*]:Person[imm N]{
       .name -> name,
       .age -> age,
       }}
@@ -177,13 +178,14 @@ public class TestInlineDecs {
     """); }
 
   @Test void boundsForwardingExplicit2() { fail("""
-    In position [###]/Dummy0.fear:3:65
+    In position [###]/Dummy0.fear:3:58
     [E5 invalidMdfBound]
+    Type bound related to test.Person[N]:
     The type N is not valid because its capability is not in the required bounds. The allowed modifiers are: imm.
     """, """
     package test
     Person[N: imm]:{ .name: Str, .age: N }
-    FPerson:{ #[N](name: Str, age: imm N): Person[imm N] -> Fresh[N]:Person[N]{
+    FPerson:{ #[N:*](name: Str, age: imm N): Person[imm N] -> Fresh[N:*]:Person[N]{
       .name -> name,
       .age -> age,
       }}
@@ -202,9 +204,9 @@ public class TestInlineDecs {
     package test
     alias base.F as F,
     
-    Stack[T]: _Stack[T]{
+    Stack[T:*]: _Stack[T]{
       .match(m) -> m.empty,
-      read .process[R](f: F[read/imm T, R]): mut Stack[R] -> {'comp
+      read .process[R:*](f: F[read/imm T, R]): mut Stack[R] -> {'comp
         #(current: read Stack[T], acc: mut Stack[R]): mut Stack[R] -> current.match{
           .empty -> acc,
           .elem(top, tail) -> comp#(tail, acc + ( f#(top) ))
@@ -214,15 +216,15 @@ public class TestInlineDecs {
         .match(m) -> m.elem(e, this),
         },
       }
-    _Stack[T]: {
-      mut  .match[R](m: mut StackMatch[T,R]): R,
-      read .match[R](m: mut StackMatchRead[T,R]): R,
+    _Stack[T:*]: {
+      mut  .match[R:*](m: mut StackMatch[T,R]): R,
+      read .match[R:*](m: mut StackMatchRead[T,R]): R,
       }
-    StackMatch[T, R]: {
+    StackMatch[T:*, R:*]: {
       mut .empty: R,
       mut .elem(top: T, tail: mut Stack[T]): R
       }
-    StackMatchRead[T, R]: {
+    StackMatchRead[T:*, R:*]: {
       mut .empty: R,
       mut .elem(top: read/imm T, tail: read Stack[T]): R
       }
@@ -233,8 +235,8 @@ public class TestInlineDecs {
       .id: Str,
       .clean: Clean -> {this.id},
       }
-    Dirty: Plate
-    Clean: Plate
+    Dirty: Plate{}
+    Clean: Plate{}
     Example: {#(ds: Stack[Dirty]): Stack[Clean] -> ds.process{dirty -> dirty.clean}}
     """, """
     package base
@@ -269,8 +271,8 @@ public class TestInlineDecs {
       .id: Str,
       .clean: Clean -> {this.id},
       }
-    Dirty: Plate
-    Clean: Plate
+    Dirty: Plate{}
+    Clean: Plate{}
     Example: {#(ds: Stack[Dirty]): Stack[Clean] -> ds.process{dirty -> dirty.clean}}
     """, """
     package base
@@ -279,16 +281,16 @@ public class TestInlineDecs {
     """); }
 
   @Test void shouldRejectRCInInlineDecl() { fail("""
-    In position [###]/Dummy0.fear:2:46
-    [E46 noMdfInFormalParams]
-    Modifiers are not allowed in declarations or implementation lists: mut X
+    In position [###]/Dummy0.fear:2:52
+    [E59 syntaxError]
+    mismatched input ':' expecting {'}', ',', MName, SysInM}
     """, """
     package test
     A: {.m[X:mut,read]: mut Foo[mut X] -> mut Foo[mut X]: {}}
     """);}
 
   @Test void shouldRejectInvalidFunnel() { fail("""
-    In position [###]/Dummy0.fear:2:54
+    In position [###]/Dummy0.fear:2:42
     [E57 invalidLambdaNameMdfBounds]
     This lambda is missing/has an incompatible set of bounds for its type parameters:
       X: mut, read
@@ -297,7 +299,7 @@ public class TestInlineDecs {
     A: {.m[X:mut,read]: mut Foo[mut X] -> mut Foo[X:mut]: {}}
     """);}
   @Test void shouldRejectValidFunnelBecauseNotMut() { fail("""
-    In position [###]/Dummy0.fear:2:59
+    In position [###]/Dummy0.fear:2:42
     [E37 noSubTypingRelationship]
     There is no sub-typing relationship between iso test.Foo[X] and mut test.Foo[mut X].
     """, """

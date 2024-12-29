@@ -21,10 +21,7 @@ public record T(Mdf mdf, Id.RT<T> rt) implements Id.Ty {
     if (mdf.isMdf()) { return rt.toString(); }
     return mdf+" "+rt;
   }
-  public T{
-    assert mdf!=null && rt!=null;
-//    assert rt instanceof Id.GX || !mdf.isReadImm() : mdf+" "+rt;
-  }
+  public T{ assert mdf!=null && rt!=null; }
   public <R> R match(Function<Id.GX<T>,R>gx, Function<Id.IT<T>,R>it){ return rt.match(gx, it); }
   public Id.IT<T> itOrThrow() { return this.match(gx->{ throw Bug.unreachable(); }, it->it); }
   public Id.GX<T> gxOrThrow() {
@@ -44,13 +41,11 @@ public record T(Mdf mdf, Id.RT<T> rt) implements Id.Ty {
   public Stream<Id.GX<T>> deepGXs() {
     return rt().match(Stream::of, it->it.ts().stream().flatMap(T::deepGXs));
   }
-
   public Stream<T> flatten() {
     return this.match(gx->Stream.of(this), it->
       Stream.concat(Stream.of(this), it.ts().stream().flatMap(T::flatten))
     );
   }
-
   public T withMdf(Mdf mdf){ return new T(mdf,rt); }
 
   public <R> R accept(TypeVisitor<T, R> visitor) {
@@ -61,7 +56,6 @@ public record T(Mdf mdf, Id.RT<T> rt) implements Id.Ty {
       case recMdf -> throw Bug.unreachable();
     }, it->visitor.visitLiteral(mdf, it));
   }
-
   public record Dec(E.Lambda lambda) implements HasPos, Id.Dec {
     public DecId name() { return lambda.id().id(); }
     public List<Id.GX<T>> gxs(){ return lambda.id().gens(); }

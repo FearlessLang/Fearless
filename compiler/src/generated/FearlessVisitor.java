@@ -1,4 +1,4 @@
-// Generated from /Users/nick/Programming/PhD/fearless/grammar/antlrGrammars/Fearless.g4 by ANTLR 4.12.0
+// Generated from C:\Users\sonta\Documents\GitHub\Fearless\grammar\antlrGrammars\Fearless.g4 by ANTLR 4.12.0
 package generated;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -53,17 +53,23 @@ public interface FearlessVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMGen(FearlessParser.MGenContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link FearlessParser#actualGen}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitActualGen(FearlessParser.ActualGenContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FearlessParser#topDec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTopDec(FearlessParser.TopDecContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link FearlessParser#lambda}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitLambda(FearlessParser.LambdaContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link FearlessParser#block}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBlock(FearlessParser.BlockContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FearlessParser#bblock}.
 	 * @param ctx the parse tree
@@ -101,17 +107,17 @@ public interface FearlessVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitGamma(FearlessParser.GammaContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link FearlessParser#topDec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTopDec(FearlessParser.TopDecContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link FearlessParser#alias}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitAlias(FearlessParser.AliasContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link FearlessParser#fStringMulti}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFStringMulti(FearlessParser.FStringMultiContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FearlessParser#atomE}.
 	 * @param ctx the parse tree
@@ -119,29 +125,17 @@ public interface FearlessVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAtomE(FearlessParser.AtomEContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link FearlessParser#postE}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPostE(FearlessParser.PostEContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link FearlessParser#pOp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPOp(FearlessParser.POpContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link FearlessParser#e}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitE(FearlessParser.EContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link FearlessParser#callOp}.
+	 * Visit a parse tree produced by {@link FearlessParser#pOp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCallOp(FearlessParser.CallOpContext ctx);
+	T visitPOp(FearlessParser.POpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link FearlessParser#nudeE}.
 	 * @param ctx the parse tree

@@ -16,7 +16,7 @@ import java.util.Comparator;
 
 public class TestMethsPost5a {
   void ok(String expected, String type, String ...code){
-    var it = new Parser(Parser.dummy, type).parseFullT();
+    var it = new Parser(Parser.dummy, type).parseFullT(type.split("\\.")[0]);
     var p = FromContent.of(code).inferSignatures();
     var res = p.meths(XBs.empty(), Mdf.recMdf, it.toAstT().itOrThrow(), 0).stream()
       .sorted(Comparator.comparing(CM::toString))
@@ -24,7 +24,7 @@ public class TestMethsPost5a {
     Err.strCmpFormat(expected, res.toString());
   }
   void fail(String expected, String type, String ...code) {
-    var it = new Parser(Parser.dummy, type).parseFullT();
+    var it = new Parser(Parser.dummy, type).parseFullT(type.split("\\.")[0]);
     var p = FromContent.of(code).inferSignatures();
     try {
       var res = p.meths(XBs.empty(), Mdf.recMdf, it.toAstT().itOrThrow(), 0);

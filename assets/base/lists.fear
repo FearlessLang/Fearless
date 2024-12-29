@@ -9,10 +9,10 @@ Collection: {
 
 // Done in the traditional order where adding to the end concatenates an empty list on.
 // Doing the linked list in stack ordering would make getting elements much slower
-LList:{ #[E]: mut LList[E] -> mut LList[E] }
-LList[E]:Collection,Sealed{
-  mut  .match[R](m: mut LListMatch[E, R]): R -> m.empty,
-  read .match[R](m: mut LListMatchRead[E, R]): R -> m.empty,
+LList:{ #[E:*]: mut LList[E] -> mut LList[E] }
+LList[E:*]:Collection,Sealed{
+  mut  .match[R:*](m: mut LListMatch[E, R]): R -> m.empty,
+  read .match[R:*](m: mut LListMatchRead[E, R]): R -> m.empty,
 
   mut  .get(i: Nat): E -> Error.msg ("The index "+(i.str)+" is out of bounds for this list"),
   read .get(i: Nat): read/imm E -> Error.msg ("The index "+(i.str)+" is out of bounds for this list"),
@@ -107,9 +107,7 @@ LList[E]:Collection,Sealed{
   mut .pushFront(e: E): mut LList[E] -> Let#{
     .var -> this.size + 1,
     .in(len) -> {'l
-      mut  .match[R](m: mut LListMatch[E, R]): R -> m.elem(e, this),
-      read .match[R](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
-      imm  .match[R](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
+      .match(m) -> m.elem(e, this),
 
       mut  .get(i: Nat): E -> (i == 0) ? { .then -> e, .else -> this.get[](i - 1) },
       read .get(i: Nat): read/imm E -> (i == 0) ?[read/imm E] { .then -> e, .else -> this.get[](i - 1) },
@@ -132,8 +130,8 @@ LList[E]:Collection,Sealed{
   read .pushFront(e: E): read LList[E] -> Let#{
     .var -> this.size + 1,
     .in(len) -> {'l
-      read .match[R](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
-      imm  .match[R](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
+      read .match[R:*](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
+      imm  .match[R:*](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
 
       read .get(i: Nat): read/imm E -> (i == 0) ?[read/imm E] { .then -> e, .else -> this.get(i - 1) },
       imm  .get(i: Nat): imm E -> (i  == 0) ?[imm E] { .then -> e, .else -> this.get(i - 1) },
@@ -152,8 +150,8 @@ LList[E]:Collection,Sealed{
 //  imm  .pushFront(e: E): LList[E] -> Let#{
 //      .var -> this.size + 1,
 //      .in(len) -> {'l
-//        imm  .match[R](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
-//        read .match[R](m: mut LListMatchRead[read E, R]): R -> m.elem(e, this),
+//        imm  .match[R:*](m: mut LListMatchRead[E, R]): R -> m.elem(e, this),
+//        read .match[R:*](m: mut LListMatchRead[read E, R]): R -> m.elem(e, this),
 //
 //        imm  .get(i: Nat): mut Opt[E] -> (i == 0) ? { .then -> Opts#[E]e, .else -> this.get[](i - 1) },
 //        read .get(i: Nat): mut Opt[read E] -> (i == 0) ? { .then -> Opts#[read E]e, .else -> this.get[](i - 1) },
@@ -168,37 +166,37 @@ LList[E]:Collection,Sealed{
 //        }
 //      },
   }
-LListMatch[E,R]: {
+LListMatch[E:*,R:*]: {
   mut .elem(head: E, tail: mut LList[E]): R,
   mut .empty: R,
   }
-LListMatchRead[E,R]: {
+LListMatchRead[E:*,R:*]: {
   mut .elem(head: read/imm E, tail: read LList[E]): R,
   mut .empty: R,
   }
 
 List: Sealed{
-  #[E]: mut List[E] -> Magic!,
-  #[E](e1: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E): mut List[E] -> Magic!,
-  #[E](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E, e16: E): mut List[E] -> Magic!,
-  .fromLList[E](list: mut LList[E]): mut List[E] -> Magic!,
-  .withCapacity[E](capacity: Nat): mut List[E] -> Magic!,
+  #[E:*]: mut List[E] -> Magic!,
+  #[E:*](e1: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E): mut List[E] -> Magic!,
+  #[E:*](e1: E, e2: E, e3: E, e4: E, e5: E, e6: E, e7: E, e8: E, e9: E, e10: E, e11: E, e12: E, e13: E, e14: E, e15: E, e16: E): mut List[E] -> Magic!,
+  .fromLList[E:*](list: mut LList[E]): mut List[E] -> Magic!,
+  .withCapacity[E:*](capacity: Nat): mut List[E] -> Magic!,
   }
-List[E]: Collection,Sealed{
+List[E:*]: Collection,Sealed{
   mut  .get(i: Nat): E,
   read .get(i: Nat): read/imm E,
   imm  .get(i: Nat): imm E,
@@ -327,14 +325,14 @@ List[E]: Collection,Sealed{
   }
 
 // Right now this is invalid if the list gets mutated for any reason, Could Repr help?
-ListView[E]: List[E]{
+ListView[E:*]: List[E]{
   read .inner: read List[E],
   /// Get an item with its original RC by providing a reference to the original mutable list.
   read .expose(list: mut List[E], i: Nat): E,
   read .tryExpose(list: mut List[E], i: Nat): mut Opt[E],
   }
 ListViews: {
-  .subList[E](list: read List[E], from: Nat, to: Nat): read ListView[E] -> Block#
+  .subList[E:*](list: read List[E], from: Nat, to: Nat): read ListView[E] -> Block#
     .assert({from <= to}, "Invalid range for the list proxy, "+(from.str)+" is greater than "+(to.str))
     .assert({to <= (list.size)}, "Invalid range for the list proxy, "+(to.str)+" is greater than the list size ("+(list.size.str)+")")
     .return {{'self
@@ -367,7 +365,7 @@ ListViews: {
         },
       }},
 
-  .indexMap[E](list: read List[E], mappings: List[Nat]): read ListView[E] -> Block#
+  .indexMap[E:*](list: read List[E], mappings: List[Nat]): read ListView[E] -> Block#
     .assert({mappings.size == (list.size)}, "The mappings list must be the same size as the original list ("+(mappings.size.str)+" vs. "+(list.size.str)+")")
     .return {{'self
       .inner -> list,

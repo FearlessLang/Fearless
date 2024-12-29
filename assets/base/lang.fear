@@ -5,45 +5,45 @@ Main: { #(s: mut System): Void }
 Sealed: {}
 Void: Sealed{}
 
-Abort: Sealed{![R:readH,mutH,read,mut,imm,iso]: R -> this!} // can be optimised to just terminate (goes stuck)
+Abort: Sealed{![R:**]: R -> this!} // can be optimised to just terminate (goes stuck)
 Magic: Sealed{
-  ![R:readH,mutH,read,mut,imm,iso]: R -> this!, // magic'd out to tell us what we forgot to implement
+  ![R:**]: R -> this!, // magic'd out to tell us what we forgot to implement
   ![R:readH,mutH,read,mut,imm,iso](_: mut base.caps._System): R -> this!,
   }
 Debug: Sealed{
-  #[T](x: T): T -> x,
-  .println[T](x: T): Void -> {},
-  .identify[T](x: T): Str -> Magic!,
+  #[T:**](x: T): T -> x,
+  .println[T:**](x: T): Void -> {},
+  .identify[T:**](x: T): Str -> Magic!,
   }
 HasIdentity: { mut .idEq(other: readH HasIdentity): Bool -> Magic! } // TODO: magic
 
-As[X:imm,mut,read,iso]: Sealed{ #(x: X): X -> x }
+As[X:*]: Sealed{ #(x: X): X -> x }
 
 Let: {
-  #[V,R](l: mut Let[V, R]): R -> l.in(l.var),
+  #[V:*,R:*](l: mut Let[V, R]): R -> l.in(l.var),
   }
-Let[V,R]: { mut .var: V, mut .in(v: V): R }
+Let[V:*,R:*]: { mut .var: V, mut .in(v: V): R }
 
-F[R:read,mut,imm,iso]: { read #: R }
-F[A:read,mut,imm,iso,R:read,mut,imm,iso]: { read #(a: A): R }
-F[A:read,mut,imm,iso, B:read,mut,imm,iso, R:read,mut,imm,iso]: { read #(a: A, b: B): R }
-F[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso, R:read,mut,imm,iso]: { read #(a: A, b: B, c: C): R }
-F[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso, D:read,mut,imm,iso, R:read,mut,imm,iso]: { read #(a: A, b: B, c: C, d: D): R }
+F[R:**]: { read #: R }
+F[A:**,R:**]: { read #(a: A): R }
+F[A:**, B:**, R:**]: { read #(a: A, b: B): R }
+F[A:**, B:**, C:**, R:**]: { read #(a: A, b: B, c: C): R }
+F[A:**, B:**, C:**, D:**, R:**]: { read #(a: A, b: B, c: C, d: D): R }
 
-MF[R:read,mut,imm,iso]: { mut #: R }
-MF[A:read,mut,imm,iso,R:read,mut,imm,iso]: { mut #(a: A): R }
-MF[A:read,mut,imm,iso, B:read,mut,imm,iso, R:read,mut,imm,iso]: { mut #(a: A, b: B): R }
-MF[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso, R:read,mut,imm,iso]: { mut #(a: A, b: B, c: C): R }
-MF[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso, D:read,mut,imm,iso, R:read,mut,imm,iso]: { mut #(a: A, b: B, c: C, d: D): R }
+MF[R:**]: { mut #: R }
+MF[A:**,R:**]: { mut #(a: A): R }
+MF[A:**, B:**, R:**]: { mut #(a: A, b: B): R }
+MF[A:**, B:**, C:**, R:**]: { mut #(a: A, b: B, c: C): R }
+MF[A:**, B:**, C:**, D:**, R:**]: { mut #(a: A, b: B, c: C, d: D): R }
 
-Consumer[A:read,mut,imm,iso]: { mut #(a: A): Void }
-Consumer[A:read,mut,imm,iso, B:read,mut,imm,iso]: { mut #(a: A, b: B): Void }
-Consumer[A:read,mut,imm,iso, B:read,mut,imm,iso, C:read,mut,imm,iso]: { mut #(a: A, b: B, c: C): Void }
+Consumer[A:**]: { mut #(a: A): Void }
+Consumer[A:**, B:**]: { mut #(a: A, b: B): Void }
+Consumer[A:**, B:**, C:**]: { mut #(a: A, b: B, c: C): Void }
 
 ToImm[R]: {read .toImm: imm R}
 ToIso[R]: {mut .iso: iso ToIso[R], mut .self: mut R,}
 
-Box[T]: {
+Box[T:*]: {
   mut  .get: T,
   read .get: read/imm T,
   imm  .get: imm T,

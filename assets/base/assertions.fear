@@ -2,15 +2,15 @@ package base
 
 Assert:Sealed{
   !(assertion: Bool): Void -> this!(assertion, { Void }),
-  ![R](assertion: Bool, cont: mut AssertCont[R]): R -> assertion ? {
+  ![R:*](assertion: Bool, cont: mut AssertCont[R]): R -> assertion ? {
     .then -> cont#,
     .else -> this._fail
     },
-  ![R](assertion: Bool, msg: Str, cont: mut AssertCont[R]): R -> assertion ? {
+  ![R:*](assertion: Bool, msg: Str, cont: mut AssertCont[R]): R -> assertion ? {
       .then -> cont#,
       .else -> this._fail(msg)
       },
-  ._fail[R]: R -> Magic!,
-  ._fail[R](msg: Str): R -> Magic!,
+  ._fail[R:*]: R -> Magic!,
+  ._fail[R:*](msg: Str): R -> Magic!,
   }
-AssertCont[R]:{ mut #: R }
+AssertCont[R:*]:{ mut #: R }

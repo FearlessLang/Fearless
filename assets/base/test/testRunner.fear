@@ -85,14 +85,14 @@ TestResult: {
   read .info: Opt[Info] -> {},
   }
 
-TestResultKind: Sealed{.match[R](m: mut TestResultKindMatcher[R]): R}
+TestResultKind: Sealed{.match[R:*](m: mut TestResultKindMatcher[R]): R}
 FTestResultKind: {
   .passed: TestResultKind -> {.match(m) -> m.passed},
   .skipped: TestResultKind -> {.match(m) -> m.skipped},
   .failed(details: Str): TestResultKind -> {.match(m) -> m.failed(details)},
   .errored(details: Str): TestResultKind -> {.match(m) -> m.errored(details)},
   }
-TestResultKindMatcher[R]: {
+TestResultKindMatcher[R:*]: {
   mut .passed: R,
   mut .skipped: R,
   mut .failed(details: Str): R,

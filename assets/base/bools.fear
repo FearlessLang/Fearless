@@ -7,9 +7,9 @@ Bool: Sealed,Stringable,ToImm[Bool]{
   |(b: Bool): Bool -> this.or(b),
   ||(b: mut MF[Bool]): Bool -> this.or(b#),
   .not: Bool,
-  .if[R:read,mut,imm,iso](f: mut ThenElse[R]): R,
-  ?[R:read,mut,imm,iso](f: mut ThenElse[R]): R -> this.if(f),
+  .if[R:**](f: mut ThenElse[R]): R,
+  ?[R:**](f: mut ThenElse[R]): R -> this.if(f),
   }
 True: Bool{ .and(b) -> b, .or(b) -> this, .not -> False, .if(f) -> f.then(), .str -> "True", .toImm -> True }
 False: Bool{ .and(b) -> this, .or(b) -> b, .not -> True, .if(f) -> f.else(), .str -> "False", .toImm -> False }
-ThenElse[R:read,mut,imm,iso]: { mut .then: R, mut .else: R, }
+ThenElse[R:**]: { mut .then: R, mut .else: R, }

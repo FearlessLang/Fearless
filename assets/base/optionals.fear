@@ -1,9 +1,9 @@
 package base
 
 Opts: {
-  #[T](x: T): mut Opt[T] -> {.match(m) -> m.some(x)},
+  #[T:*](x: T): mut Opt[T] -> {.match(m) -> m.some(x)},
   }
-Opt[T]: _Opt[T]{
+Opt[T:*]: _Opt[T]{
   .match(m) -> m.empty,
   .map(f)   -> this.match(f),
   .flatMap(f)   -> this.match(f),
@@ -16,18 +16,18 @@ Opt[T]: _Opt[T]{
   read .isSome: Bool  -> this.match{.empty -> False, .some(_) -> True},
   imm .imm: Opt[imm T] -> this.match{.empty -> {}, .some(x) -> Opts#x},
   }
-_Opt[T]: Sealed{ // Sealed because potential magic on .flow
-  mut  .match[R:iso,imm,mut,mutH,read,readH](m: mut OptMatch[T, R]): R,
-  read .match[R:iso,imm,mut,mutH,read,readH](m: mut OptMatch[read/imm T, R]): R,
-  imm  .match[R:iso,imm,mut,mutH,read,readH](m: mut OptMatch[imm T, R]): R,
+_Opt[T:*]: Sealed{ // Sealed because potential magic on .flow
+  mut  .match[R:**](m: mut OptMatch[T, R]): R,
+  read .match[R:*](m: mut OptMatch[read/imm T, R]): R,
+  imm  .match[R:*](m: mut OptMatch[imm T, R]): R,
 
-  mut  .map[R](f: mut OptMap[T, R]):          mut Opt[R],
-  read .map[R](f: mut OptMap[read/imm T, R]): mut Opt[R],
-  imm  .map[R](f: mut OptMap[imm T, R]):      mut Opt[R],
+  mut  .map[R:*](f: mut OptMap[T, R]):          mut Opt[R],
+  read .map[R:*](f: mut OptMap[read/imm T, R]): mut Opt[R],
+  imm  .map[R:*](f: mut OptMap[imm T, R]):      mut Opt[R],
 
-  mut  .flatMap[R](f: mut OptFlatMap[T, R]):          mut Opt[R],
-  read .flatMap[R](f: mut OptFlatMap[read/imm T, R]): mut Opt[R],
-  imm  .flatMap[R](f: mut OptFlatMap[imm T, R]):      mut Opt[R],
+  mut  .flatMap[R:*](f: mut OptFlatMap[T, R]):          mut Opt[R],
+  read .flatMap[R:*](f: mut OptFlatMap[read/imm T, R]): mut Opt[R],
+  imm  .flatMap[R:*](f: mut OptFlatMap[imm T, R]):      mut Opt[R],
 
   mut  ||(default: mut MF[T]):          T,
   read ||(default: mut MF[read/imm T]): read/imm T,
@@ -46,13 +46,13 @@ _Opt[T]: Sealed{ // Sealed because potential magic on .flow
   imm  .flow: mut Flow[imm T],
   }
 
-OptMatch[T,R:iso,imm,mut,mutH,read,readH]:{ mut .some(x: T): R, mut .empty: R }
-OptMap[T,R]:OptMatch[T, mut Opt[R]]{
+OptMatch[T:*, R:**]: {mut .some(x: T): R, mut .empty: R}
+OptMap[T:*,R:*]:OptMatch[T, mut Opt[R]]{
   mut #(t: T): R,
   .some(x) -> Opts#(this#x),
   .empty -> {}
   }
-OptFlatMap[T,R]:OptMatch[T, mut Opt[R]]{
+OptFlatMap[T:*,R:*]:OptMatch[T, mut Opt[R]]{
   mut #(t: T): mut Opt[R],
   .some(x) -> this#x,
   .empty -> {}

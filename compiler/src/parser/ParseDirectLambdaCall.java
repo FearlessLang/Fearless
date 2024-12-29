@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
 /**
  * If a method is called directly on a literal, we should infer an explicit name for it immediately because what it
  * implements is irrelevant.

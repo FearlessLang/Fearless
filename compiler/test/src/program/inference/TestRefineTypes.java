@@ -23,9 +23,9 @@ public class TestRefineTypes {
   }
   void ok(String expected, String expr, String t1, String t2, String program){
     Main.resetAll();
-    var e = new Parser(Parser.dummy,expr).parseFullE(Bug::err, s->Optional.empty());
-    var pT1 = addInfers(new Parser(Parser.dummy, t1).parseFullT());
-    var pT2 = addInfers(new Parser(Parser.dummy, t2).parseFullT());
+    var e = new Parser(Parser.dummy,expr).parseFullE("dummy",Bug::err, s->Optional.empty());
+    var pT1 = addInfers(new Parser(Parser.dummy, t1).parseFullT("dummy"));
+    var pT2 = addInfers(new Parser(Parser.dummy, t2).parseFullT("dummy"));
     var p = Parser.parseAll(List.of(new Parser(Path.of("Dummy.fear"), program)), new TypeSystemFeatures());
     new WellFormednessFullShortCircuitVisitor().visitProgram(p).ifPresent(err->{ throw err; });
     var inferredSigs = ShallowInjectionVisitor.of().visitProgram(p.inferSignatures());

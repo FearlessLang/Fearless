@@ -290,7 +290,7 @@ public class TestRecMdf {
 //      .readOnlyOpt(x: readH Foo): readH Opt[readOnly Foo] -> readH Opts#x,
 //      .readOpt(x: readH Foo): readH Opt[readOnly Foo] -> readH Opts#x,
 //      .lentOpt(x: mutH Foo): mutH Opt[lent Foo] -> mutH Opts#x,
-//      //.isoOpt(x: iso Foo): iso Opt[iso Foo] -> iso Opts#x,
+//      //.isoOpt(x: iso Foo): iso Opt[Foo] -> iso Opts#x,
 //      recMdf .recMdfOpt(x: recMdf Foo): recMdf Opt[recMdf Foo] -> recMdf Opts#x,
 //      .mdfOptMut[X](x: mut X): mut Opt[mut X] -> mut Opts#x,
 //      }

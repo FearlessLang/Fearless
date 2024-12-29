@@ -57,7 +57,7 @@ public interface SubTyping extends TypeTable {
       return false;
     }
     // No hyg allowed
-    var kj = new KindingJudgement(this, xbs, Set.of(Mdf.iso, Mdf.imm, Mdf.mut, Mdf.read), true);
+    var kj = new KindingJudgement(this, "-", xbs, Set.of(Mdf.iso, Mdf.imm, Mdf.mut, Mdf.read), true);
     return t1.accept(kj).isRes();
   }
 
@@ -72,8 +72,8 @@ public interface SubTyping extends TypeTable {
       return isSubType(t1.mdf(), t2.mdf());
     }
 
-    var rcs1 = t1.accept(new KindingJudgement(this, xbs, false)).get();
-    var rcs2 = t2.accept(new KindingJudgement(this, xbs, false)).get();
+    var rcs1 = t1.accept(new KindingJudgement(this, t1.toString(), xbs, GenericBounds.ALL_RCS, false)).get();
+    var rcs2 = t2.accept(new KindingJudgement(this, t2.toString(), xbs, GenericBounds.ALL_RCS, false)).get();
     return isSubType(rcs1, rcs2);
   }
   static boolean isSubType(List<Set<Mdf>> rcss1, List<Set<Mdf>> rcss2) {

@@ -22,41 +22,41 @@ import static id.Mdf.*;
 
 public class TestKindingJudgement {
   private static void ok(XBs xbs, String t, Set<Mdf> expected, String... content) {
-    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var fullT = new Parser(Parser.dummy, t).parseFullT("dummy");
     var coreT = fullT.toAstT();
     var p = toProgram(content);
-    var actualFull = coreT.accept(new KindingJudgement(p, xbs, expected, false)).get();
+    var actualFull = coreT.accept(new KindingJudgement(p, coreT.toString(), xbs, expected, false)).get();
     Assertions.assertTrue(actualFull.stream().anyMatch(rcs->rcs.equals(expected)));
-    var actualCheckOnly = coreT.accept(new KindingJudgement(p, xbs, expected, true)).get();
+    var actualCheckOnly = coreT.accept(new KindingJudgement(p,  coreT.toString(), xbs, expected, true)).get();
     Assertions.assertTrue(actualCheckOnly.stream().anyMatch(rcs->rcs.equals(expected)));
   }
   private static void extract(XBs xbs, String t, Set<Set<Mdf>> expected, String... content) {
-    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var fullT = new Parser(Parser.dummy, t).parseFullT("dummy");
     var coreT = fullT.toAstT();
     var p = toProgram(content);
-    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
+    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, coreT.toString(), xbs, GenericBounds.ALL_RCS, false)).get());
     Assertions.assertEquals(expected, actual);
   }
   private static void contains(XBs xbs, String t, Set<Mdf> expected, String... content) {
-    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var fullT = new Parser(Parser.dummy, t).parseFullT("dummy");
     var coreT = fullT.toAstT();
     var p = toProgram(content);
-    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
+    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, coreT.toString(), xbs, GenericBounds.ALL_RCS, false)).get());
     Assertions.assertTrue(actual.contains(expected));
   }
   private static void notContains(XBs xbs, String t, Set<Mdf> expected, String... content) {
-    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var fullT = new Parser(Parser.dummy, t).parseFullT("dummy");
     var coreT = fullT.toAstT();
     var p = toProgram(content);
-    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, xbs, false)).get());
+    var actual = new HashSet<>(coreT.accept(new KindingJudgement(p, coreT.toString(), xbs, GenericBounds.ALL_RCS, false)).get());
     Assertions.assertFalse(actual.contains(expected));
   }
   private static void fail(String expectedErr, XBs xbs, String t, Set<Mdf> expected, String... content) {
-    var fullT = new Parser(Parser.dummy, t).parseFullT();
+    var fullT = new Parser(Parser.dummy, t).parseFullT("dummy");
     var coreT = fullT.toAstT();
     var p = toProgram(content);
     try {
-      coreT.accept(new KindingJudgement(p, xbs, expected, false)).get();
+      coreT.accept(new KindingJudgement(p, coreT.toString(), xbs, expected, false)).get();
       Assertions.fail("Did not fail!\n");
     } catch (CompileError e) {
       Err.strCmp(expectedErr, e.toString());
@@ -124,6 +124,7 @@ public class TestKindingJudgement {
   );}
   @Test void noMutInExpected() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to mut X:
     The type mut X is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, read.
     """,
     XBs.empty(),
@@ -139,6 +140,7 @@ public class TestKindingJudgement {
   );}
   @Test void noMutInExpectedX() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to mut X:
     The type mut X is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, read.
     """,
     XBs.empty()
@@ -148,6 +150,7 @@ public class TestKindingJudgement {
   );}
   @Test void multiBoundsXFail() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to X:
     The type X is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, mut, read.
     """,
     XBs.empty()
@@ -181,6 +184,7 @@ public class TestKindingJudgement {
   );}
   @Test void readImmWillOnlyBeImm() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to read/imm X:
     The type read/imm X is not valid because its capability is not in the required bounds. The allowed modifiers are: read.
     """,
     XBs.empty()
@@ -203,6 +207,7 @@ public class TestKindingJudgement {
   );}
   @Test void immIsoLimitXFail() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to X:
     The type X is not valid because its capability is not in the required bounds. The allowed modifiers are: iso, imm.
     """,
     XBs.empty()
@@ -222,6 +227,7 @@ public class TestKindingJudgement {
   );}
   @Test void literalFail() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to mut a.A[]:
     The type mut a.A[] is not valid because its capability is not in the required bounds. The allowed modifiers are: imm.
     """,
     XBs.empty(),
@@ -257,6 +263,7 @@ public class TestKindingJudgement {
   );}
   @Test void literalImplFail1() {fail("""
     [E5 invalidMdfBound]
+    Type bound related to a.A[mut a.B[]]:
     The type mut a.B[] is not valid because its capability is not in the required bounds. The allowed modifiers are: imm.
     """,
     XBs.empty(),

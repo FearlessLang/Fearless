@@ -14,12 +14,12 @@ import static program.typesystem.RunTypeSystem.ok;
 public class TestReadImm {
   private static final String BOX = """
     package test
-    Box: {#[T](t: T): mut Box[T] -> {
+    Box: {#[T:*](t: T): mut Box[T] -> {
       .get   -> t,
       .rget  -> t,
       .riget -> t,
       }}
-    Box[T]: {
+    Box[T:*]: {
       mut .get: T,
       read .rget: read T,
       read .riget: read/imm T,
@@ -121,7 +121,7 @@ public class TestReadImm {
     var expected = mdf.isImm() ? "imm" : "read";
     ok("""
     package test
-    A: {#[X](box: read Box[%s X]): %s X -> box.riget}
+    A: {#[X:*](box: read Box[%s X]): %s X -> box.riget}
     """.formatted(mdf, expected), BOX);
   }
   @Property void shouldGetAsReadOrImmForReadImmArbitraryRecvMdf(@ForAll("recvMdf") Mdf recvMdf, @ForAll("capturableMdf") Mdf mdf) {
@@ -129,7 +129,7 @@ public class TestReadImm {
     if (recvMdf.isHyg() && !mdf.isImm()) { expected = "readH"; }
     ok("""
     package test
-    A: {#[X](box: %s Box[%s X]): %s X -> box.riget}
+    A: {#[X:*](box: %s Box[%s X]): %s X -> box.riget}
     B: {}
     """.formatted(recvMdf, mdf, expected), BOX);
   }
@@ -216,9 +216,9 @@ public class TestReadImm {
     C: {.m[Y](y: read Y): read Y -> A.m[Y](y)}
     """);}
   @Test void readParamMdfArgAIsReadImm() {fail("""
-    In position [###]/Dummy0.fear:3:37
+    In position [###]/Dummy0.fear:3:39
     [E66 invalidMethodArgumentTypes]
-    Method .m/1 called in position [###]/Dummy0.fear:3:37 cannot be called with current parameters of types:
+    Method .m/1 called in position [###]/Dummy0.fear:3:39 cannot be called with current parameters of types:
     [read Y]
     Attempted signatures:
     (imm Y):imm Y kind: IsoHProm
@@ -226,15 +226,15 @@ public class TestReadImm {
     (read/imm Y):read/imm Y kind: Base
     """, """
     package test
-    A: {.m[X](x: read/imm X): read/imm X -> x}
-    C: {.m[Y](y: read Y): read/imm Y -> A.m[Y](y)}
+    A: {.m[X:*](x: read/imm X): read/imm X -> x}
+    C: {.m[Y:*](y: read Y): read/imm Y -> A.m[Y](y)}
     D: {.m(foo: read Foo): imm Foo -> C.m[imm Foo](foo)} // unsound
     Foo: {}
     """);}
   @Test void readParamMdfArgAIsReadImmOnTrait() {fail("""
-    In position [###]/Dummy0.fear:3:52
+    In position [###]/Dummy0.fear:3:58
     [E66 invalidMethodArgumentTypes]
-    Method .m/1 called in position [###]/Dummy0.fear:3:52 cannot be called with current parameters of types:
+    Method .m/1 called in position [###]/Dummy0.fear:3:58 cannot be called with current parameters of types:
     [read Y]
     Attempted signatures:
     (imm Y):imm Y kind: IsoHProm
@@ -242,9 +242,9 @@ public class TestReadImm {
     (read/imm Y):read/imm Y kind: Base
     """, """
     package test
-    A[X]: {.m(x: read/imm X): read/imm X -> x}
-    B[Y]: {.m(y: read Y): read/imm Y -> BrokenA[Y]: A[Y].m(y)}
-    C: {.m(foo: read Foo): imm Foo -> BrokenB: B[imm Foo].m(foo)} // unsound
+    A[X:*]: {.m(x: read/imm X): read/imm X -> x}
+    B[Y:*]: {.m(y: read Y): read/imm Y -> BrokenA[Y:*]: A[Y]{}.m(y)}
+    C: {.m(foo: read Foo): imm Foo -> BrokenB: B[imm Foo]{}.m(foo)} // unsound
     Foo: {}
     """);}
 

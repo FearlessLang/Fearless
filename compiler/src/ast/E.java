@@ -29,7 +29,7 @@ public interface E extends HasPos {
       assert mdf != null;
       assert X.validId(selfName);
       assert meths != null;
-    }
+      }
 
     public record LambdaId(Id.DecId id, List<Id.GX<T>> gens, Map<Id.GX<T>, Set<Mdf>> bounds) {
       public Id.IT<T> toIT() {

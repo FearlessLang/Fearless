@@ -13,12 +13,12 @@ import static program.typesystem.RunTypeSystem.ok;
 public class TestBounds {
   private static final String BOX = """
     package test
-    Box: {#[T](t: T): mut Box[T] -> {
+    Box: {#[T:*](t: T): mut Box[T] -> {
       .get -> t,
       .rget -> t,
       .riget -> t,
       }}
-    Box[T]: {
+    Box[T:*]: {
       mut .get: T,
       read .rget: read T,
       read .riget: read/imm T,
@@ -30,44 +30,47 @@ public class TestBounds {
     """, BOX); }
   @Test void boxIsoPromotionCall() { ok("""
     package test
-    B:{#[Y](b: iso Y): mut B -> {}}
+    B:{#[Y:*](b: iso Y): mut B -> {}}
     A: {#[S:imm](s: S): mut B -> B#[mut Box[S]](Box#[S]s)}
     """, BOX); }
 
   @Test void invalidTraitBoundsTopLevel() {fail("""
-    In position [###]/Dummy0.fear:3:7
+    In position [###]/Dummy0.fear:3:0
     [E5 invalidMdfBound]
+    Type bound related to test.A[imm test.Break[]]:
     The type imm test.Break[] is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package test
     A[X:mut]: {}
-    Break: A[imm Break]
+    Break: A[imm Break]{}
     """);}
   @Test void invalidTraitBoundsInline() {fail("""
-    In position [###]/Dummy0.fear:3:42
+    In position [###]/Dummy0.fear:3:30
     [E5 invalidMdfBound]
+    Type bound related to test.A[imm test.Break[]]:
     The type imm test.Break[] is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package test
     A[X:mut]: {}
-    BreakOuter: {#: BreakInner -> BreakInner: A[imm Break]}
+    BreakOuter: {#: BreakInner -> BreakInner: A[imm Break]{}}
     Break: {}
     """);}
   @Test void invalidTraitBoundsTopLevelValid() {ok("""
     package test
     A[X:mut]: {}
-    Break: A[mut Break]
+    Break: A[mut Break]{}
     """);}
   @Test void invalidTraitBoundsInlineValid() {ok("""
     package test
     A[X:mut]: {}
-    BreakOuter: {#: BreakInner -> BreakInner: A[mut Break]}
+    BreakOuter: {#: BreakInner -> BreakInner: A[mut Break]{}}
     Break: {}
     """);}
 
   @Test void invalidTraitBoundsMethodCall() {fail("""
     In position [###]/Dummy0.fear:3:25
     [E5 invalidMdfBound]
+    Type bound related to #/1:
     The type imm test.Break[] is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package test
@@ -83,6 +86,7 @@ public class TestBounds {
   @Test void invalidBounds() {fail("""
     In position [###]/Dummy0.fear:3:4
     [E5 invalidMdfBound]
+    Type bound related to a.Foo[Y]:
     The type Y is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package a

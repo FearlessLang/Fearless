@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static magic.Magic.isLiteral;
+import static magic.LiteralKind.isLiteral;
 
 // TODO: Sealed and _C/_m restrictions
 public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEnv<CompileError> {
@@ -147,7 +147,7 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
     if (its.isEmpty()) { return List.of(); }
     return Stream.concat(its.stream(), Stream.of(base))
       .map(Id.IT::name)
-      .filter(dec->Magic.isLiteral(dec.name()) || !dec.pkg().equals(pkg))
+      .filter(dec->isLiteral(dec.name()) || !dec.pkg().equals(pkg))
       .filter(dec->p.superDecIds(dec).contains(Magic.Sealed))
       .filter(dec->!dec.equals(Magic.Sealed))
       .toList();
@@ -166,8 +166,9 @@ public class WellFormednessShortCircuitVisitor extends ShortCircuitVisitorWithEn
     if (this.env.gxs().isEmpty()) { return Optional.empty(); }
     var visitor = new UndefinedGXsVisitor(Set.copyOf(e.id().gens()));
     visitor.visitLambda(e);
-    if (visitor.res().isEmpty()) { return Optional.empty(); }
-    return Optional.of(Fail.freeGensInLambda(e.id().toIT().toString(), visitor.res()).pos(e.pos()));
+    var vres= visitor.res(); 
+    if (vres.isEmpty()) { return Optional.empty(); }
+    return Optional.of(Fail.freeGensInLambda(e.id().toIT().toString(), vres).pos(e.pos()));
   }
 
   private Optional<CompileError> validBoundsForLambdaGens(E.Lambda e) {

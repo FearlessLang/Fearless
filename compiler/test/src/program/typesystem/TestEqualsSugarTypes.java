@@ -8,14 +8,14 @@ import static program.typesystem.RunTypeSystem.ok;
 public class TestEqualsSugarTypes {
   private static final String LET = """
     package test
-    Continuation[TT,CC,RR]: {mut #(x: TT, self: CC): RR}
-    Let: {#[R]: mut Let[R] -> {}}
-    Let[R]: {
-      mut .let[T](x: mut MF[T], c: mut Continuation[T,mut Let[R],R]): R
+    Continuation[TT:*,CC:*,RR:*]: {mut #(x: TT, self: CC): RR}
+    Let: {#[R:*]: mut Let[R] -> {}}
+    Let[R:*]: {
+      mut .let[T:*](x: mut MF[T], c: mut Continuation[T,mut Let[R],R]): R
         ->  c#(x#,this),
       mut .in(rv: mut MF[R]): R -> rv#,
       }
-    MF[R]: {mut #: R}
+    MF[R:*]: {mut #: R}
     """;
   private static final String NUMS = """
     package test
@@ -49,10 +49,10 @@ public class TestEqualsSugarTypes {
 
   @Test void letUsageGeneric() { ok("""
     package test
-    A[T]: {mut .a: T}
-    B: {#[T](a: mut A[T]): mut B[T] -> this#a}
-    B[T]: {}
-    Usage: {#[T](x: T): mut A[T] -> Let#
+    A[T:*]: {mut .a: T}
+    B: {#[T:*](a: mut A[T]): mut B[T] -> this#a}
+    B[T:*]: {}
+    Usage: {#[T:*](x: T): mut A[T] -> Let#
       .let[mut A[T]] y = {{x}}
       .in {{y.a}}
       }
@@ -60,20 +60,20 @@ public class TestEqualsSugarTypes {
   // TODO: This should pass, that it does not is an inference bug
   @Disabled("03/12/24") @Test void letUsageGenericWrapped() { ok("""
     package test
-    A[T]: {mut .a: T}
-    B: {#[T](a: mut A[T]): mut B[T] -> this#a}
-    B[T]: {}
-    Usage: {#[T](x: T): mut B[T] -> B#(Let#
+    A[T:*]: {mut .a: T}
+    B: {#[T:*](a: mut A[T]): mut B[T] -> this#a}
+    B[T:*]: {}
+    Usage: {#[T:*](x: T): mut B[T] -> B#(Let#
       .let[mut A[T]] y = {{x}}
       .in {{y.a}}
       )}
     """, LET); }
   @Test void letUsageGenericWrappedExplicit() { ok("""
     package test
-    A[T]: {mut .a: T}
-    B: {#[T](a: mut A[T]): mut B[T] -> this#a}
-    B[T]: {}
-    Usage: {#[T](x: T): mut B[T] -> B#(Let#[mut A[T]]
+    A[T:*]: {mut .a: T}
+    B: {#[T:*](a: mut A[T]): mut B[T] -> this#a}
+    B[T:*]: {}
+    Usage: {#[T:*](x: T): mut B[T] -> B#(Let#[mut A[T]]
       .let[mut A[T]] y = {{x}}
       .in {{y.a}}
       )}

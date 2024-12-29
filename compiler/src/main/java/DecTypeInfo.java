@@ -15,7 +15,7 @@ import id.Id;
 import id.Mdf;
 import id.Id.DecId;
 import id.Id.GX;
-import magic.Magic;
+import magic.LiteralKind;
 
 //TODO: refactoring
 //-remove ciclyic impl and the 3 extra ifs about it
@@ -117,7 +117,7 @@ class DecTypeInfo implements visitors.Visitor<Void>{
         });},",");
   }
   public void stringName(DecId decId) {
-    if (Magic.isLiteral(decId.name())) {
+    if (LiteralKind.isLiteral(decId.name())) {
       c(decId.name());
       return;
     }

@@ -7,7 +7,7 @@ package base.flows
 // to parallelise never runs in parallel. This should be easy because basically all parallel implementations of _Sink
 // will be Magic!.
 
-FlowOp[E]: {
+FlowOp[E:*]: {
   mut .step(sink: mut _Sink[E]): Void,
   mut .stop: Void,
   mut .isRunning: Bool,
@@ -30,9 +30,9 @@ FlowOp[E]: {
 
 
 _Sink: {
-  #[T](s: mut _Sink[T]): mut _Sink[T] -> s,
+  #[T:*](s: mut _Sink[T]): mut _Sink[T] -> s,
   }
-_Sink[T]: {
+_Sink[T:*]: {
   mut #(x: T): Void,
   mut .pushError(info: Info): Void,
   mut .stop: Void,
@@ -41,7 +41,7 @@ _Sink[T]: {
 // IMPORTANT NOTE: REUSE SINK OBJECTS! THE IDENTITY IS IMPORTANT FOR WHEN THEY ARE RAN IN PARALLEL!!!!!
 
 _Filter: {
-  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
+  #[E:*](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
 //    .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
@@ -73,11 +73,11 @@ _Filter: {
       }}
   }
 _Map: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] ->
+  #[E:*,R:*](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] ->
     this#[_EmptyCtx,E,R](sinkFactory, upstream, iso _EmptyCtx, {_,e -> f#e}),
   // It would be unsound to call this with a non-iso `c` if this is run in parallel.
   // It's okay here because the public API of this library requires that `c` is iso.
-  #[C,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], ctx: iso ToIso[C], f: read F[iso C, E, R]): mut FlowOp[R] -> Block#
+  #[C,E:*,R:*](sinkFactory: _Sink, upstream: mut FlowOp[E], ctx: iso ToIso[C], f: read F[iso C, E, R]): mut FlowOp[R] -> Block#
     .letIso ctx' = ctx
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return  {{'op
@@ -109,7 +109,7 @@ _Map: {
     }}
   }
 _FlatMap: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
+  #[E:*,R:*](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
     .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Var#{}}
     .return{{'op
@@ -155,7 +155,7 @@ _FlatMap: {
 
 // TODO: I'm still not 100% sure .with/1 is safe in parallel
 _With: {
-  #[A,B](sinkFactory: _Sink, upstream: mut FlowOp[A], other: mut FlowOp[B]): mut FlowOp[mut Pair[A,B]] -> Block#
+  #[A:*,B:*](sinkFactory: _Sink, upstream: mut FlowOp[A], other: mut FlowOp[B]): mut FlowOp[mut Pair[A,B]] -> Block#
     .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[A]]]] sink = {Var#{}}
     .return{{'op

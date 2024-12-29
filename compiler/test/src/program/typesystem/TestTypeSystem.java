@@ -63,7 +63,7 @@ public class TestTypeSystem {
   @Test void numbersGenericTypes2aNoMagic(){ fail("""
     In position [###]/Dummy0.fear:6:43
     [E37 noSubTypingRelationship]
-    There is no sub-typing relationship between imm test.Fear7$[] and imm test.FortyTwo[].
+    There is no sub-typing relationship between imm test.Fear[###]$[] and imm test.FortyTwo[].
     """, """
     package test
     Res1:{} Res2:{}
@@ -275,7 +275,7 @@ public class TestTypeSystem {
   @Test void boxMutBounds() { ok("""
     package test
     Box:{#[R:imm,mut](r: R): mut Box[R] -> {r}}
-    Box[R]:{mut #: R}
+    Box[R:**]:{mut #: R}
     """); }
 
   @Test void noCaptureMdfInMut() { fail("""
@@ -346,8 +346,8 @@ public class TestTypeSystem {
   @Test void immCapture() { ok("""
     package test
     B:{}
-    L[X]:{ imm .absMeth: imm X }
-    A:{ read .m[T](par: mut T) : mut L[mut T] -> mut L[mut T]{.absMeth->par} }
+    L[X:*]:{ imm .absMeth: imm X }
+    A:{ read .m[T:*](par: mut T) : mut L[mut T] -> mut L[mut T]{.absMeth->par} }
     """); }
 
   @Test void numbersNoBase(){ ok( """
@@ -390,7 +390,7 @@ public class TestTypeSystem {
     //we can have mutH matcher with mutH cases that can capture all (but mut as lent), and can only return mut as mutH :-(
     //we can have mut matcher with mut cases that can capture mut,imm,iso, can return R
     alias base.NoMutHyg as NoMutHyg,
-    Matcher[R]:{ //Look ma, no NoMutHyg
+    Matcher[R:*]:{ //Look ma, no NoMutHyg
       mut .get: R
       }
     PreR:{
@@ -398,7 +398,7 @@ public class TestTypeSystem {
       }
     MyRes:{}
     MatcherContainer:{
-      read .match[R](m: mut Matcher[R]): R -> m.get
+      read .match[R:*](m: mut Matcher[R]): R -> m.get
       }
     Usage:{
       .direct(preR: mut PreR): mut MyRes -> MatcherContainer.match{ preR.get },
@@ -406,7 +406,7 @@ public class TestTypeSystem {
       }
     """, """
     package base
-    NoMutHyg[X]:{}
+    NoMutHyg[X:*]:{}
     """); }
 
   @Test void aliasGenericHiding() { fail("""
@@ -418,7 +418,7 @@ public class TestTypeSystem {
     alias foo.Bar as Baz,
     alias foo.Bar[test.Yolo] as YoloBar,
     Yolo:{}
-    Bloop3:YoloBar[Yolo,Yolo]
+    Bloop3:YoloBar[Yolo,Yolo]{}
     """, """
     package foo
     Bar:{}
@@ -770,6 +770,7 @@ public class TestTypeSystem {
   @Test void invalidBoundsOnInlineLambda() { fail("""
     In position [###]/Dummy0.fear:3:6
     [E5 invalidMdfBound]
+    Type bound related to test.A[mutH test.Foo[]]:
     The type mutH test.Foo[] is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, mut.
     """, """
     package test
@@ -781,10 +782,12 @@ public class TestTypeSystem {
     fail("""
       In position [###]/Dummy0.fear:10:21
       [E5 invalidMdfBound]
+      Type bound related to base.Ref[mutH base.B[]]:
       The type mutH base.B[] is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, mut.
       
       In position [###]/Dummy0.fear:3:4
       [E5 invalidMdfBound]
+      Type bound related to base.Ref[mutH base.B[]]:
       The type mutH base.B[] is not valid because its capability is not in the required bounds. The allowed modifiers are: imm, mut.
       """, """
       package base
@@ -805,8 +808,8 @@ public class TestTypeSystem {
       package base
       Void:{} Sealed:{}
       Yeet:{
-        #[X](x: X): Void -> this.with(x, Void),
-        .with[X,R](_: X, res: R): R -> res,
+        #[X:*](x: X): Void -> this.with(x, Void),
+        .with[X:*,R:*](_: X, res: R): R -> res,
         }
       Ref:{ #[X:imm,mut](x: X): mut Ref[X] -> this#(x) }
       Ref[X:imm,mut]:Sealed{
@@ -820,29 +823,31 @@ public class TestTypeSystem {
         mut <-(f: mut UpdateRef[X]): X -> this.swap(f#(this*)),
         mut .update(f: mut UpdateRef[X]): X -> this <- f,
         }
-      UpdateRef[X]:{ mut #(x: X): X }
-      Abort:{ ![R]: R -> this! }
-      Block: {#[P1](a: P1): Void -> Void,}
+      UpdateRef[X:*]:{ mut #(x: X): X }
+      Abort:{ ![R:*]: R -> this! }
+      Block: {#[P1:*](a: P1): Void -> Void,}
       """);
   }
 
   @Test void invalidTraitBounds1() { fail("""
-    [###]/Dummy0.fear:3:2
+    [###]/Dummy0.fear:3:0
     [E5 invalidMdfBound]
+    Type bound related to test.A[imm test.B[]]:
     The type imm test.B[] is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package test
     A[X: mut]:{}
-    B:A[imm B]
+    B:A[imm B]{}
     """); }
   @Test void invalidTraitBounds2() { fail("""
-    [###]/Dummy0.fear:3:2
+    [###]/Dummy0.fear:3:0
     [E5 invalidMdfBound]
+    Type bound related to test.A[imm test.B[]]:
     The type imm test.B[] is not valid because its capability is not in the required bounds. The allowed modifiers are: mut.
     """, """
     package test
     A[X: mut]:{ .a1: X }
-    B:A[imm B]
+    B:A[imm B]{}
     """); }
 
   @Test void mutMdfAdapt() { fail("""
@@ -959,8 +964,8 @@ public class TestTypeSystem {
     Foo:{} Bar:{}
     A:{ .foo: Foo -> {} }
     B:{ .bar: Bar -> {} }
-    Test2:{ #: Foo -> A,B{}.foo }
-    Test1:{ #: Foo -> (B,A{}).foo }
+    Test2:{ #: Foo -> Anon2:A,B{}.foo }
+    Test1:{ #: Foo -> (Anon1:B,A{}).foo }
     """); }
 
   @Test void breaksEvenWithCast() { fail("""
@@ -970,7 +975,7 @@ public class TestTypeSystem {
     """, """
     package test
     Void:{}
-    Red[T]:{
+    Red[T:*]:{
       .foo: Void,
       }
     Foo:{}
@@ -1047,7 +1052,7 @@ public class TestTypeSystem {
   @Test void inferMultipleTraits1() { ok("""
     package a
     A:{ .foo: A } B:{ .bar: B -> this }
-    Test:{ #: B -> A,B{'self .foo -> self } }
+    Test:{ #: B -> Anon:A,B{'self .foo -> self } }
     """); }
 
   @Test void contravarianceBox() { fail("""
@@ -1095,13 +1100,13 @@ public class TestTypeSystem {
 
   // Error message is from method body promotions
   @Test void badGenericPromotionIso() { fail("""
-    In position [###]/Dummy0.fear:3:43
+    In position [###]/Dummy0.fear:3:45
     [E28 undefinedName]
     The identifier "y" is undefined or cannot be captured.
     """, """
     package test
-    Foo:{ .m[X](x: X): mut Beer[X] -> {x} }
-    Bar:{ .k[Y](y: Y): iso Beer[Y] -> Foo.m[Y](y) }
+    Foo:{ .m[X:*](x: X): mut Beer[X] -> {x} }
+    Bar:{ .k[Y:*](y: Y): iso Beer[Y] -> Foo.m[Y](y) }
     Break:{
       .m1(y: mut Baz): Beer[mut Baz] -> Bar.k(y),
       .ohNo(y: mut Baz): imm Baz -> this.m1(y).x,
@@ -1109,24 +1114,24 @@ public class TestTypeSystem {
     """, """
     package test
     Baz:{}
-    Beer[X]:{ mut .x: X, read .x: read X }
+    Beer[X:*]:{ mut .x: X, read .x: read X }
     Block:{
       #[X:read,mut,imm,iso, R:read,mut,imm,iso](_: X, res: R): R -> res,
       }
     Abort:{ ![R:readH,mutH,read,mut,imm,iso]: R -> this! }
     """); }
   @Test void badGenericPromotionImm() { fail("""
-    In position [###]/Dummy0.fear:3:37
+    In position [###]/Dummy0.fear:3:39
     [E66 invalidMethodArgumentTypes]
-    Method .m/1 called in position [###]/Dummy0.fear:3:37 cannot be called with current parameters of types:
+    Method .m/1 called in position [###]/Dummy0.fear:3:39 cannot be called with current parameters of types:
     [Y]
     Attempted signatures:
     (iso Y):iso test.Beer[Y] kind: IsoHProm
     (iso Y):iso test.Beer[Y] kind: IsoProm
     """, """
     package test
-    Foo:{ .m[X](x: X): mut Beer[X] -> {x} }
-    Bar:{ .k[Y](y: Y): imm Beer[Y] -> Foo.m[Y](y) }
+    Foo:{ .m[X:*](x: X): mut Beer[X] -> {x} }
+    Bar:{ .k[Y:*](y: Y): imm Beer[Y] -> Foo.m[Y](y) }
     Break:{
       .m1(y: mut Baz): Beer[mut Baz] -> Bar.k(y),
       .ohNo(y: mut Baz): imm Baz -> this.m1(y).x,
@@ -1134,7 +1139,7 @@ public class TestTypeSystem {
     """, """
     package test
     Baz:{}
-    Beer[X]:{ mut .x: X, read .x: read X }
+    Beer[X:*]:{ mut .x: X, read .x: read X }
     Block:{
       #[X:read,mut,imm,iso, R:read,mut,imm,iso](_: X, res: R): R -> res,
       }
@@ -1142,8 +1147,8 @@ public class TestTypeSystem {
     """); }
   @Test void okGenericPromotion() { ok("""
     package test
-    Foo:{ .m[X](x: X): mut Beer[X] -> {x} }
-    Bar:{ .k[Y](y: iso Y): iso Beer[Y] -> Foo.m[Y](y) }
+    Foo:{ .m[X:*](x: X): mut Beer[X] -> {x} }
+    Bar:{ .k[Y:*](y: iso Y): iso Beer[Y] -> Foo.m[Y](y) }
     Break:{
       .m1(y: iso Baz): Beer[mut Baz] -> Bar.k[mut Baz](y),
       .ohNo(y: iso Baz): imm Baz -> this.m1(y).x,
@@ -1151,7 +1156,7 @@ public class TestTypeSystem {
     """, """
     package test
     Baz:{}
-    Beer[X]:{ mut .x: X, read .x: read X }
+    Beer[X:*]:{ mut .x: X, read .x: read X }
     Block:{
       #[X:read,mut,imm,iso, R:read,mut,imm,iso](_: X, res: R): R -> res,
       }
@@ -1229,13 +1234,13 @@ public class TestTypeSystem {
 
   @Test void branchingReturnTypes() { ok("""
     package a
-    Opt:{ #[T](x: T): mut Opt[T] -> { .match(m) -> m.some(x) }}
-    Opt[T]:{
-      mut  .match[R](m: mut OptMatch[T, R]): R -> m.empty,
-      read .match[R](m: mut OptMatch[read T, R]): R -> m.empty,
-      imm  .match[R](m: mut OptMatch[imm T, R]): R -> m.empty
+    Opt:{ #[T:*](x: T): mut Opt[T] -> { .match(m) -> m.some(x) }}
+    Opt[T:*]:{
+      mut  .match[R:*](m: mut OptMatch[T, R]): R -> m.empty,
+      read .match[R:*](m: mut OptMatch[read T, R]): R -> m.empty,
+      imm  .match[R:*](m: mut OptMatch[imm T, R]): R -> m.empty
       }
-    OptMatch[T,R]:{ mut .some(x: T): R, mut .empty: R }
+    OptMatch[T:*,R:*]:{ mut .some(x: T): R, mut .empty: R }
     N: {}
     Zero: N{}
     Test:{ .test(opt: Opt[N]): N -> opt.match{
@@ -1281,7 +1286,7 @@ public class TestTypeSystem {
     package test
     Default: {} Foo: {}
     A[X,Y]: {}
-    B[X]: A[X,Default]
+    B[X]: A[X,Default]{}
     Break:{ #(b: B[Foo]): A[Foo,Default] -> b }
     """); }
 

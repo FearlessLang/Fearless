@@ -7,7 +7,6 @@ import id.Id;
 import id.Mdf;
 import magic.Magic;
 import magic.MagicCallable;
-import magic.MagicImpls;
 import magic.MagicTrait;
 import utils.Bug;
 import visitors.MIRVisitor;
@@ -27,7 +26,6 @@ public record JavaMagicImpls(
   @Override public MagicTrait<MIR.E,String> int_(MIR.E e) {
     var name = e.t().name().orElseThrow();
     return new MagicTrait<>() {
-
       @Override public Optional<String> instantiate() {
         var lit = getLiteral(p, name);
         try {

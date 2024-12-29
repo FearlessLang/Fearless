@@ -822,7 +822,7 @@ public class Ex17FlowsTest {
       .map{n -> n.str}
       .fold(_ToIsoMF#(sys.io.iso.self), {io, msg -> Block#(io.print msg, io)}))
       }
-    _ToIsoMF: {#[T](x: mut T): mut MF[mut T] -> {x}}
+    _ToIsoMF: {#[T:*](x: mut T): mut MF[mut T] -> {x}}
     """, Base.mutBaseAliases);}
 
   @Test void noneTerminal() {ok(new Res(), """

@@ -16,7 +16,7 @@ public class BetterErrMsgs {
 
   public String syntaxError() {
     try {
-      return new ParenthesisChecker(input).compute();
+      //return new ParenthesisChecker(input).compute();
     } catch (IllegalStateException e) {
       assert e.getMessage().equals("No parenthesis error was found");
       if (isParenthesisError()) {

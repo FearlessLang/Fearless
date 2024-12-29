@@ -87,10 +87,10 @@ interface ELambdaTypeSystem extends ETypeSystem{
       mi->methOkOuter(xbs, selfT, selfName, mi));
     return mRes.map(_ ->selfT);
   }
-  private FailOr<Void> sigOk(Sig sig,Optional<Pos> p){
+  private FailOr<Void> sigOk(String context, Sig sig, Optional<Pos> p){
     var ts= Stream.concat(sig.ts().stream(),Stream.of(sig.ret()));
     var badBounds= ts
-      .map(t->t.accept(new KindingJudgement(p(), xbs(), true)))
+      .map(t->t.accept(new KindingJudgement(p(), t.toString(), xbs(), GenericBounds.ALL_RCS, true)))
       .filter(FailOr::isErr)
       .<FailOr<Void>>map(FailOr::cast)
       .map(res->res.mapErr(err->()->err.get().pos(p)))
@@ -113,7 +113,7 @@ interface ELambdaTypeSystem extends ETypeSystem{
   private FailOr<Void> mOk(String selfName, T selfT, T litT, E.Meth m){
     var xbs = xbs().addBounds(m.sig().gens(),m.sig().bounds());
     var withXBs = (ELambdaTypeSystem) withXBs(xbs);
-    var sigOk = withXBs.sigOk(m.sig(),m.pos());
+    var sigOk = withXBs.sigOk(selfT.toString(), m.sig(), m.pos());
     if (sigOk.isErr()) { return sigOk; }
     if(m.isAbs()){ return FailOr.ok(); }
     return withXBs.mOkEntry(selfName, selfT, litT, m, m.sig());

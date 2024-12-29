@@ -31,7 +31,7 @@ public sealed interface E extends HasPos {
       Objects.requireNonNull(mdf);
       Objects.requireNonNull(meths);
       Objects.requireNonNull(it);
-      assert mdf.isPresent() == it.isPresent();
+      assert mdf.isPresent() == it.isPresent(): mdf+" "+it;
     }
 
     public record LambdaId(Id.DecId id, List<Id.GX<T>> gens, Map<Id.GX<T>, Set<Mdf>> bounds) {
@@ -103,7 +103,7 @@ public sealed interface E extends HasPos {
     }
   }
   record MCall(E receiver,MethName name,Optional<List<T>>ts,List<E>es, T t, Optional<Pos> pos) implements E{
-    public MCall { assert name.num() == es.size(); }
+    public MCall { assert name.num() == es.size():name.num()+" "+es.size(); }
     public MCall withReceiver(E receiver) {
       return new MCall(receiver, name, ts, es, t, pos);
     }

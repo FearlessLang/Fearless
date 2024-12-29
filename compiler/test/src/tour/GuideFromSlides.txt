@@ -1003,7 +1003,7 @@ Create:FileHandleMode{ "w+" }
 //---File caps\isopod.fear
 package base.caps
 
-IsoPod:{ #[T:imm,iso](val: iso T): mut IsoPod[iso T] -> base.Magic! }
+IsoPod:{ #[T:imm,iso](val: iso T): mut IsoPod[T] -> base.Magic! }
 IsoPod[T:imm,iso]:{
   readOnly .isAlive: Bool -> Magic!,
   readOnly .isDead: Bool -> this.isAlive.not,

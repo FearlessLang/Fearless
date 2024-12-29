@@ -142,14 +142,14 @@ public class TestMdfDispatch {
 
   @Test void optWithImmMatcher() { ok("""
   package base
-  Opt:{ #[T](x: T): mut Opt[T] -> {
-    mut .match[R](m: mut OptMatch[T, R]): R -> m.some(x),
-    read .match[R](m: mut OptMatch[read T, R]): R -> m.some(x),
+  Opt:{ #[T:*](x: T): mut Opt[T] -> {
+    mut .match[R:*](m: mut OptMatch[T, R]): R -> m.some(x),
+    read .match[R:*](m: mut OptMatch[read T, R]): R -> m.some(x),
     }}
-  Opt[T]:{
-    mut  .match[R](m: mut OptMatch[T, R]): R -> m.empty,
-    read .match[R](m: mut OptMatch[read T, R]): R -> m.empty,
-    imm  .match[R](m: mut OptMatch[T, R]): R -> m.empty,
+  Opt[T:*]:{
+    mut  .match[R:*](m: mut OptMatch[T, R]): R -> m.empty,
+    read .match[R:*](m: mut OptMatch[read T, R]): R -> m.empty,
+    imm  .match[R:*](m: mut OptMatch[T, R]): R -> m.empty,
     read .or(f: mut OptOrElse[read Opt[T]]): read Opt[T] -> this.match[read Opt[T]](mut OptMatch[read T, read Opt[T]]{
       .some(x) -> this,
       .empty -> f#
@@ -159,30 +159,29 @@ public class TestMdfDispatch {
         .empty -> f#
         }),
       }
-    OptMatch[T,R]:{ mut .some(x: T): R, mut .empty: R }
-    OptOrElse[R]:{ mut #: R }
+    OptMatch[T:*,R:*]:{ mut .some(x: T): R, mut .empty: R }
+    OptOrElse[R:*]:{ mut #: R }
   """); }
-
   @Test void complexOpts() {ok("""
   package test
   Opts: {
-    #[T](x: T): mut Opt[T] -> {.match(m) -> m.some(x)},
+    #[T:*](x: T): mut Opt[T] -> {.match(m) -> m.some(x)},
     }
-  Opt[T]: _Opt[T]{
+  Opt[T:*]: _Opt[T]{
     .match(m) -> m.empty,
     .map(f)   -> this.match(f),
     ||(f)     -> this.match{.some(x) -> x, .empty -> f#},
     |(f)      -> this.match{.some(x) -> x, .empty -> f},
     !         -> this.match{.some(x) -> x, .empty -> this!},
     }
-  _Opt[T]: {
-    mut  .match[R](m: mut OptMatch[T, R]): R,
-    read .match[R](m: mut OptMatch[read/imm T, R]): R,
-    imm  .match[R](m: mut OptMatch[imm T, R]): R,
+  _Opt[T:*]: {
+    mut  .match[R:*](m: mut OptMatch[T, R]): R,
+    read .match[R:*](m: mut OptMatch[read/imm T, R]): R,
+    imm  .match[R:*](m: mut OptMatch[imm T, R]): R,
   
-    mut  .map[R](f: mut OptMap[T, R]):          mut Opt[R],
-    read .map[R](f: mut OptMap[read/imm T, R]): mut Opt[R],
-    imm  .map[R](f: mut OptMap[imm T, R]):      mut Opt[R],
+    mut  .map[R:*](f: mut OptMap[T, R]):          mut Opt[R],
+    read .map[R:*](f: mut OptMap[read/imm T, R]): mut Opt[R],
+    imm  .map[R:*](f: mut OptMap[imm T, R]):      mut Opt[R],
   
     mut  ||(default: mut MF[T]):          T,
     read ||(default: mut MF[read/imm T]): read/imm T,
@@ -197,8 +196,8 @@ public class TestMdfDispatch {
     imm  !: imm T,
     }
   
-  OptMatch[T,R]:{ mut .some(x: T): R, mut .empty: R }
-  OptMap[T,R]:OptMatch[T, mut Opt[R]]{
+  OptMatch[T:*,R:*]:{ mut .some(x: T): R, mut .empty: R }
+  OptMap[T:*,R:*]:OptMatch[T, mut Opt[R]]{
     mut #(t: T): R,
     .some(x) -> Opts#(this#x),
     .empty -> {}

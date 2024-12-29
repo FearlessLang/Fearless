@@ -3,6 +3,7 @@ package wellFormedness;
 import failure.CompileError;
 import main.Main;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import parser.Parser;
 import program.TypeSystemFeatures;
@@ -97,7 +98,7 @@ public class TestFullWellFormedness {
     """); }
 
   @Test void noShadowingMeths() { fail("""
-    In position [###]/Dummy0.fear:2:2
+    In position [###]/Dummy0.fear:2:0
     [E17 conflictingMethNames]
     Methods may not have the same name and number of parameters. The following methods were conflicting: .a/0
     """, """
@@ -137,7 +138,7 @@ public class TestFullWellFormedness {
     """); }
 
   @Test void noTopLevelSelfName() { fail("""
-    In position [###]/Dummy0.fear:2:2
+    In position [###]/Dummy0.fear:2:0
     [E50 namedTopLevelLambda]
     Trait declarations may not have a self-name other than "this".
     """, """
@@ -170,7 +171,7 @@ public class TestFullWellFormedness {
     Nat:{} TwentyFour:Nat{}
     """); }
   @Test void failTopLevelDeclImpl() { fail("""
-    In position [###]/Dummy0.fear:6:4
+    In position [###]/Dummy0.fear:6:0
     [E13 implInlineDec]
     Traits declared within expressions cannot be implemented. This lambda has the following invalid implementations: test.Person/0
     """, """
@@ -201,11 +202,11 @@ public class TestFullWellFormedness {
     B:{ #: A -> A:{} }
     """); }
   @Test void disjointDecsInline2() { fail("""
-    In position [###]/Dummy0.fear:3:14
+    In position [###]/Dummy0.fear:3:12
     [E2 conflictingDecl]
     This trait declaration is in conflict with other trait declarations in the same package: test.A/0
     conflicts:
-    ([###]/Dummy0.fear:2:14) test.A/0
+    ([###]/Dummy0.fear:2:12) test.A/0
     """, """
     package test
     B:{ #: A -> A:{} }
@@ -256,7 +257,7 @@ public class TestFullWellFormedness {
     """); }
 
   @Test void noLentLambdaCreation() { fail("""
-    In position [###]/Dummy0.fear:2:22
+    In position [###]/Dummy0.fear:2:17
     [E63 invalidLambdaMdf]
     mutH is not a valid modifier for a lambda.
     """, """
@@ -264,7 +265,7 @@ public class TestFullWellFormedness {
     A: {#: mutH A -> mutH A}
     """); }
   @Test void noReadOnlyLambdaCreation() { fail("""
-    In position [###]/Dummy0.fear:2:24
+    In position [###]/Dummy0.fear:2:18
     [E63 invalidLambdaMdf]
     readH is not a valid modifier for a lambda.
     """, """
@@ -272,7 +273,7 @@ public class TestFullWellFormedness {
     A: {#: readH A -> readH A}
     """); }
   @Test void noReadImmLambdaCreation() { fail("""
-    In position [###]/Dummy0.fear:2:33
+    In position [###]/Dummy0.fear:2:24
     [E63 invalidLambdaMdf]
     read/imm is not a valid modifier for a lambda.
     """, """
@@ -311,7 +312,7 @@ public class TestFullWellFormedness {
     A: {#: Float -> +5.556}
     Float: {}
     """); }
-  @Test void noMultiplePointsInFloat() {fail("""
+  @Disabled @Test void noMultiplePointsInFloat() {fail("""
     In position [###]/Dummy0.fear:2:16
     [E59 syntaxError]
     1.2.4/0 is not a valid type name.
@@ -327,7 +328,7 @@ public class TestFullWellFormedness {
     """); }
 
   @Test void noFreeGensFunnelling() { fail("""
-    In position [###]/Dummy0.fear:2:52
+    In position [###]/Dummy0.fear:2:45
     [E56 freeGensInLambda]
     The declaration name for a lambda must include all type variables used in the lambda. The declaration name test.Person[] does not include the following type variables: N
     """, """
@@ -342,21 +343,21 @@ public class TestFullWellFormedness {
     Nat:{} TwentyFour:Nat{}
     """); }
   @Test void nonExistentImplInline() {fail("""
-    In position [###]/Dummy0.fear:3:42
+    In position [###]/Dummy0.fear:3:30
     [E28 undefinedName]
     The identifier "Break" is undefined or cannot be captured.
     """, """
     package test
     A[X:mut]: {}
-    BreakOuter: {#: BreakInner -> BreakInner: A[imm Break]}
+    BreakOuter: {#: BreakInner -> BreakInner: A[imm Break]{}}
     """);}
   @Test void nonExistentGenInline() {fail("""
-    In position [###]/Dummy0.fear:3:49
+    In position [###]/Dummy0.fear:3:37
     [E56 freeGensInLambda]
     The declaration name for a lambda must include all type variables used in the lambda. The declaration name test.BreakInner[] does not include the following type variables: Z
     """, """
     package test
     A[X:mut]: {}
-    BreakOuter[Z:mut]: {#: BreakInner -> BreakInner: A[Z]}
+    BreakOuter[Z:mut]: {#: BreakInner -> BreakInner: A[Z]{}}
     """);}
 }

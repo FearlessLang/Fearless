@@ -16,15 +16,15 @@ import java.util.Arrays;
 
 public class TestSubTyping {
   void ok(String t1, String t2, boolean res, String ...code){
-    var ty1 = new Parser(Parser.dummy, t1).parseFullT();
-    var ty2 = new Parser(Parser.dummy, t2).parseFullT();
+    var ty1 = new Parser(Parser.dummy, t1).parseFullT("dummy");
+    var ty2 = new Parser(Parser.dummy, t2).parseFullT("dummy");
     Program p = FromContent.of(code);
     Assertions.assertEquals(res,p.isSubType(XBs.empty(), ty1, ty2), String.format("t1: %s\nt2: %s", ty1, ty2));
   }
 
   void fail(String expected, String t1, String t2, String ...code){
-    var ty1 = new Parser(Parser.dummy, t1).parseFullT();
-    var ty2 = new Parser(Parser.dummy, t2).parseFullT();
+    var ty1 = new Parser(Parser.dummy, t1).parseFullT("dummy");
+    var ty2 = new Parser(Parser.dummy, t2).parseFullT("dummy");
     Program p = FromContent.of(code);
     try {
       p.isSubType(XBs.empty(), ty1, ty2);
@@ -70,19 +70,19 @@ public class TestSubTyping {
     "a.C","a.A",true,
     """
     package a
-    A:{} B:A C:B
+    A:{} B:A{} C:B{}
     """); }
   @Test void transitiveManyStepsSub() { ok(
     "a.E","a.A",true,
     """
     package a
-    A:{} B:A C:F,B,G{} D:C E:D F:{} G:{}
+    A:{} B:A{} C:F,B,G{} D:C{} E:D{} F:{} G:{}
     """); }
   @Test void inverseTransitiveManyStepsSub() { ok(
     "a.A","a.E",false,
     """
     package a
-    A:{} B:A C:B D:C E:D
+    A:{} B:A{} C:B{} D:C{} E:D{}
     """); }
 
   // This would fail, but now works because adapt will assume true for a sub-typing relationship if it's part of the
@@ -108,10 +108,10 @@ public class TestSubTyping {
 
   final String pointEx = """
     package a
-    List[T]:{
+    List[T:*]:{
       read .get: read/imm T
     }
-    SortedList[T]:List[T]
+    SortedList[T:*]:List[T]{}
     Int:{}
     Point:{ .x: Int, .y: Int }
     ColouredPoint:Point{ .colour: Int }
@@ -129,10 +129,10 @@ public class TestSubTyping {
 
   final String pointEx2 = """
     package a
-    List[T]:{
+    List[T:*]:{
       read .get: T
     }
-    SortedList[T]:List[T]
+    SortedList[T:*]:List[T]{}
     Int:{}
     Point:{ .x: Int, .y: Int }
     ColouredPoint:Point{ .colour: Int }

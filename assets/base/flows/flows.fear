@@ -2,26 +2,26 @@ package base.flows
 alias base.Todo as Todo,
 
 Flow: Sealed, _FlowExtensions, _FlowConverters{
-  #[E]: mut Flow[E] -> mut EmptyFlow[E],
-  #[E](e: E): mut Flow[E] -> _SeqFlow#[E](e),
-  #[E](e1: E, e2: E): mut Flow[E] -> List#(e1, e2).flow,
-  #[E](e1: E, e2: E, e3: E): mut Flow[E] -> List#(e1, e2, e3).flow,
-  #[E](e1: E, e2: E, e3: E, e4: E): mut Flow[E] -> List#(e1, e2, e3, e4).flow,
+  #[E:*]: mut Flow[E] -> mut EmptyFlow[E],
+  #[E:*](e: E): mut Flow[E] -> _SeqFlow#[E](e),
+  #[E:*](e1: E, e2: E): mut Flow[E] -> List#(e1, e2).flow,
+  #[E:*](e1: E, e2: E, e3: E): mut Flow[E] -> List#(e1, e2, e3).flow,
+  #[E:*](e1: E, e2: E, e3: E, e4: E): mut Flow[E] -> List#(e1, e2, e3, e4).flow,
 
   // These fromOp calls will always be sequential. Only flows made from specific standard library types
   // could have a parallel constructor.
-  .fromOp[E](source: mut FlowOp[E]): mut Flow[E] -> _SeqFlow.fromOp(source, {}),
-  .fromOp[E](source: mut FlowOp[E], size: Nat): mut Flow[E] -> _SeqFlow.fromOp(source, Opts#size),
+  .fromOp[E:*](source: mut FlowOp[E]): mut Flow[E] -> _SeqFlow.fromOp(source, {}),
+  .fromOp[E:*](source: mut FlowOp[E], size: Nat): mut Flow[E] -> _SeqFlow.fromOp(source, Opts#size),
 
   // This variant of fromOp asks the compiler to emit code that collects the source into an intermediary list to
   // avoid any concurrent modification issues if they would be possible during the execution of the flow.
-  .fromMutSource[E](source: mut FlowOp[E]): mut Flow[E] -> _MutSourceCollection[E]#source,
-  .fromMutSource[E](source: mut FlowOp[E], size: Nat): mut Flow[E] -> _MutSourceCollection[E]#(source, size),
+  .fromMutSource[E:*](source: mut FlowOp[E]): mut Flow[E] -> _MutSourceCollection[E]#source,
+  .fromMutSource[E:*](source: mut FlowOp[E], size: Nat): mut Flow[E] -> _MutSourceCollection[E]#(source, size),
   }
 
-Flow[E]: Sealed, Extensible[Flow[E]], _NonTerminalOps[E], _TerminalOps[E]{
+Flow[E:*]: Sealed, Extensible[Flow[E]], _NonTerminalOps[E], _TerminalOps[E]{
   .self -> this,
-  mut .let[DR,R](x: read F[mut MF[mut Flow[E]],DR], cont: mut Continuation[DR,mut Flow[E],R]): R -> Block#
+  mut .let[DR:*,R:*](x: read F[mut MF[mut Flow[E]],DR], cont: mut Continuation[DR,mut Flow[E],R]): R -> Block#
     .let duplicator = {_LazyFlowDuplicators#this}
     .let splitResult = {x#duplicator}
     .let[mut Flow[E]] selfFlow = {duplicator.collected.match{
@@ -45,22 +45,22 @@ Flow[E]: Sealed, Extensible[Flow[E]], _NonTerminalOps[E], _TerminalOps[E]{
   }
 _UnwrapFlowToken: {}
 
-_NonTerminalOps[E]: {
+_NonTerminalOps[E:*]: {
   mut .filter(predicate: read F[E, Bool]): mut Flow[E],
 
-  mut .map[R](f: read F[E, R]): mut Flow[R],
-  mut .map[C,R](ctx: iso ToIso[C], f: read F[iso C, E, R]): mut Flow[R],
+  mut .map[R:*](f: read F[E, R]): mut Flow[R],
+  mut .map[C,R:*](ctx: iso ToIso[C], f: read F[iso C, E, R]): mut Flow[R],
 
   mut .peek(f: read F[E, Void]): mut Flow[E] -> this.map{e -> Block#(f#e, e)},
   mut .peek[C](ctx: iso ToIso[C], f: read F[iso C, E, Void]): mut Flow[E] ->
     this.map(ctx, {c, e -> Block#(f#(c, e), e)}),
 
-  mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
+  mut .flatMap[R:*](f: read F[E, mut Flow[R]]): mut Flow[R],
   /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
   /// flows stop.
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
-  mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
-  mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
+  mut .with[EB:*](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
+  mut .actor[S:*,R:*](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
+  mut .actorMut[S:*,R:*](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
 
   mut .limit(n: Nat): mut Flow[E],
 
@@ -71,14 +71,14 @@ _NonTerminalOps[E]: {
     ActorRes.continue
     )}),
   }
-_TerminalOps[E]: Sealed{
+_TerminalOps[E:*]: Sealed{
   // has to be magic because of strong exception safety (flows are mut and thus cannot be in a Try)
-//  mut .action[R:iso,imm,mut,mutH,read,readH](terminalOp: read F[mut Flow[E],R]): mut Action[R] -> Todo!,
+//  mut .action[R:*](terminalOp: read F[mut Flow[E],R]): mut Action[R] -> Todo!,
 
   mut .first: mut Opt[E],
   mut .last: mut Opt[E] -> this.fold[mut Opt[E]]({{}}, {_, e -> Opts#e}),
-  mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R],
-  mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S,
+  mut .findMap[R:*](f: read F[E, mut Opt[R]]): mut Opt[R],
+  mut .fold[S:*](acc: iso MF[S], f: read F[S,E,S]): S,
   mut .size: Nat,
 
   mut .find(predicate: read F[E, Bool]): mut Opt[E] -> this.findMap{e -> predicate#e ? {.then -> Opts#e, .else -> {}}},
@@ -116,16 +116,16 @@ _FlowExtensions: {
     },
   }
 
-EmptyFlow[E]: Flow[E]{
+EmptyFlow[E:*]: Flow[E]{//TODO: why the types are repeated?
   .filter(p) -> this,
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
+  mut .with[EB:*](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
 
-  mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .map[R:*](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   .map(_,_) -> this.map({_ -> Unreachable!}),
 
-  mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
-  mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> mut EmptyFlow[imm R],
-  mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .flatMap[R:*](f: read F[E, mut Flow[R]]): mut Flow[R] -> mut EmptyFlow[R],
+  mut .actor[S:*,R:*](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] -> mut EmptyFlow[imm R],
+  mut .actorMut[S:*,R:*](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] -> mut EmptyFlow[R],
   .limit(_) -> this,
   .first -> {},
   .findMap(_) -> {},
@@ -154,4 +154,4 @@ _Enumerateds: {#[E:imm](i: Nat, e: E): Enumerated[E] -> Enumerated[E:imm]: {
   .e: E -> e,
   }}
 
-Pair[A,B]: {mut .a: A, mut .b: B}
+Pair[A:*,B:*]: {mut .a: A, mut .b: B}

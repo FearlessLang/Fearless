@@ -3,6 +3,7 @@ package astFull;
 import files.Pos;
 import id.Id;
 import id.Mdf;
+import magic.LiteralKind;
 import magic.Magic;
 import failure.CompileError;
 import failure.Fail;
@@ -205,7 +206,9 @@ public class Program implements program.Program{
       return sorted;
     }
     private static boolean hasNoSuperTypeInDs(T.Dec d) {
-      return d.lambda().its().isEmpty() || d.lambda().its().stream().anyMatch(it->Magic.isLiteral(it.name().name()));
+      return d.lambda().its().isEmpty() 
+          || d.lambda().its().stream()
+            .anyMatch(it->LiteralKind.isLiteral(it.name().name()));
     }
     private void updateDec(T.Dec d, int i) {
       assert !p.inlineDs().containsKey(d.name());

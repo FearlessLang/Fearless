@@ -10,6 +10,7 @@ import failure.Fail;
 import utils.Range;
 import utils.Streams;
 import visitors.FullEAntlrVisitor;
+import visitors.InlineDecNamesAntlrVisitor;
 import wellFormedness.WellFormednessFullShortCircuitVisitor;
 
 import java.nio.file.Path;
@@ -24,43 +25,32 @@ public record Package(
     List<Path> ps
     ){
   public Map<Id.DecId,T.Dec> parse(){
-    var res = new HashMap<Id.DecId,T.Dec>();
-    try {
-      IntStream.range(0, this.ds().size()).forEach(i->this.acc(res, new ArrayList<>(), i, false));
-    } catch (CompileError err) {
-      throw ParserErrors.fromCompileError(err);
-    }
+    var res= new HashMap<Id.DecId,T.Dec>();
+    try{ IntStream.range(0, this.ds().size()).forEach(i->this.acc(res, i)); }
+    catch (CompileError err){ throw ParserErrors.fromCompileError(err); }
     return Collections.unmodifiableMap(res);
   }
-  public Stream<T.Alias> shallowParse(){
-    var res = new HashMap<Id.DecId,T.Dec>();
-    var extraAliases = new ArrayList<T.Alias>();
-    IntStream.range(0, this.ds().size()).forEach(i->this.acc(res, extraAliases, i, true));
-    var resTopLevel = res.values().stream()
-      .map(T.Dec::name)
-      .map(n->{
-        assert n.name().startsWith(this.name());
-        var shortName = n.name().substring(this.name().length()+1);
-        assert !shortName.contains(".");
-        return new T.Alias(new Id.IT<>(new Id.DecId(n.name(), 0), List.of()), shortName, Optional.empty());
-      });
-
-    return Stream.concat(
-      resTopLevel,
-      extraAliases.stream()
-    );
+  public List<T.Alias> shallowParse(){
+    var aliases = new ArrayList<T.Alias>();
+    IntStream.range(0, this.ds().size()).forEach(i->this.shallowParse(aliases, i));
+    return aliases;
   }
-  private void acc(Map<Id.DecId,T.Dec> acc, List<T.Alias> extraAliases, int i, boolean shallow){
-    Path pi = this.ps().get(i);
-    TopDecContext di=this.ds().get(i);
-    var visitor = new FullEAntlrVisitor(pi,this::resolve);
-    T.Dec dec = visitor.visitTopDec(di, this.name(), shallow);
+  private void acc(Map<Id.DecId,T.Dec> acc, int i){
+    Path pi= this.ps().get(i);
+    TopDecContext di= this.ds().get(i);
+    var visitor= new FullEAntlrVisitor(pi,this.name(),this::resolve);
+    T.Dec dec= visitor.visitTopDec(di);
     acc.put(dec.name(), dec);
-    extraAliases.addAll(visitor.inlineNames);
+  }
+  private void shallowParse(List<T.Alias> aliases, int i){
+    Path pi = this.ps().get(i);
+    TopDecContext ctxi=this.ds().get(i);
+    var inlineNamesVisitor = new InlineDecNamesAntlrVisitor(this.name, pi);
+    inlineNamesVisitor.visitTopDec(ctxi);
+    aliases.addAll(inlineNamesVisitor.inlineDecs);
   }
   Optional<Id.IT<T>> resolve(String base){
-    return Magic.resolve(base)
-      .or(()->this.as.stream()
+    return Optional.<Id.IT<T>>empty().or(()->this.as.stream()
         .filter(a -> base.equals(a.to()))
         .findAny()
         .map(T.Alias::from));
@@ -86,7 +76,7 @@ public record Package(
     return Streams.of(
       global.stream(),
       ps.stream().flatMap(p->p.as().stream()),
-      ps.stream().flatMap(p->p.shallowParse().distinct())
+      ps.stream().flatMap(p->p.shallowParse().stream().distinct())
     ).toList();
   }
   static void aliasDisj(List<T.Alias> all){

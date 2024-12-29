@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import parser.Parser;
 import program.TypeSystemFeatures;
 import program.inference.InferBodies;
-import program.typesystem.EMethTypeSystem;
 import program.typesystem.TsT;
 import utils.Base;
 import utils.Err;

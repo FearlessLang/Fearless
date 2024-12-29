@@ -68,7 +68,7 @@ public class Fail{
   public static CompileError conflictingMethNames(List<String> conflicts){return of(
     "Methods may not have the same name and number of parameters. The following methods were conflicting: " + String.join(", ", conflicts));}
 
-  public static CompileError concreteTypeInFormalParams(T badType){return of(
+  public static CompileError concreteTypeInFormalParams(String badType){return of(
     "Trait and method declarations may only have generic type parameters. This concrete type was provided instead:\n"+badType
       +"\nAlternatively, are you attempting to shadow an existing class name?"
   );}
@@ -76,9 +76,9 @@ public class Fail{
     "A reference capability cannot be specified on lambdas without an explicit type."
   );}
 
-  public static CompileError invalidMdfBound(String badType, Stream<Mdf> bounds){
+  public static CompileError invalidMdfBound(String context, String badType, Stream<Mdf> bounds){
     return of(
-      "The type "+badType+" is not valid because its capability is not in the required bounds. The allowed modifiers are: "+bounds.map(Enum::toString).collect(Collectors.joining(", "))+"."
+      "Type bound related to "+context+":\nThe type "+badType+" is not valid because its capability is not in the required bounds. The allowed modifiers are: "+bounds.map(Enum::toString).collect(Collectors.joining(", "))+"."
     );
   }
   public static CompileError shadowingX(String x){return of(String.format("'%s' is shadowing another variable in scope.", x));}
@@ -160,6 +160,9 @@ public class Fail{
 
   public static CompileError invalidNum(String n, String kind) {
     return of("The number "+n+" is not a valid "+kind);
+  }
+  public static CompileError invalidStr(String n, String kind) {
+    return of("The string "+n+"\" is not a valid "+kind+" string");
   }
   public static CompileError noMethOnX(ast.E.MCall e, ast.T found) {
     return of("Method "+e.name()+" can not be called on generic type "+found);
@@ -274,7 +277,7 @@ public class Fail{
     return of("The isolated reference \""+x+"\" is used more than once.");
   }
 
-  public static CompileError noMdfInFormalParams(String mdf, String ty) {
+  public static CompileError noMdfInImplementedT(String mdf, String ty) {
     return of("Modifiers are not allowed in declarations or implementation lists: "+mdf+" "+ty);
   }
 

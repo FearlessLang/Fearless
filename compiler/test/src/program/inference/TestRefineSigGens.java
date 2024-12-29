@@ -31,8 +31,8 @@ public class TestRefineSigGens {
     List<RefineTypes.RP> parsed = Arrays.stream(rps)
       .map(rp->rp.split("=", 2))
       .map(ts->new RefineTypes.RP(
-        addInfers(new Parser(Parser.dummy, ts[0]).parseFullT()),
-        addInfers(new Parser(Parser.dummy, ts[1]).parseFullT())
+        addInfers(new Parser(Parser.dummy, ts[0]).parseFullT("dummy")),
+        addInfers(new Parser(Parser.dummy, ts[1]).parseFullT("dummy"))
         ))
       .toList();
     var p = Parser.parseAll(List.of(new Parser(Path.of("Dummy.fear"), program)), new TypeSystemFeatures());

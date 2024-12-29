@@ -16,11 +16,9 @@ import java.util.*;
  * Kinded type judgements. Used for getting potential RCs from a type and checking if a type is valid for an expected
  * set of RCs.
  */
-public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean checkOnly) implements TypeVisitor<T, FailOr<List<Set<Mdf>>>> {
-  static Set<Mdf> ALL_RCs = Set.of(Mdf.iso, Mdf.imm, Mdf.mut, Mdf.mutH, Mdf.read, Mdf.readH);
-  public KindingJudgement(TypeTable p, XBs xbs, boolean checkOnly) {
-    this(p, xbs, ALL_RCs, checkOnly);
-  }
+public record KindingJudgement(TypeTable p,String context, XBs xbs, Set<Mdf> expected, boolean checkOnly) implements TypeVisitor<T, FailOr<List<Set<Mdf>>>> {
+  public KindingJudgement{ assert !context.isEmpty()
+    :""; }  
 
   @Override public FailOr<List<Set<Mdf>>> visitLiteral(Mdf mdf_, Id.IT<T> it) {
     Mdf mdf = mdf_.isMdf() ? Mdf.mut : mdf_;
@@ -34,7 +32,7 @@ public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean 
       case astFull.T.Dec dec_ -> dec_.lambda().id().bounds();
     };
     var res = Streams.zip(it.ts(), gens)
-      .map((t, gx)-> t.accept(new KindingJudgement(p, xbs, bounds.get(gx), checkOnly)))
+      .map((t, gx)-> t.accept(new KindingJudgement(p, it.toString(), xbs, bounds.get(gx), checkOnly)))
       .filter(FailOr::isErr)
       .findFirst();
     return res.orElseGet(()->holds(Set.of(mdf), mdf+" "+it));
@@ -54,19 +52,19 @@ public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean 
     if (checkOnly && case1.isRes()) { return case1; }
     case1.ifRes(res::addAll);
 
-    if (new KindingJudgement(p, xbs, Set.of(Mdf.iso, Mdf.imm), checkOnly).visitX(x).isRes()) {
+    if (new KindingJudgement(p, context, xbs, Set.of(Mdf.iso, Mdf.imm), checkOnly).visitX(x).isRes()) {
       var caseImm = holds(Set.of(Mdf.imm), Mdf.readImm+" "+x);
       if (checkOnly && caseImm.isRes()) { return caseImm; }
       caseImm.ifRes(res::addAll);
     }
 
-    if (new KindingJudgement(p, xbs, Set.of(Mdf.mut, Mdf.mutH, Mdf.read, Mdf.readH), checkOnly).visitX(x).isRes()) {
+    if (new KindingJudgement(p, context, xbs, Set.of(Mdf.mut, Mdf.mutH, Mdf.read, Mdf.readH), checkOnly).visitX(x).isRes()) {
       var caseRead = holds(Set.of(Mdf.read), Mdf.readImm+" "+x);
       if (checkOnly && caseRead.isRes()) { return caseRead; }
       caseRead.ifRes(res::addAll);
     }
     if (checkOnly || res.isEmpty()) {
-      return FailOr.err(()->Fail.invalidMdfBound(Mdf.readImm+" "+x, expected.stream().sorted()));
+      return FailOr.err(()->Fail.invalidMdfBound(context,Mdf.readImm+" "+x, expected.stream().sorted()));
     }
     return FailOr.res(Collections.unmodifiableList(res));
   }
@@ -84,7 +82,7 @@ public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean 
   }
   private FailOr<List<Set<Mdf>>> holdsSimple(Set<Mdf> actual, String typeName) {
     if (expected.containsAll(actual)) { return FailOr.res(List.of(expected)); }
-    return FailOr.err(()->Fail.invalidMdfBound(typeName, expected.stream().sorted()));
+    return FailOr.err(()->Fail.invalidMdfBound(context,typeName, expected.stream().sorted()));
   }
   private FailOr<Set<Set<Mdf>>> holdsAux(Set<Mdf> actual, String typeName, Set<Set<Mdf>> visited) {
     /* Subsumption means that
@@ -101,7 +99,7 @@ public record KindingJudgement(TypeTable p, XBs xbs, Set<Mdf> expected, boolean 
     }
 
     if (!expected.containsAll(actual)) {
-      return FailOr.err(()->Fail.invalidMdfBound(typeName, expected.stream().sorted()));
+      return FailOr.err(()->Fail.invalidMdfBound(context,typeName, expected.stream().sorted()));
     }
     var holdsFor = new HashSet<Set<Mdf>>();
     holdsFor.add(actual);

@@ -8,6 +8,7 @@ import failure.Fail;
 import files.HasPos;
 import id.Id;
 import id.Mdf;
+import magic.LiteralKind;
 import magic.Magic;
 import visitors.FullShortCircuitVisitor;
 import visitors.FullShortCircuitVisitorWithEnv;
@@ -114,7 +115,7 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
       .or(()->super.visitT(t));
   }
   @Override public Optional<CompileError> visitIT(Id.IT<T> t) {
-    return noInvalidLiterals(t)
+    return Magic.validateIfLiteral(t.name())
       .or(()->super.visitIT(t));
   }
 
@@ -244,12 +245,6 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
       e.its().stream().map(Id.IT::name).filter(d->p.isInlineDec(d) && !e.id().id().equals(d)).toList()
     ));
   }
-
-  private Optional<CompileError> noInvalidLiterals(Id.IT<T> it) {
-    if (!Magic.isLiteral(it.name().name())) { return Optional.empty(); }
-    return Magic.validateLiteral(it.name());
-  }
-
   private Optional<CompileError> disjointDecls(Program p) {
     var inline = p.inlineDs().keySet();
     var topLevel = p.ds().keySet();
@@ -274,8 +269,9 @@ public class WellFormednessFullShortCircuitVisitor extends FullShortCircuitVisit
     if (decId.isFresh() || decId.gen() != 0) { return Optional.empty(); }
     var visitor = new FullUndefinedGXsVisitor(Set.copyOf(e.id().gens()));
     visitor.visitLambda(e);
-    if (visitor.res().isEmpty()) { return Optional.empty(); }
-    var res = visitor.res().stream().map(Id.GX::toAstGX).collect(Collectors.toUnmodifiableSet());
+    var vres= visitor.res();
+    if (vres.isEmpty()) { return Optional.empty(); }
+    var res = vres.stream().map(Id.GX::toAstGX).collect(Collectors.toUnmodifiableSet());
     return Optional.of(Fail.freeGensInLambda(e.id().toIT().toString(), res).pos(e.pos()));
   }
 }

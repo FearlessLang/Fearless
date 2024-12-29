@@ -16,9 +16,8 @@ public interface GenericBounds {
   Set<Mdf> ALL_RCS = Set.of(Mdf.iso, Mdf.imm, Mdf.mut, Mdf.mutH, Mdf.read, Mdf.readH);
 
   static FailOr<Void> validGenericLambda(Program p, XBs xbs, E.Lambda l) {
-    var boundsInference = new KindingJudgement(p, xbs, ALL_RCS, true);
     var res = l.its().stream()
-      .map(it->it.accept(boundsInference))
+      .map(it->it.accept(new KindingJudgement(p, it.toString(), xbs, ALL_RCS, true)))
       .filter(FailOr::isErr)
       .<FailOr<Void>>map(FailOr::cast)
       .findFirst();
@@ -32,8 +31,10 @@ public interface GenericBounds {
     }
     var res = Streams.zip(typeArgs, typeParams)
       .map((t, gx)->{
-        var bounds = cm.bounds().getOrDefault(gx, XBs.defaultBounds);
-        var inference = new KindingJudgement(p, xbs, bounds, true);
+        //var bounds = cm.bounds().getOrDefault(gx, XBs.defaultBounds);//Should not be possible any more
+        var bounds = cm.bounds().get(gx);
+        assert bounds!=null;
+        var inference = new KindingJudgement(p, cm.name().toString(), xbs, bounds, true);
         return t.accept(inference);
       })
       .filter(FailOr::isErr)

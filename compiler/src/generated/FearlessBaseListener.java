@@ -1,4 +1,4 @@
-// Generated from /Users/nick/Programming/PhD/fearless/grammar/antlrGrammars/Fearless.g4 by ANTLR 4.12.0
+// Generated from C:\Users\sonta\Documents\GitHub\Fearless\grammar\antlrGrammars\Fearless.g4 by ANTLR 4.12.0
 package generated;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -101,6 +101,30 @@ public class FearlessBaseListener implements FearlessListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterActualGen(FearlessParser.ActualGenContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitActualGen(FearlessParser.ActualGenContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterTopDec(FearlessParser.TopDecContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTopDec(FearlessParser.TopDecContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterLambda(FearlessParser.LambdaContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -108,18 +132,6 @@ public class FearlessBaseListener implements FearlessListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitLambda(FearlessParser.LambdaContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterBlock(FearlessParser.BlockContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitBlock(FearlessParser.BlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -197,18 +209,6 @@ public class FearlessBaseListener implements FearlessListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTopDec(FearlessParser.TopDecContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTopDec(FearlessParser.TopDecContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterAlias(FearlessParser.AliasContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -216,6 +216,18 @@ public class FearlessBaseListener implements FearlessListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitAlias(FearlessParser.AliasContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFStringMulti(FearlessParser.FStringMultiContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFStringMulti(FearlessParser.FStringMultiContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -233,30 +245,6 @@ public class FearlessBaseListener implements FearlessListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPostE(FearlessParser.PostEContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPostE(FearlessParser.PostEContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterPOp(FearlessParser.POpContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPOp(FearlessParser.POpContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterE(FearlessParser.EContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -269,13 +257,13 @@ public class FearlessBaseListener implements FearlessListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterCallOp(FearlessParser.CallOpContext ctx) { }
+	@Override public void enterPOp(FearlessParser.POpContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitCallOp(FearlessParser.CallOpContext ctx) { }
+	@Override public void exitPOp(FearlessParser.POpContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

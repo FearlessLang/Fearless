@@ -3,7 +3,7 @@ package codegen;
 import ast.T;
 import id.Id;
 import id.Mdf;
-import magic.Magic;
+import magic.LiteralKind;
 import program.CM;
 import utils.Bug;
 import visitors.MIRVisitor;
@@ -42,7 +42,7 @@ public sealed interface MIR {
       assert impls.stream()
         .map(MT.Plain::id)
         .map(Id.DecId::name)
-        .filter(Magic::isLiteral)
+        .filter(LiteralKind::isLiteral)
         .count() <= 1;
     }
   }

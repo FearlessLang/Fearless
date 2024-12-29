@@ -35,7 +35,7 @@ public class TestMethodLookupErrors {
   @Test void nonExistentMethodTypeSystem() {fail("""
     In position [###]/Dummy0.fear:6:26
     [E36 undefinedMethod]
-    Method <.meh1> with 0 args does not exist in <imm test.Fear1$[]>
+    Method <.meh1> with 0 args does not exist in <imm test.Fear[###]$[]>
     Did you mean <test.A.meth1()>
     
     Other candidates:

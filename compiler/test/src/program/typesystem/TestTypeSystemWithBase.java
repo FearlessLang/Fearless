@@ -6,7 +6,6 @@ import main.InputOutput;
 import main.Main;
 import main.java.LogicMainJava;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import utils.Base;
 import utils.Err;
@@ -59,7 +58,7 @@ public class TestTypeSystemWithBase {
   @Test void numbersSubTyping2(){ fail("""
     In position [###]/Dummy0.fear:3:22
     [E37 noSubTypingRelationship]
-    There is no sub-typing relationship between imm base.Nat[] and imm 42[].
+    There is no sub-typing relationship between imm base.Nat[] and imm base.natLit.42[].
     """, """
     package test
     alias base.Nat as Nat,
@@ -97,7 +96,7 @@ public class TestTypeSystemWithBase {
   @Test void numbersGenericTypes2a(){ fail("""
     In position [###]/Dummy0.fear:4:31
     [E37 noSubTypingRelationship]
-    There is no sub-typing relationship between imm test.Fear[###]$[] and imm 42[].
+    There is no sub-typing relationship between imm test.Fear[###]$[] and imm base.natLit.42[].
     """, """
     package test
     alias base.Nat as Nat,
@@ -107,7 +106,7 @@ public class TestTypeSystemWithBase {
   @Test void numbersSubTyping5a(){ fail("""
     In position [###]/Dummy0.fear:6:19
     [E37 noSubTypingRelationship]
-    There is no sub-typing relationship between imm base.Nat[] and imm 42[].
+    There is no sub-typing relationship between imm base.Nat[] and imm base.natLit.42[].
     """, """
     package test
     alias base.Nat as Nat,
@@ -161,7 +160,7 @@ public class TestTypeSystemWithBase {
     In position [###]/Dummy0.fear:5:21
     [E66 invalidMethodArgumentTypes]
     Method .nm/1 called in position [###]/Dummy0.fear:5:21 cannot be called with current parameters of types:
-    [imm test.Fear[###]$[] (5/0)]
+    [imm test.Fear[###]$[] (base.natLit.5/0)]
     Attempted signatures:
     (imm base.Float[]):imm base.Nat[] kind: IsoHProm
     (imm base.Float[]):imm base.Nat[] kind: IsoProm
@@ -180,12 +179,12 @@ public class TestTypeSystemWithBase {
     In position [###]/Dummy0.fear:5:21
     [E66 invalidMethodArgumentTypes]
     Method .nm/1 called in position [###]/Dummy0.fear:5:21 cannot be called with current parameters of types:
-    [imm test.Fear[###]$[] (5/0)]
+    [imm test.Fear[###]$[] (base.natLit.5/0)]
     Attempted signatures:
-    (imm 6[]):imm base.Nat[] kind: IsoHProm
-    (imm 6[]):imm base.Nat[] kind: IsoProm
-    (imm 6[]):imm base.Nat[] kind: Base
-    (imm 6[]):imm base.Nat[] kind: ReadHProm
+    (imm base.natLit.6[]):imm base.Nat[] kind: IsoHProm
+    (imm base.natLit.6[]):imm base.Nat[] kind: IsoProm
+    (imm base.natLit.6[]):imm base.Nat[] kind: Base
+    (imm base.natLit.6[]):imm base.Nat[] kind: ReadHProm
     """, """
     package test
     alias base.Nat as Nat,

@@ -36,7 +36,7 @@ _ValueParser: {#(collector: mut Consumer[Json], old: mut _ParserActor): mut _Par
   }}
 
 _ArrayParser: {#(collector: mut Consumer[Json], old: mut _ParserActor): mut _ParserActor -> Block#
-  .let[mut IsoPod[iso List[Json]]] es = {IsoPod#(List#)}
+  .let[mut IsoPod[List[Json]]] es = {IsoPod#(List#)}
   .let[mut Consumer[Json]] collector' = {{value -> es.mutate{es' -> es'.add(value)}!}}
   .return {{'parser
     downstream, behaviour, token -> token.match(mut _SubMatch[ActorRes]{
@@ -60,7 +60,7 @@ _ArrayCommaParser: {#(collector: mut Consumer[Json], old: mut _ParserActor): mut
   }
 
 _ObjectParser: {#(collector: mut Consumer[Json], old: mut _ParserActor): mut _ParserActor -> Block#
-  .let[mut IsoPod[iso LinkedHashMap[Str,Json]]] es = {IsoPod#(Maps.hashMap[Str,Json]({k1,k2 -> k1 == k2}, {k->k}))}
+  .let[mut IsoPod[LinkedHashMap[Str,Json]]] es = {IsoPod#(Maps.hashMap[Str,Json]({k1,k2 -> k1 == k2}, {k->k}))}
   .let[mut Consumer[Str,Json]] collector' = {{key, value -> es.mutate{es' -> es'.put(key, value)}!}}
   .return {{'parser
     downstream, behaviour, token -> token.match(mut _SubMatch[ActorRes]{
@@ -124,7 +124,7 @@ TopLevelMatch: {
       )
     }}
 
-_SubMatch[R:iso,imm,mut,mutH,read,readH]: TokenMatch[R]{
+_SubMatch[R:**]: TokenMatch[R]{
   read .mode: Str,
   read .token: Token,
   read .errorSuffix: Str -> mut " at " + (this.token.line.str) + ":" + (this.token.col.str),

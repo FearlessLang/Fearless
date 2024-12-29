@@ -6,13 +6,13 @@ alias base.Action as Action,
 alias base.Debug as D,
 alias base.Unreachable as Unreachable,
 
-Test:Main {sys -> Block#
+Test: Main{sys -> Block#
   .let p = {Printers#(sys.io)}
   .let[Json] r1 = {ParseJson#("\"Hello!!!\\nHow are you?\"")!}
   .do {p#r1}
-  .let[Json] r2 = {ParseJson#("\"Hello!!!\\nHow \u5423are\\u5423 you?\"")!}
+  .let[Json] r2 = {ParseJson#("\"Hello!!!\\nHow \u{21539}are\\u5423 you?\"")!}
   .do {p#r2}
-  .let[Json] r3 = {ParseJson#("\"Hello!!!\\nHow \u5423are\\u5423 you? \\uD834\\uDD1E\"")!}
+  .let[Json] r3 = {ParseJson#("\"Hello!!!\\nHow \u{21539}are\\u5423 you? \\uD834\\uDD1E\"")!}
   .do {p#r3}
   .do {p#(ParseJson#("[]")!)}
   .do {p#(ParseJson#("[[[[]], [], true]]")!)}
@@ -22,7 +22,7 @@ Test:Main {sys -> Block#
   .do {p#r5}
   .do {p#(ParseJson#("{}")!)}
   .do {p#(ParseJson#("{\"single\":true}")!)}
-  .let[Json] r6 = {ParseJson#("[\n\n   \"ab\u005C\u005Cc\", \"def\", {}, {\"a\": \"fearless\",\n \"b\": {\"a\": true} }]")!}
+  .let[Json] r6 = {ParseJson#("[\n\n   \"ab\u{92}\u{92}c\", \"def\", {}, {\"a\": \"fearless\",\n \"b\": {\"a\": true} }]")!}
   .do {p#r6}
 
   // matches JavaScript's loss of precision to 12345678901234567000 (1.2345678901234567E19). =

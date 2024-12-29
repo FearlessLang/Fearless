@@ -3,6 +3,7 @@ package id;
 import parser.Parser;
 import utils.Bug;
 import utils.OneOr;
+import visitors.FullEAntlrVisitor;
 import visitors.TypeVisitor;
 
 import java.util.*;
@@ -33,6 +34,7 @@ public class Id {
   public record DecId(String name, int gen){
     public DecId{ assert validDecName(name) && gen>=0 : name; }
     public static DecId fresh(String pkg, int gens) {
+      assert pkg!=null;
       return new DecId(pkg+"."+Id.GX.fresh().name(), gens);
     }
 
@@ -45,6 +47,12 @@ public class Id {
     static Pattern pkgRegex = Pattern.compile("(.+\\.)+([A-Za-z0-9_'$]+)\\$?$");
     public String pkg() { return _pkg(name); }
     private static String _pkg(String name) {
+      //TODO: Nick, the below should be the new way of doing it
+//      return FullEAntlrVisitor.extractPackageName(name);
+      //and use substring instead of group2 for the simpleName.
+      //But, If I do it, other stuff breaks. Also may be connected with the confusing 
+      //      .filter(tr->!tr.equals(fullName))//TODO: remove when fixed
+      //in JavaSingleCodeGen line 49
       var pkg = OneOr.of("Malformed package: "+name, pkgRegex.matcher(name).results()).group(1);
       return pkg.substring(0, pkg.length() - 1);
     }
@@ -90,7 +98,6 @@ public class Id {
 
   public record GX<TT extends Ty>(String name) implements RT<TT>{
     private static final AtomicInteger FRESH_N = new AtomicInteger(0);
-    private static HashMap<Integer, List<GX<ast.T>>> freshNames = new HashMap<>();
 
     public static void reset() {
       // TODO: disable outside unit testing context
@@ -114,7 +121,7 @@ public class Id {
       return new GX<>("Fear" + n + "$");
     }
 
-    public GX{ assert Id.validGX(name); }
+    public GX{ assert Id.validGX(name):name; }
     public <R> R match(Function<GX<TT>,R>gx, Function<IT<TT>,R>it){ return gx.apply(this); }
 
     @Override public boolean equals(Object o) {
@@ -139,10 +146,8 @@ public class Id {
     }
     public GX<TT> withName(String name) { return new GX<>(name); }
   }
-  public record IT<TT extends Ty>(Id.DecId name, List<TT> ts)implements RT<TT>{
-    public IT{
-      assert ts.size()==name.gen();
-    }
+  public record IT<TT extends Ty>(Id.DecId name, List<TT> ts) implements RT<TT>{
+    public IT{ assert ts.size()==name.gen(); }
     public IT(String name,List<TT> ts){ this(new Id.DecId(name,ts.size()),ts); }
     public <R> R match(Function<GX<TT>,R> gx, Function<IT<TT>,R> it){ return it.apply(this); }
     public <R> R accept(TypeVisitor<TT, R> visitor) {

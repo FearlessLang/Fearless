@@ -7,15 +7,16 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public record ResolveResource(Path assetRoot, Path artefactRoot, Optional<Path> testsRoot, FileSystem virtualFs) {
   static private final ResolveResource instance= 
-    ResolveResource.infer();
-    //ResolveResource.of(Paths.get("C:/")
-    //  .resolve("Users/sonta/Documents/GitHub/Fearless"));
+    //ResolveResource.infer(Path.of(""));
+    ResolveResource.infer(Paths.get("C:/")
+      .resolve("Users/sonta/Documents/GitHub/Fearless/compiler"));
   //Infer works if we put the two data folders in the class path
 
   public ResolveResource{
@@ -23,12 +24,12 @@ public record ResolveResource(Path assetRoot, Path artefactRoot, Optional<Path> 
     assert Files.exists(artefactRoot):artefactRoot;
   }
 
-  static ResolveResource infer() {
+  static ResolveResource infer(Path start) {
     var url= ResolveResource.class.getResource("/base");
     var testResourceUrl= Optional.ofNullable(ResolveResource.class.getResource("/.compiler-tests"));
     if(url==null) {
       // We're running with a working dir of the Fearless Compiler project, likely in something like Eclipse.
-      var root = Path.of("").toAbsolutePath().getParent();
+      var root = start.toAbsolutePath().getParent();
       return new ResolveResource(
         root.resolve("assets"),
         root.resolve("artefacts"),

@@ -53,7 +53,7 @@ public class TestWellFormedness {
   }
 
   @Test void sealedOutsidePkg() { fail("""
-    In position [###]/Dummy1.fear:2:2
+    In position [###]/Dummy1.fear:2:0
     [E35 sealedCreation]
     The sealed trait a.A/0 cannot be implemented in a different package (b).
     """, """
@@ -69,7 +69,7 @@ public class TestWellFormedness {
     Sealed:{}
     """); }
   @Test void sealedOutsidePkgNested() { fail("""
-    In position [###]/Dummy1.fear:2:2
+    In position [###]/Dummy1.fear:2:0
     [E35 sealedCreation]
     The sealed trait a.B/0 cannot be implemented in a different package (b).
     """, """
@@ -85,7 +85,7 @@ public class TestWellFormedness {
     Sealed:{}
     """); }
   @Test void sealedOutsidePkgNoOverrides() { fail("""
-    In position [###]/Dummy1.fear:2:2
+    In position [###]/Dummy1.fear:2:0
     [E35 sealedCreation]
     The sealed trait a.A/0 cannot be implemented in a different package (b).
     """, """
@@ -113,7 +113,7 @@ public class TestWellFormedness {
     Sealed:{}
     """); }
   @Test void sealedOutsidePkgInline() { fail("""
-    In position [###]/Dummy1.fear:2:18
+    In position [###]/Dummy1.fear:2:15
     [E35 sealedCreation]
     The sealed trait a.B/0 cannot be implemented in a different package (b).
     """, """
@@ -129,12 +129,12 @@ public class TestWellFormedness {
     Sealed:{}
     """); }
   @Test void sealedOutsidePkgMultiImpl() { fail("""
-    In position [###]/Dummy1.fear:2:18
+    In position [###]/Dummy1.fear:2:15
     [E34 conflictingSealedImpl]
     A sealed trait from another package may not be composed with any other traits.
     conflicts:
-    ([###]/Dummy0.fear:3:2) a.A/0
-    ([###]/Dummy0.fear:4:3) a.B/0
+    ([###]/Dummy0.fear:3:0) a.A/0
+    ([###]/Dummy0.fear:4:0) a.B/0
     """, """
     package a
     alias base.Sealed as Sealed,
@@ -222,15 +222,15 @@ public class TestWellFormedness {
     [E34 conflictingSealedImpl]
     A sealed trait from another package may not be composed with any other traits.
     conflicts:
-    ([###]/Dummy0.fear:3:3) base.A/0
-    ([###]/Dummy1.fear:3:3) a.C/0
+    ([###]/Dummy0.fear:3:0) base.A/0
+    ([###]/Dummy1.fear:3:0) a.C/0
     """, """
     package base
     Sealed: {}
     A: Sealed{}
     """, """
     package a
-    Foo: {#: C -> base.A,C{}}
+    Foo: {#: C -> Anon:base.A,C{}}
     C: {}
     """);}
 
@@ -390,7 +390,7 @@ public class TestWellFormedness {
       }}
     """);}
   @Test void mustImplementMethodsInInlineDecFail() {fail("""
-    In position [###]/compiler/Dummy0.fear:3:16
+    In position [###]/Dummy0.fear:3:13
     [E70 noUnimplementedMethods]
     Object literals must implement all callable methods. The following methods are unimplemented: imm .foo/0.
     """, """
@@ -402,7 +402,7 @@ public class TestWellFormedness {
   @Test void mustImplementMethodsInLambdaOk() {ok("""
     package test
     A: {.foo: A}
-    B: A
+    B: A{}
     Bs: {#: B -> B{
       .foo -> this,
       }}
@@ -414,7 +414,7 @@ public class TestWellFormedness {
     """, """
     package test
     A: {.foo: A}
-    B: A
+    B: A{}
     Bs: {#: B -> B {}}
     """);}
   @Test void mustImplementMethodsInLambdaEvenIfImplAbs() {fail("""
@@ -424,7 +424,7 @@ public class TestWellFormedness {
     """, """
     package test
     A: {.foo: A}
-    B: A
+    B: A{}
     Bs: {#: B -> B {
       .foo: A,
       }}

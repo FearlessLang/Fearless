@@ -2,7 +2,7 @@ package base.json
 
 alias base.Todo as Todo,
 
-JsonMatch[R:iso,imm,mut,mutH,read,readH]: {
+JsonMatch[R:**]: {
   mut .string(s: Str): R,
   mut .number(n: Float): R,
   mut .bool(b: Bool): R,
@@ -19,7 +19,7 @@ Jsons: {
   .null: Json -> {m -> m.null},
   }
 Json: {
-  read .match[R:iso,imm,mut,mutH,read,readH](m: mut JsonMatch[R]): R,
+  read .match[R:**](m: mut JsonMatch[R]): R,
   .str: Str -> _JsonToStr#this,
   }
 
@@ -43,8 +43,7 @@ _JsonToStr: {
     .let[Regex] mustEscape = {Regexs#"[\\U{0000}-\\U{001F}]"} // unicode control characters
     .return {AtomiseStr#s
       .map{ch -> Block#
-//        .if {ch == "\\"} .return {"\\\\"} // TODO: this breaks the fearless parer
-        .if {ch == "\u005C"} .return {"\\"}
+        .if {ch == "\\"} .return {"\\\\"}
         .if {ch == "\n"} .return {"\\n"}
         .if {ch == "\b"} .return {"\\b"}
         .if {ch == "\f"} .return {"\\f"}

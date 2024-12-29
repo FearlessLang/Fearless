@@ -1,4 +1,4 @@
-// Generated from /Users/nick/Programming/PhD/fearless/grammar/antlrGrammars/Fearless.g4 by ANTLR 4.12.0
+// Generated from C:\Users\sonta\Documents\GitHub\Fearless\grammar\antlrGrammars\Fearless.g4 by ANTLR 4.12.0
 package generated;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -78,6 +78,26 @@ public interface FearlessListener extends ParseTreeListener {
 	 */
 	void exitMGen(FearlessParser.MGenContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FearlessParser#actualGen}.
+	 * @param ctx the parse tree
+	 */
+	void enterActualGen(FearlessParser.ActualGenContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#actualGen}.
+	 * @param ctx the parse tree
+	 */
+	void exitActualGen(FearlessParser.ActualGenContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FearlessParser#topDec}.
+	 * @param ctx the parse tree
+	 */
+	void enterTopDec(FearlessParser.TopDecContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#topDec}.
+	 * @param ctx the parse tree
+	 */
+	void exitTopDec(FearlessParser.TopDecContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FearlessParser#lambda}.
 	 * @param ctx the parse tree
 	 */
@@ -87,16 +107,6 @@ public interface FearlessListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitLambda(FearlessParser.LambdaContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link FearlessParser#block}.
-	 * @param ctx the parse tree
-	 */
-	void enterBlock(FearlessParser.BlockContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link FearlessParser#block}.
-	 * @param ctx the parse tree
-	 */
-	void exitBlock(FearlessParser.BlockContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FearlessParser#bblock}.
 	 * @param ctx the parse tree
@@ -158,16 +168,6 @@ public interface FearlessListener extends ParseTreeListener {
 	 */
 	void exitGamma(FearlessParser.GammaContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link FearlessParser#topDec}.
-	 * @param ctx the parse tree
-	 */
-	void enterTopDec(FearlessParser.TopDecContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link FearlessParser#topDec}.
-	 * @param ctx the parse tree
-	 */
-	void exitTopDec(FearlessParser.TopDecContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link FearlessParser#alias}.
 	 * @param ctx the parse tree
 	 */
@@ -177,6 +177,16 @@ public interface FearlessListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAlias(FearlessParser.AliasContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FearlessParser#fStringMulti}.
+	 * @param ctx the parse tree
+	 */
+	void enterFStringMulti(FearlessParser.FStringMultiContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FearlessParser#fStringMulti}.
+	 * @param ctx the parse tree
+	 */
+	void exitFStringMulti(FearlessParser.FStringMultiContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FearlessParser#atomE}.
 	 * @param ctx the parse tree
@@ -188,26 +198,6 @@ public interface FearlessListener extends ParseTreeListener {
 	 */
 	void exitAtomE(FearlessParser.AtomEContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link FearlessParser#postE}.
-	 * @param ctx the parse tree
-	 */
-	void enterPostE(FearlessParser.PostEContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link FearlessParser#postE}.
-	 * @param ctx the parse tree
-	 */
-	void exitPostE(FearlessParser.PostEContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link FearlessParser#pOp}.
-	 * @param ctx the parse tree
-	 */
-	void enterPOp(FearlessParser.POpContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link FearlessParser#pOp}.
-	 * @param ctx the parse tree
-	 */
-	void exitPOp(FearlessParser.POpContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link FearlessParser#e}.
 	 * @param ctx the parse tree
 	 */
@@ -218,15 +208,15 @@ public interface FearlessListener extends ParseTreeListener {
 	 */
 	void exitE(FearlessParser.EContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link FearlessParser#callOp}.
+	 * Enter a parse tree produced by {@link FearlessParser#pOp}.
 	 * @param ctx the parse tree
 	 */
-	void enterCallOp(FearlessParser.CallOpContext ctx);
+	void enterPOp(FearlessParser.POpContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link FearlessParser#callOp}.
+	 * Exit a parse tree produced by {@link FearlessParser#pOp}.
 	 * @param ctx the parse tree
 	 */
-	void exitCallOp(FearlessParser.CallOpContext ctx);
+	void exitPOp(FearlessParser.POpContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link FearlessParser#nudeE}.
 	 * @param ctx the parse tree

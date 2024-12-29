@@ -199,10 +199,10 @@ It returns a `mut Action[Int]`. We discuss the Action type in details later, for
 
   @Test void nullByteInStr() {ok(new RunOutput.Res("Hi\u0000HelloBeer", "", 0), """
     package test
-    Test: Main{sys -> sys.io.println("Hi\\0Hello" + "Beer")}
+    Test: Main{sys -> sys.io.println("Hi\\u{0}Hello" + "Beer")}
     """, Base.mutBaseAliases);}
   @Test void nullByteSize() {ok(new RunOutput.Res("8", "", 0), """
     package test
-    Test: Main{sys -> sys.io.println("Hi\\0Hello".size.str)}
+    Test: Main{sys -> sys.io.println("Hi\\u{0}Hello".size.str)}
     """, Base.mutBaseAliases);}
 }

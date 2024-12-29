@@ -1,27 +1,28 @@
 package base
 
 Error: {
-  ![R:read,mut,imm,iso,mutH,readH](info: Info): R -> Magic!,
-  .msg[R:read,mut,imm,iso,mutH,readH](msg: Str): R -> this!(Infos.msg msg)
+  ![R:**](info: Info): R -> Magic!,
+  .msg[R:**](msg: Str): R -> this!(Infos.msg msg)
   }
 
 Todo: {
-  ![R:read,mut,imm,iso,mutH,readH]: R -> Error.msg[R] "TODO: Implement this code",
-  ![R:read,mut,imm,iso,mutH,readH](msg: Str): R -> Error.msg[R]("TODO: " + msg),
+  ![R:**]: R -> Error.msg[R] "TODO: Implement this code",
+  ![R:**](msg: Str): R -> Error.msg[R]("TODO: " + msg),
   }
 
 Unreachable: {
-  ![R:read,mut,imm,iso,mutH,readH]: R -> Error.msg[R] "Unreachable code reached",
-  ![R:read,mut,imm,iso,mutH,readH](msg: Str): R -> Error.msg[R]("Unreachable code reached: " + msg),
+  ![R:**]: R -> Error.msg[R] "Unreachable code reached",
+  ![R:**](msg: Str): R -> Error.msg[R]("Unreachable code reached: " + msg),
   }
 
 /// Strong exception safety is upheld:
 /// The operation has either completed successfully or thrown an exception,
 // leaving the program state exactly as it was before the operation started.
 Try: {
-  #[R](try: read F[R]): mut Action[R] -> Magic!,
+  #[R:*](try: read F[R]): mut Action[R] -> Magic!,
   #[T:iso,imm,mut,read,R](data: iso T, try: read F[iso T, R]): mut Action[R] -> Magic!,
   }
+Try[R:*]:{ read #: R, }
 
 Info: Sealed{
   .msg: Str,

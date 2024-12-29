@@ -5,13 +5,16 @@ import astFull.E;
 import failure.Fail;
 import id.Id;
 import id.Id.GX;
+import id.Id.IT;
 import id.Mdf;
 import program.typesystem.XBs;
 import utils.Mapper;
+import utils.Push;
 import wellFormedness.UndefinedGXsVisitor;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class InjectionVisitor implements FullVisitor<ast.E>{
   private final Map<Id.GX<T>, Set<Mdf>> allBounds; 
@@ -56,8 +59,12 @@ public abstract class InjectionVisitor implements FullVisitor<ast.E>{
     return visitLambda(e,gxs,bounds);
   }
   public ast.E.Lambda visitLambda(E.Lambda e,List<Id.GX<T>> gxs, Map<Id.GX<T>, Set<Mdf>> bounds){
-    var inferredType= e.it().map(List::of).orElse(List.of());
-    var its= e.its().isEmpty() ? inferredType : e.its();
+    List<IT<astFull.T>> inferredType= e.it()
+      .map(ti->Stream.concat(Stream.of(ti),e.its().stream()).distinct().toList())
+      .orElse(List.of());
+    var addSelfImpl= e.id().id().isFresh();
+    //assert e.its().equals(inferredType):e.its()+"\n\n"+inferredType;//when we refactor so that this is true, much can be simplified
+    var its= addSelfImpl ? inferredType : e.its();
     var lambdaId= new ast.E.Lambda.LambdaId(e.id().id(),gxs,bounds);
     Mdf lambdaMdf= e.mdf().orElse(Mdf.imm);
 

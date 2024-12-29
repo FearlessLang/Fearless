@@ -2,50 +2,37 @@ package visitors;
 
 import astFull.T;
 import failure.Fail;
+import files.Pos;
 import generated.FearlessBaseVisitor;
 import generated.FearlessParser;
+import generated.FearlessParser.TopDecContext;
 import id.Id;
-import utils.Bug;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
 public class InlineDecNamesAntlrVisitor extends FearlessBaseVisitor<Void> {
-  private final FullEAntlrVisitor parser;
+  public final Path fileName;
   public final List<T.Alias> inlineDecs = new ArrayList<>();
   private String pkg;
-  public InlineDecNamesAntlrVisitor(FullEAntlrVisitor parser, String pkg) {
-    this.parser = parser;
+  public InlineDecNamesAntlrVisitor(String pkg, Path fileName) {
+    this.fileName = fileName;
     this.pkg = pkg;
   }
 
-  @Override public Void visitLambda(FearlessParser.LambdaContext ctx) {
-    Optional.ofNullable(ctx.topDec())
-      .map(decCtx->{
-        String cName = parser.visitFullCN(decCtx.fullCN());
-        if (cName.contains(".")) {
-          throw Fail.crossPackageDeclaration().pos(parser.pos(ctx));
-        }
-        var longName = pkg + "." +cName;
-
-//        var inG = Optional.ofNullable(decCtx.mGen())
-//          .map(mGenCtx->parser.visitMGen(mGenCtx, true))
-//          .flatMap(x->x)
-//          .orElse(List.of());
-        var inT=new Id.IT<T>(longName, List.of());
-        return new T.Alias(inT, cName, Optional.ofNullable(parser.pos(decCtx)));
-      })
-      .ifPresent(inlineDecs::add);
-
-    return super.visitLambda(ctx);
+  void topDecCollect(TopDecContext decCtx){
+    Pos pos=Pos.of(fileName.toUri(),decCtx.getStart().getLine(), decCtx.getStart().getCharPositionInLine()); 
+    String cName = decCtx.fullCN().getText();
+    if (cName.contains(".")){ throw Fail.crossPackageDeclaration().pos(pos); }
+    var longName = pkg + "." +cName;
+    var inT=new Id.IT<T>(longName, List.of());
+    inlineDecs.add(new T.Alias(inT, cName, Optional.ofNullable(pos)));
   }
-
-  @Override public Void visitNudeProgram(FearlessParser.NudeProgramContext ctx) {
-    String name = ctx.Pack().getText();
-    assert name.startsWith("package ");
-    assert name.endsWith("\n");
-    this.pkg = name.substring("package ".length(),name.length()-1);
-    return super.visitNudeProgram(ctx);
+  @Override public Void visitTopDec(FearlessParser.TopDecContext ctx) {    
+    if (ctx!=null){ topDecCollect(ctx); }
+    return super.visitTopDec(ctx);
   }
 }

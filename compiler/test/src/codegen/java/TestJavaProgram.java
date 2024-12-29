@@ -362,7 +362,7 @@ public class TestJavaProgram {
     alias base.Main as Main, alias base.Void as Void, alias base.Assert as Assert, alias base.Block as Block,
     alias base.Var as Var, alias base.Int as Int, alias base.ReturnStmt as ReturnStmt,
     Test:Main{ _ -> mut Block[Void]
-      .let(n = { Var#[Int]+5 })
+      .let n = { Var#[Int]+5 }
       .do{ Assert!(n.swap(+6) == +5) }
       .do{ Assert!(n* == +6) }
       .return{{}}
@@ -716,7 +716,7 @@ public class TestJavaProgram {
   @Test void isoPod1() { ok(new Res("", "", 0), """
     package test
     Test:Main{ _ -> Block#
-      .let[mut IsoPod[iso MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
       .return{ Assert!(Usage#(a!) == +0) }
       }
     Usage:{ #(m: iso MutThingy): Int -> (m.n*) }
@@ -726,7 +726,7 @@ public class TestJavaProgram {
   @Test void isoPod1Consume() { ok(new Res("", "", 0), """
     package test
     Test:Main{ _ -> Block#
-      .let[mut IsoPod[iso MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
       .return{ Assert!(a.consume{.some(n) -> Usage#n, .empty -> +500} == +0) }
       }
     Usage:{ #(m: iso MutThingy): Int -> (m.n*) }
@@ -736,7 +736,7 @@ public class TestJavaProgram {
   @Test void isoPod2() { ok(new Res("", "", 0), """
     package test
     Test:Main{ _ -> Block#
-      .let[mut IsoPod[iso MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
       .do{ a.next(MutThingy'#(Count.int(+5))) }
       .return{ Assert!(Usage#(a!) == +5) }
       }
@@ -747,7 +747,7 @@ public class TestJavaProgram {
   @Test void isoPod3() { ok(new Res("", "", 0), """
     package test
     Test:Main{ _ -> Block#
-      .let[mut IsoPod[iso MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
       .do{ Block#(a.mutate{ mt -> Block#(mt.n++) }!) }
       .return{ Assert!(Usage#(a!) == +1) }
       }
@@ -758,7 +758,7 @@ public class TestJavaProgram {
   @Test void isoPodNoImmFromPeekOk() { ok(new Res("", "", 0), """
     package test
     Test:Main{ _ -> Block#
-      .let[mut IsoPod[iso MutThingy]] a = { IsoPod#[iso MutThingy](MutThingy'#(Count.int(+0))) }
+      .let[mut IsoPod[MutThingy]] a = { IsoPod#[MutThingy](MutThingy'#(Count.int(+0))) }
       .let[Int] ok = { a.peek[Int]{ .some(m) -> m.rn*.int + +0, .empty -> base.Abort! } }
       .return{Void}
       }
@@ -836,12 +836,12 @@ public class TestJavaProgram {
     package test
     Test:Main{ s -> Block#
       .let io = { UnrestrictedIO#s }
-      .let s1 = { IsoPod#[iso Str](iso "help, i'm alive") }
+      .let s1 = { IsoPod#[Str](iso "help, i'm alive") }
       .do{ PrintMsg#(io, s1) }
       .return{ io.println("consume: " + (s1!)) }
       }
     PrintMsg:{
-      #(io: mut IO, msg: read IsoPod[iso Str]): Void -> msg.peek{
+      #(io: mut IO, msg: read IsoPod[Str]): Void -> msg.peek{
         .some(str) -> io.println("peek: " + (str.str)),
         .empty -> Void
         }
@@ -852,7 +852,7 @@ public class TestJavaProgram {
     package test
     Test:Main{ s ->
       Try#[Str]{ Block#
-        .let[mut IsoPod[iso Str]] pod = { IsoPod#[iso Str] iso "hi" }
+        .let[mut IsoPod[Str]] pod = { IsoPod#[Str] iso "hi" }
         .return{pod!}
         }.run{
           .ok(msg) -> UnrestrictedIO#s.println(msg),
@@ -864,7 +864,7 @@ public class TestJavaProgram {
     package test
     Test:Main{ s ->
       Try#[Str]{ Block#
-        .let[mut IsoPod[iso Str]] pod = { IsoPod#[iso Str] iso "hi" }
+        .let[mut IsoPod[Str]] pod = { IsoPod#[Str] iso "hi" }
         .do{ Block#(pod!) }
         .return{pod!}
         }.run{
@@ -943,7 +943,7 @@ public class TestJavaProgram {
 //      read .aRead(a: mut A): read B -> a.m1,
       read .aRead(a: mut A): read B -> As[read A]#a.m1,
       }
-    ToVoid:{ #[I](x: I): Void -> {} }
+    ToVoid:{ #[I:**](x: I): Void -> {} }
     """); }
   @Test void callingMultiSigAmbiguousDiffRetMut() { ok(new Res("", "", 0), """
     package test
@@ -957,7 +957,7 @@ public class TestJavaProgram {
       #(s) -> ToVoid#(this.aRead(mut A)),
       read .aRead(a: mut A): mut A -> a.m1[](),
       }
-    ToVoid:{ #[I](x: I): Void -> {} }
+    ToVoid:{ #[I:**](x: I): Void -> {} }
     """); }
   @Test void callingMultiSigAmbiguousSameRet() { ok(new Res("", "", 0), """
     package test
@@ -971,7 +971,7 @@ public class TestJavaProgram {
       #(s) -> ToVoid#(this.aRead(mut A)),
       read .aRead(a: mut A): mut A -> a.m1[](),
       }
-    ToVoid:{ #[I](x: I): Void -> {} }
+    ToVoid:{ #[I:**](x: I): Void -> {} }
     """); }
   @Test void optionals1() { ok(new Res("", "", 0), """
     package test
@@ -1362,7 +1362,7 @@ public class TestJavaProgram {
     package test
     Test: Main{sys -> Block#
       .if {True} .return {Void}
-      .letIso[iso Rez] x = (Block#(base.Debug#[Str]"hey", iso Rez))
+      .letIso[Rez] x = (Block#(base.Debug#[Str]"hey", iso Rez))
       .return {Void}
       }
     Rez: {}
@@ -1419,19 +1419,20 @@ public class TestJavaProgram {
     Foo: {.msg(start: Stringable): Str -> start.str + "!"}
     """, Base.mutBaseAliases); }
 
+//TODO: Nick fix this: extending string literal?
   @Test void literalSubtypeStr() {ok(new Res("Nick", "", 0), """
     package test
     Test: Main{sys -> UnrestrictedIO#sys.println(MyNames#)}
     MyNames: {#: MyName -> MyName: "Nick"{}}
     """, Base.mutBaseAliases);}
   @Test void literalSubtypeMultiDiff() {fail("""
-    In position [###]/Dummy0.fear:3:31
+    In position [###]/Dummy0.fear:3:23
     [E34 conflictingSealedImpl]
     A sealed trait from another package may not be composed with any other traits.
     conflicts:
-    ([###]) "Nick"/0
-    ([###]) 123/0
-    ([###]/Dummy0.fear:4:5) test.Foo/0
+    ([###]) base.uStrLit."Nick"/0
+    ([###]) base.natLit.123/0
+    ([###]) test.Foo/0    
     """, """
     package test
     Test: Main{sys -> UnrestrictedIO#sys.println(MyNames#)}
@@ -1483,6 +1484,7 @@ public class TestJavaProgram {
     Foo: {#(join: mut Str): mut Str -> mut "Hello," + join + mut "World!" + join + mut "Bye!"}
     """, Base.mutBaseAliases);}
 
+  //TODO: Nick fix this
   @Test void simpleJson() {ok(new Res("""
     "Hello!!!\\nHow are you?"
     "Hello!!!\\nHow 吣are吣 you?"
@@ -1493,7 +1495,7 @@ public class TestJavaProgram {
     ["abc", "def", true, [false], 42.1337, null, []]
     {}
     {"single": true}
-    ["ab\\c", "def", {}, {"a": "fearless", "b": {"a": true}}]
+    ["ab\\\\c", "def", {}, {"a": "fearless", "b": {"a": true}}]
     {"value": 12345678901234567000}
     """, """
     Invalid string found, expected JSON.
@@ -1510,8 +1512,8 @@ public class TestJavaProgram {
     
     Test: Main{_ -> {}}
     
-    Exp: {mut .match[R:iso,imm,mut,mutH,read,readH](l: mut ExpMatch[R]): R}
-    ExpMatch[R:iso,imm,mut,mutH,read,readH]: {
+    Exp: {mut .match[R:**](l: mut ExpMatch[R]): R}
+    ExpMatch[R:**]: {
       mut .sum(left: mut Var[mut Exp], right: mut Var[mut Exp]): R,
       mut .lit(n: Num): R,
     }
@@ -1533,11 +1535,11 @@ public class TestJavaProgram {
       .eof: Token -> {l, m -> m.eof(l)},
     }
     Parser: {//simple right associative parser
-      .parse(l: mutH Lexer): iso Exp -> l.nextToken.match(l, {
-        .plus(_)->Error.msg "cannot start with +",
+      .parse(l: mutH Lexer): iso Exp -> l.nextToken.match(l, {      
+        .plus(_)->Error.msg "cannot start with +",        
         .eof(_)->Error.msg "cannot start with EOF",
         .num(l', n) -> this.parse(l', n),
-      }),
+      }),      
       .parse(l: mutH Lexer, left: Num): iso Exp -> l.nextToken.match(l, {
         .plus(l')->Exps.sum(Vars#[mut Exp](Exps.lit(left)),Vars#[mut Exp](this.parse(l'))),
         .eof(_) -> Exps.lit(left),

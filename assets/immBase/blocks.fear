@@ -19,7 +19,7 @@ ControlFlowMatch[T:imm,R:imm]: {
   .break: R,
   .return(returnValue: T): R,
   }
-LoopBody[R:imm]: ReturnStmt[ControlFlow[R]]
+LoopBody[R:imm]: ReturnStmt[ControlFlow[R]] {}
 
 Block: Sealed{
   #[R:imm]: Block[R] -> {},

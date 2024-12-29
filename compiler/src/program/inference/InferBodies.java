@@ -7,6 +7,7 @@ import failure.Fail;
 import failure.TypingAndInferenceErrors;
 import id.Id;
 import id.Mdf;
+import magic.LiteralKind;
 import magic.Magic;
 import program.CM;
 import program.typesystem.XBs;
@@ -266,27 +267,24 @@ public record InferBodies(ast.Program p) {
         e.pos()
       );
       return e.equals(res) ? Optional.empty() : Optional.of(res);
-    } catch (CompileError err) {
-      throw err.pos(e.pos());
     }
+    catch (CompileError err){ throw err.pos(e.pos()); }
   }
   public static T replaceOnlyInfers(T user, T inferred) {
-    if (user.isInfer()) {
-      if (!inferred.isInfer() && inferred.rt() instanceof Id.IT<T> inferredIT && Magic.isLiteral(inferredIT.name().name())) {
-          inferred = new T(inferred.mdf(), LiteralToType.of(inferredIT));
+    Id.IT<T> userIT=     !user.isInfer() && user.rt() instanceof Id.IT<T> i ? i : null;
+    Id.IT<T> inferredIT= !inferred.isInfer() && inferred.rt() instanceof Id.IT<T> i ? i : null;
+    Optional<Id.IT<astFull.T>> literalIT= inferredIT==null
+      ? Optional.empty()
+      : LiteralKind.nameToType(inferredIT.name().name());
+    boolean isLiteral= literalIT.isPresent();
+    if (user.isInfer()){
+      if (!isLiteral){ return inferred; }
+      return new T(inferred.mdf(), literalIT.get());
       }
-      return inferred;
-    }
-    if (inferred.isInfer()) {
-      return user;
-    }
-    if (!(user.rt() instanceof Id.IT<T> userIT
-      && inferred.rt() instanceof Id.IT<T> inferredIT)) { return user; }
-
-    if (Magic.isLiteral(inferredIT.name().name())) {
-      inferredIT = LiteralToType.of(inferredIT);
-    }
-
+    if (inferred.isInfer()){ return user; }
+    boolean bothIT= userIT!=null && inferredIT != null;
+    if (!bothIT){ return user; }
+    if (isLiteral){ inferredIT = literalIT.get(); }
     if (!userIT.name().equals(inferredIT.name())) { return user; }
     return new T(user.mdf(), userIT.withTs(replaceOnlyInfers(userIT.ts(), inferredIT.ts())));
   }

@@ -47,7 +47,7 @@ public enum ErrorCode {
   invalidEntryPoint,
   ignoredIdentInExpr,
   multipleIsoUsage,
-  noMdfInFormalParams,
+  noMdfInImplementedT,
   privateMethCall,
   privateTraitImplementation,
   mustProvideImplsIfMdfProvided,
@@ -71,7 +71,8 @@ public enum ErrorCode {
   crossPackageDeclaration,
   genericMismatch,
   inferImplementsFailed,
-  noUnimplementedMethods;
+  noUnimplementedMethods,
+  invalidStr;
   private static final ErrorCode[] values = values();
   public int code() {
     return this.ordinal() + 1;

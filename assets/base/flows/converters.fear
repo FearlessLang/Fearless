@@ -1,16 +1,16 @@
 package base.flows
 
-Joinable[T,R]: {.join(flow: mut Flow[T]): R}
-Joinable[T]: Joinable[T,T]{}
+Joinable[T:*,R:**]: {.join(flow: mut Flow[T]): R}
+Joinable[T:*]: Joinable[T,T]{}
 
 _RestrictFlowReuse: {
-  #[E](flow: mut Flow[E]): mut Flow[E] -> Block#
+  #[E:*](flow: mut Flow[E]): mut Flow[E] -> Block#
     .var[Bool] isTail = {True}
     .return {{
       .unwrapOp(token) -> flow.unwrapOp(token),
-      mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] ->
+      mut .actorMut[S:*,R:*](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] ->
         Block#(_CheckFlowReuse#isTail, flow.actorMut[S,R](state, f)),
-      mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] ->
+      mut .actor[S:*,R:*](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] ->
         Block#(_CheckFlowReuse#isTail, flow.actor[S,R](state, f)),
       .first -> Block#(_CheckFlowReuse#isTail, flow.first),
       .filter(predicate) -> Block#(_CheckFlowReuse#isTail, flow.filter(predicate)),
@@ -34,7 +34,7 @@ _CheckFlowReuse: {
 // Prevents any issues arising from someone mutating the thing the flow is going over
 // from within the flow itself. This is prevented by collecting the flow-source into a list and then
 // flowing on that instead.
-_MutSourceCollection[E]: {
+_MutSourceCollection[E:*]: {
   #(source: mut FlowOp[E]): mut Flow[E] -> Flow.fromOp(this.wrap(source)),
   #(source: mut FlowOp[E], size: Nat): mut Flow[E] -> Flow.fromOp(this.wrap(source), size),
   .wrap(source: mut FlowOp[E]): mut FlowOp[E] -> Block#
@@ -98,8 +98,8 @@ _FlowRange: {
 
 // Variants of the converter methods that do not clone if is safe to do so. Invoked by magic
 _SafeSource: {
-//  .fromIter[E](iter: mut base.iter.Iter[E]): mut Flow[E] -> Flow.fromOp[E](this.fromIter'[E](iter)),
-//  .fromIter'[E](iter: mut base.iter.Iter[E]): mut FlowOp[E] -> Block#
+//  .fromIter[E:*](iter: mut base.iter.Iter[E]): mut Flow[E] -> Flow.fromOp[E](this.fromIter'[E](iter)),
+//  .fromIter'[E:*](iter: mut base.iter.Iter[E]): mut FlowOp[E] -> Block#
 //    .let[mut Var[Bool]] isRunning = {Var#[Bool]True}
 //    .return {{'op
 //      .stop -> isRunning := False,
@@ -113,8 +113,8 @@ _SafeSource: {
 //        }
 //      }},
 
-  .fromList[E](list: mut List[E]): mut Flow[E] -> Flow.fromOp[E](this.fromList'[E](list, 0, list.size), list.size),
-  .fromList'[E](list: mut List[E], start: Nat, end: Nat): mut FlowOp[E] -> Block#
+  .fromList[E:*](list: mut List[E]): mut Flow[E] -> Flow.fromOp[E](this.fromList'[E](list, 0, list.size), list.size),
+  .fromList'[E:*](list: mut List[E], start: Nat, end: Nat): mut FlowOp[E] -> Block#
     .let[mut Count[Nat]] cursor = {Count.nat(start)}
     .let[mut Count[Nat]] endCursor = {Count.nat(end)}
     .return {{'self
