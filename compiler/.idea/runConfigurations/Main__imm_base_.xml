@@ -2,7 +2,7 @@
   <configuration default="false" name="Main (imm base)" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="main.Main" />
     <module name="fearless" />
-    <option name="PROGRAM_PARAMETERS" value="--show-internal-stack-traces -i -e examples.MyApp --run examples/immBase -- &quot;Hi&quot;" />
+    <option name="PROGRAM_PARAMETERS" value="--show-internal-stack-traces -i -e examples.MyApp --run examples/immBase -- &quot;Hi!!&quot;" />
     <option name="VM_PARAMETERS" value="-ea" />
     <extension name="coverage">
       <pattern>
