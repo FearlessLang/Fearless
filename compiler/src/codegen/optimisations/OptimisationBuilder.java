@@ -32,4 +32,11 @@ public class OptimisationBuilder {
     passes.add(new BlockOptimisation(magic));
     return this;
   }
+  public OptimisationBuilder withVPFOptimisation() {
+    return withOptimisation(new VPFOptimisation());
+  }
+  public OptimisationBuilder withOptimisation(MIRCloneVisitor optimisation) {
+    passes.add(optimisation);
+    return this;
+  }
 }

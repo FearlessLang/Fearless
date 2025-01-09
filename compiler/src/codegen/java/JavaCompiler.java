@@ -25,6 +25,7 @@ public record JavaCompiler(Verbosity verbosity, InputOutput io){
       "-d", io.output().toAbsolutePath().toString(),
       "-cp", io.cachedBase().toAbsolutePath().toString(),
       "-Xdiags:verbose",
+      "-Xlint:preview",
       "--enable-preview",
       "--release", "23"
       );

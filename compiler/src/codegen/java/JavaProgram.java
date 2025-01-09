@@ -1,10 +1,10 @@
 package codegen.java;
 
 import codegen.MIR;
+import codegen.java.vpf.BuildVPFTargetContainer;
 import main.java.LogicMainJava;
 import utils.IoErr;
 
-import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public record JavaProgram(List<JavaFile> files){
+public record JavaProgram(List<JavaFile> files) {
   public JavaProgram(LogicMainJava main, MIR.Program program){
     this(new ToJavaProgram(main,program).of());
   }
@@ -36,7 +36,7 @@ public record JavaProgram(List<JavaFile> files){
   }
 }
 
-record ToJavaProgram(LogicMainJava main, MIR.Program program){
+record ToJavaProgram(LogicMainJava main, MIR.Program program) {
   public List<JavaFile> of(){
     ArrayList<JavaFile> javaFiles= generateFiles();
     List<JavaFile> magicFiles=main.io().magicFiles();
@@ -58,6 +58,7 @@ record ToJavaProgram(LogicMainJava main, MIR.Program program){
         String name= gen.id.getSimpleName(def.name());
         res.add(toFile(pkg.name(), name, typeDefContent));
       }
+      res.add(BuildVPFTargetContainer.of(pkg, gen, this::toFile));
     }
     for(var e : gen.freshRecords.entrySet()){
       String pkg    = e.getKey().pkg();
@@ -67,6 +68,7 @@ record ToJavaProgram(LogicMainJava main, MIR.Program program){
     }
     return res;
   }
+
   private JavaFile toFile(String pkgName, String name, String content) {
     String pkg= "package "+pkgName+";\n";
     String fileName= pkgName.replace(".","/")+"/"+name+".java";

@@ -6,6 +6,7 @@ import base.flows.*;
 import rt.flows.dataParallel.DataParallelFlowK;
 
 public interface FlowCreator {
+  @SuppressWarnings("preview")
   ScopedValue<Void> IS_SEQUENTIALISED = ScopedValue.newInstance();
 
   /**
@@ -21,6 +22,7 @@ public interface FlowCreator {
     return fromFlowOp(intended, op, size);
   }
 
+  @SuppressWarnings("preview")
   static Flow_1 fromFlowOp(_FlowFactory_0 intended, FlowOp_1 op, long size) {
     var isSequentialised = IS_SEQUENTIALISED.isBound();
     if (isSequentialised) {

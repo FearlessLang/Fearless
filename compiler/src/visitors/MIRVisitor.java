@@ -22,4 +22,13 @@ public interface MIRVisitor<R> {
   default R visitStaticCall(MIR.StaticCall call, boolean checkMagic) {
     return call.original().accept(this, checkMagic);
   }
+  default R visitVPFCall(MIR.VPFCall vpfCall, boolean checkMagic) {
+    return vpfCall.original().accept(this, checkMagic);
+  }
+  default R visitSpawnVPFArg(MIR.VPFCall.VPFArg.Spawn spawn, boolean checkMagic) {
+    return spawn.e().accept(this, checkMagic);
+  }
+  default R visitPlainVPFArg(MIR.VPFCall.VPFArg.Plain plain, boolean checkMagic) {
+    return plain.e().accept(this, checkMagic);
+  }
 }

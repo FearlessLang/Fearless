@@ -6,11 +6,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ast.Program;
+import codegen.MIR;
 import id.Id;
 import id.Mdf;
 
-final class StringIds{
+public final class StringIds{
   public static final StringIds $self = new StringIds();
+  public static final String VPF_TARGET_CONTAINER_BASE_NAME = "VPF$Impls";
+
   public Optional<String> getLiteral(Program p, Id.DecId d) {
     return p.superDecIds(d).stream()
       .map(Id.DecId::name)
@@ -47,6 +50,26 @@ final class StringIds{
   }
   public String getMName(Mdf mdf, Id.MethName m) {
     return getBase(m.name())+"$"+mdf;
+  }
+  public String getVPFTargetName(String currentPkg, MIR.VPFCall call) {
+    return getVPFTargetContainerName(currentPkg)+"."+getRelativeVPFTargetName(call);
+  }
+  public String getRelativeVPFTargetName(MIR.VPFCall call) {
+    return getFullFName(call.parentFun())+"$vpf$"+call.original().callId();
+  }
+  public static String getVPFTargetContainerName(String currentPkg) {
+    return currentPkg+"."+VPF_TARGET_CONTAINER_BASE_NAME;
+  }
+
+  public String getFName(MIR.FName name) {
+    return
+      //id.getFullName(name.d()).replace(".","$")+"$"+
+      getMName(name.mdf(), name.m())+"$fun";
+  }
+  public String getFullFName(MIR.FName name) {
+    return
+      getFullName(name.d()).replace(".","$")+"$"+
+      getMName(name.mdf(), name.m())+"$fun";
   }
 
   public String getBase(String name) {

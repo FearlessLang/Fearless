@@ -30,6 +30,7 @@ public interface LogicMainJava extends FullLogicMain<JavaProgram> {
     return new OptimisationBuilder(magic)
       .withBoolIfOptimisation()
       .withBlockOptimisation()
+      .withVPFOptimisation()
       .run(mir);
   }
   default JavaProgram codeGeneration(MIR.Program mir) {

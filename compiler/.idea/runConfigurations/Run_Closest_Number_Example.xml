@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Closest Number Example" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="main.Main" />
+    <module name="fearless" />
+    <option name="PROGRAM_PARAMETERS" value="--show-full-progress -e closest.Test --run examples/mutBase/closest" />
+    <option name="VM_PARAMETERS" value="-ea" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="main.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -119,12 +119,12 @@ public class TestJavaOptimisations {
     package test;
     public interface Test_0 extends base.Main_0{
     Test_0 $self = new Test_0Impl();
-    base.Void_0 $hash$imm(base.caps.System_0 fear[###]$_m$);
-    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear[###]$_m$, test.Test_0 $this) {
+    base.Void_0 $hash$imm(base.caps.System_0 fear0$_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear0$_m$, test.Test_0 $this) {
       var n_m$ = 5L;
     var n2_m$ = 10L;
     var n3_m$ = base.Vars_0.$self.$hash$imm(15L);
-    if ((((long)((long)n3_m$.get$mut()))==((long)((long)((long)n_m$)) + n2_m$)?base.True_0.$self:base.False_0.$self) == base.True_0.$self) { rt.Error.throwFearlessError(base.Infos_0.$self.msg$imm(str$3882878235102293474$str$.$self));
+    if ((rt.vpf.VPF.shouldSpawn() ? test.VPF$Impls.test$Test_0$$hash$imm$fun$vpf$[###](n_m$, n2_m$, n3_m$) : (((long)((long)n3_m$.get$mut()))==((long)((long)((long)n_m$)) + n2_m$)?base.True_0.$self:base.False_0.$self)) == base.True_0.$self) { rt.Error.throwFearlessError(base.Infos_0.$self.msg$imm(str$3882878235102293474$str$.$self));
      }
     var doRes1 = test.ForceGen_0.$self.$hash$imm();
     return base.Void_0.$self;
@@ -291,7 +291,7 @@ public class TestJavaOptimisations {
     Test_0 $self = new Test_0Impl();
     base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
     static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
-      return sys_m$.io$mut().println$mut(((rt.Str)((base.flows.Flow_1)((base.flows.Flow_1)rt.flows.FlowCreator.fromFlow(rt.flows.dataParallel.DataParallelFlowK.$self, str$3297469917561599766$str$.$self.flow$imm())).map$mut(test.Fear[###]$_0.$self)).join$mut(str$14492805990617963705$str$.$self)));
+      return (rt.vpf.VPF.shouldSpawn() ? test.VPF$Impls.test$Test_0$$hash$imm$fun$vpf$[###](sys_m$) : sys_m$.io$mut().println$mut(((rt.Str)((base.flows.Flow_1)((base.flows.Flow_1)rt.flows.FlowCreator.fromFlow(rt.flows.dataParallel.DataParallelFlowK.$self, str$3297469917561599766$str$.$self.flow$imm())).map$mut(test.Fear[###]$_0.$self)).join$mut(str$14492805990617963705$str$.$self))));
     }
     }
     """, "/test/Test_0.java", """

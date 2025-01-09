@@ -19,6 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public interface TraitTypeSystem {
+  @SuppressWarnings("preview")
+  ScopedValue<String> pkg = ScopedValue.newInstance(); // temporary hack for VPF
+
   Program p();
   static List<Supplier<CompileError>> dsOk(TypeSystemFeatures tsf, Collection<Dec> ds, ConcurrentHashMap<Long, TsT> resolvedCalls){
     Map<Id.DecId, Dec> pDs = Mapper.of(c->ds.forEach(e->c.put(e.name(),e)));
@@ -30,6 +33,7 @@ public interface TraitTypeSystem {
         (Supplier<CompileError>)()->TypingAndInferenceErrors.fromMethodError(ttt.p(), errorSupplier.get()))
       .toList();
   }
+  @SuppressWarnings("preview")
   default Optional<Supplier<CompileError>> dOk(Dec d, ConcurrentHashMap<Long, TsT> resolvedCalls){
     var c=d.name();
     var xs=d.gxs();
@@ -41,7 +45,14 @@ public interface TraitTypeSystem {
     catch(CompileError ce){ return Optional.of(()->ce); }
     assert d.lambda().mdf()==Mdf.mdf: d.lambda().mdf();
     var self= (ELambdaTypeSystem) ETypeSystem.of(
-      p(), Gamma.empty(), xbs, List.of(), resolvedCalls, new TypeSystemCache(), 0);
-    return self.bothT(d).asOpt();
+      p(),
+      Gamma.empty(),
+      xbs,
+      List.of(),
+      resolvedCalls,
+      new TypeSystemCache(),
+      0
+    );
+    return ScopedValue.callWhere(pkg, d.name().pkg(), ()->self.bothT(d).asOpt());
   }
 }

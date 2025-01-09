@@ -49,7 +49,9 @@ public class BlockOptimisation implements
     var eagerStmts = new ArrayDeque<MIR.Block.BlockStmt>();
     var res = flatten(call, stmts, eagerStmts, self);
     if (res == FlattenStatus.INVALID) { return Optional.empty(); }
-    if (validEndings.stream().noneMatch(c->c.isAssignableFrom(stmts.getLast().getClass()))) { return Optional.empty(); }
+    if (validEndings.stream().noneMatch(c->c.isAssignableFrom(stmts.getLast().getClass()))) {
+      return Optional.empty();
+    }
     assert res == FlattenStatus.FLATTENED;
     var allStmts = Stream.concat(eagerStmts.stream(), stmts.stream()).toList();
     return Optional.of(new MIR.Block(call, allStmts, call.t()));
@@ -135,9 +137,8 @@ public class BlockOptimisation implements
       }
       case MIR.BoolExpr _ -> throw Bug.todo();
       case MIR.X x -> self.filter(x::equals).map(_->FlattenStatus.FLATTENED).orElse(FlattenStatus.INVALID);
-      case MIR.CreateObj ignored -> FlattenStatus.INVALID;
-      case MIR.StaticCall ignored -> throw Bug.unreachable();
-      case MIR.Block ignored -> throw Bug.unreachable();
+      case MIR.CreateObj _ -> FlattenStatus.INVALID;
+      case MIR.StaticCall _, MIR.Block _, MIR.VPFCall _, MIR.VPFCall.VPFArg _ -> throw Bug.unreachable();
     };
   }
 

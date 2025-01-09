@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface FlowSelector {
   static Optional<Id.DecId> bestParallelConstr(MIR.MCall call) {
-    if (!call.canParallelise()) { return Optional.empty(); }
+    if (!call.canParalleliseFlows()) { return Optional.empty(); }
     var res = call.variant().contains(MIR.MCall.CallVariant.DataParallelFlow)
       ? Magic.DataParallelFlowK
       : Magic.PipelineParallelFlowK;

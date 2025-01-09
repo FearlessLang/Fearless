@@ -12,6 +12,7 @@ import program.typesystem.XBs;
 import utils.*;
 import visitors.CollectorVisitor;
 import visitors.CtxVisitor;
+import vpf.VPFCallMode;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,7 +79,12 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
         allTDefs.addAll(res.defs());
         allFuns.addAll(res.funs());
       });
-    return new MIR.Package(pkg, Mapper.of(defs->allTDefs.forEach(def->defs.put(def.name(), def))), Collections.unmodifiableList(allFuns));
+    return new MIR.Package(
+      pkg,
+      Mapper.of(defs->allTDefs.forEach(def->defs.put(def.name(), def))),
+      Collections.unmodifiableList(allFuns),
+      List.of()
+    );
   }
 
   public TopLevelRes visitTopDec(T.Dec dec, Ctx ctx) {
@@ -188,6 +194,7 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
     var args = e.es().stream().map(ei->ei.accept(this, ctx)).toList();
     var topLevel = Stream.concat(Stream.of(recvRes), args.stream())
       .reduce(TopLevelRes.EMPTY, TopLevelRes::mergeAsTopLevel, TopLevelRes::merge);
+    var captures = captures(e, ctx);
 
     var call = new MIR.MCall(
       recvRes.e(),
@@ -196,7 +203,9 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
       MIR.MT.of(tst.t()),
       MIR.MT.of(((CM.CoreCM) tst.original()).m().sig().ret()),
       tst.original().mdf(),
-      getVariants(recvRes.e(), e)
+      getVariants(recvRes.e(), e),
+      e.callId(),
+      captures
     );
 
     return new Res<>(call, topLevel.defs(), topLevel.funs());
@@ -249,10 +258,10 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
   }
 
   private EnumSet<MIR.MCall.CallVariant> getVariants(MIR.E recv, E.MCall e) {
-    // Standard library .flow methods:
     var recvT = (MIR.MT.Usual) recv.t();
     var recvIT = recvT.it();
     Optional<String> literal = Magic.getLiteral(p, recvIT.name());
+    // Standard library .flow methods:
     if (e.name().name().equals(".flow")) {
       if (literal.map(Magic::isStringLiteral).orElse(recvIT.name().equals(Magic.Str))) {
         return EnumSet.of(MIR.MCall.CallVariant.DataParallelFlow, MIR.MCall.CallVariant.PipelineParallelFlow);
@@ -292,6 +301,9 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
       return EnumSet.of(MIR.MCall.CallVariant.DataParallelFlow, MIR.MCall.CallVariant.PipelineParallelFlow, MIR.MCall.CallVariant.SafeMutSourceFlow);
     }
 
+    if (resolvedCalls.get(e.callId()).vpfMode() == VPFCallMode.Parallel) {
+      return EnumSet.of(MIR.MCall.CallVariant.VPFParallelisable);
+    }
     return EnumSet.of(MIR.MCall.CallVariant.Standard);
   }
 
@@ -315,6 +327,13 @@ public class MIRInjectionVisitor implements CtxVisitor<MIRInjectionVisitor.Ctx, 
   private SortedSet<MIR.X> captures(E.Meth m, Ctx ctx) {
     var fv = new FreeVariables();
     fv.visitMeth(m);
+    return Collections.unmodifiableSortedSet(fv.res().stream()
+      .map(x->visitX(x, ctx))
+      .collect(Collectors.toCollection(MIR::createCapturesSet)));
+  }
+  private SortedSet<MIR.X> captures(E.MCall m, Ctx ctx) {
+    var fv = new FreeVariables();
+    fv.visitMCall(m);
     return Collections.unmodifiableSortedSet(fv.res().stream()
       .map(x->visitX(x, ctx))
       .collect(Collectors.toCollection(MIR::createCapturesSet)));

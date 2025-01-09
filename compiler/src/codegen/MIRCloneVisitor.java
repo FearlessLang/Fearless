@@ -5,7 +5,9 @@ import visitors.MIRVisitor;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
   default MIR.Program visitProgram(MIR.Program p) {
@@ -15,7 +17,8 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
     return new MIR.Package(
       pkg.name(),
       Mapper.of(res->pkg.defs().forEach((id,def) -> res.put(id, this.visitTypeDef(def)))),
-      pkg.funs().stream().map(this::visitFun).toList()
+      pkg.funs().stream().map(this::visitFun).toList(),
+      pkg.vpfTargets().stream().map(this::visitVPFCallTarget).filter(Optional::isPresent).map(Optional::get).toList()
     );
   }
   default MIR.TypeDef visitTypeDef(MIR.TypeDef def) {
@@ -41,6 +44,13 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
       fun.name(),
       fun.args().stream().map(x->(MIR.X)this.visitX(x, true)).toList(),
       this.visitMT(fun.ret()), fun.body().accept(this, true));
+  }
+  default Optional<MIR.VPFCallTarget> visitVPFCallTarget(MIR.VPFCallTarget target) {
+    var res = visitVPFCall(target.call(), true);
+    if (!(res instanceof MIR.VPFCall vpfCall)) {
+      return Optional.empty();
+    }
+    return Optional.of(new MIR.VPFCallTarget(vpfCall));
   }
 
   default MIR.MT visitMT(MIR.MT t) {
@@ -85,7 +95,9 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
       this.visitMT(call.t()),
       this.visitMT(call.originalRet()),
       call.mdf(),
-      this.visitCallVariant(call.variant())
+      this.visitCallVariant(call.variant()),
+      call.callId(),
+      call.captures()
     );
   }
 
@@ -96,5 +108,43 @@ public interface MIRCloneVisitor extends MIRVisitor<MIR.E> {
       expr.then(),
       expr.else_()
     );
+  }
+
+  @Override default MIR.E visitVPFCall(MIR.VPFCall vpfCall, boolean checkMagic) {
+    return new MIR.VPFCall(
+      vpfCall.original(), // todo: not sure if I should transform original here because then it could become any E, skipping doing it for now
+      vpfCall.parentFun(),
+      MIR.VPFCall.VPFArg.of(-1, vpfCall.recv().accept(this, checkMagic)),
+      IntStream.range(0, vpfCall.args().size())
+        .mapToObj(i->MIR.VPFCall.VPFArg.of(i, vpfCall.args().get(i).accept(this, checkMagic)))
+        .toList()
+    );
+  }
+
+  @Override default MIR.E visitSpawnVPFArg(MIR.VPFCall.VPFArg.Spawn spawn, boolean checkMagic) {
+    return new MIR.VPFCall.VPFArg.Spawn(spawn.i(), spawn.e().accept(this, checkMagic));
+  }
+
+  @Override default MIR.E visitPlainVPFArg(MIR.VPFCall.VPFArg.Plain plain, boolean checkMagic) {
+    return new MIR.VPFCall.VPFArg.Plain(plain.i(), plain.e().accept(this, checkMagic));
+  }
+
+  @Override default MIR.E visitBlockExpr(MIR.Block expr, boolean checkMagic) {
+    return new MIR.Block(
+      expr.original().accept(this, checkMagic),
+      expr.stmts().stream().map(this::visitBlockStmt).toList(),
+      this.visitMT(expr.t())
+    );
+  }
+  default MIR.Block.BlockStmt visitBlockStmt(MIR.Block.BlockStmt stmt) {
+    return switch (stmt) {
+      case MIR.Block.BlockStmt.Do aDo -> new MIR.Block.BlockStmt.Do(aDo.e().accept(this, true));
+      case MIR.Block.BlockStmt.If anIf -> new MIR.Block.BlockStmt.If(anIf.e().accept(this, true));
+      case MIR.Block.BlockStmt.Let let -> new MIR.Block.BlockStmt.Let(let.name(), let.e().accept(this, true));
+      case MIR.Block.BlockStmt.Loop loop -> new MIR.Block.BlockStmt.Loop(loop.e().accept(this, true));
+      case MIR.Block.BlockStmt.Return aReturn -> new MIR.Block.BlockStmt.Return(aReturn.e().accept(this, true));
+      case MIR.Block.BlockStmt.Throw aThrow -> new MIR.Block.BlockStmt.Throw(aThrow.e().accept(this, true));
+      case MIR.Block.BlockStmt.Var var -> new MIR.Block.BlockStmt.Var(var.name(), var.e().accept(this, true));
+    };
   }
 }

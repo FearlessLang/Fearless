@@ -3,6 +3,7 @@ package codegen.java;
 import codegen.MIR;
 import codegen.MethExprKind;
 import codegen.ParentWalker;
+import codegen.java.vpf.JavaVPFArg;
 import id.Id;
 import id.Id.DecId;
 import magic.Magic;
@@ -31,6 +32,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   public final HashMap<DecId, String> freshRecords= new HashMap<>();
   public final StringIds id= new StringIds();
   private String pkg;
+
   public JavaSingleCodegen(MIR.Program p) {
     magic= new JavaMagicImpls(this, t->getTName(t,false), p.p());
     this.p = p;
@@ -127,7 +129,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
         case RealExpr, Delegate -> "return %s %s.%s(%s);".formatted(
           cast,
           id.getFullName(meth.origin()),
-          getFName(meth.fName().orElseThrow()),
+          id.getFName(meth.fName().orElseThrow()),
           funArgs);
         case Unreachable -> "throw new java.lang.Error(\"Unreachable code\");";
         case Delegator -> throw Bug.unreachable();
@@ -148,7 +150,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   public String visitFun(MIR.Fun fun) {
-    var name = getFName(fun.name());
+    var name = id.getFName(fun.name());
     var args = seq(fun.args(),this::typePair,", ");
     var body = fun.body().accept(this, true);
     var ret = fun.body() instanceof MIR.Block ? "" : "return ";
@@ -160,6 +162,55 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
   @Override public String visitBlockExpr(MIR.Block expr, boolean checkMagic) {
     return visitBlockExpr(expr, BlockReturnKind.RETURN);
+  }
+
+  @Override public String visitVPFCall(MIR.VPFCall vpfCall, boolean checkMagic) {
+    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
+    var targetName = id.getVPFTargetName(this.pkg, vpfCall);
+//    var fun = this.funMap.get(vpfCall.parentFun());
+//    if (fun != currentFun) {
+//      return "((%s)rt.Error.throwFearlessError(base.Infos_0.$self.msg$imm(rt.Str.fromJavaStr(\"Unreachable code due to inlining\"))))"
+//        .formatted(getTName(vpfCall.t(), true));
+//    }
+    var args = seq(vpfCall.targetArgs(), x->this.visitX(x, true),", ");
+    var promotedCall = "%s(%s)".formatted(targetName, args);
+    var seqCall = vpfCall.original().withVariants(EnumSet.of(MIR.MCall.CallVariant.Standard));
+    return "(rt.vpf.VPF.shouldSpawn() ? %s : %s)".formatted(promotedCall, seqCall.accept(this, true));
+  }
+
+  public String visitVPFCallTarget(MIR.VPFCallTarget vpfTarget) {
+    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
+    var call = vpfTarget.call();
+    var name = id.getRelativeVPFTargetName(call);
+//    var fun = this.funMap.get(call.parentFun());
+    var args = seq(vpfTarget.args(), this::typePair,", ");
+    var recv = JavaVPFArg.assignment(this, call.recv())+"\n";
+    var assignments = seq(call.args(), arg->JavaVPFArg.assignment(this, arg), "\n");
+    var actualCall = call.original()
+      .withRecv(call.recv())
+      .withArgs(call.args())
+      .withVariants(EnumSet.of(MIR.MCall.CallVariant.Standard));
+    return """
+      public static %s %s(%s) {
+        %s
+        %s
+        return %s;
+      }
+      """.formatted(
+      getTName(call.t(), true),
+      name,
+      args,
+      recv,
+      assignments,
+      actualCall.accept(this, true)
+    );
+  }
+
+  @Override public String visitPlainVPFArg(MIR.VPFCall.VPFArg.Plain plain, boolean checkMagic) {
+    return JavaVPFArg.argName(plain.i());
+  }
+  @Override public String visitSpawnVPFArg(MIR.VPFCall.VPFArg.Spawn spawn, boolean checkMagic) {
+    return "rt.vpf.VPF.join(%s)".formatted(JavaVPFArg.argName(spawn.i()));
   }
 
   enum BlockReturnKind {
@@ -357,11 +408,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   private String typePair(MIR.X x) {
     return getTName(x.t(),false)+" "+id.varName(x.name());
   }
-  public String getFName(MIR.FName name) {
-    return
-      //id.getFullName(name.d()).replace(".","$")+"$"+
-      id.getMName(name.mdf(), name.m())+"$fun";
-  }
+
   public String getTName(MIR.MT t, boolean isRet) {
     return new TypeIds(magic,id).getTName(t,isRet);
   }

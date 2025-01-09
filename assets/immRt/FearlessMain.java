@@ -2,6 +2,8 @@ package base;
 
 import rt.NativeRuntime;
 import rt.Str;
+import rt.vpf.ConfigureVPF;
+import rt.vpf.VPF;
 
 import java.lang.reflect.Field;
 
@@ -24,6 +26,7 @@ public class FearlessMain {
     assert myMain != null;
 
     var userArgs = buildArgList(args, 1);
+    var shutdownVPF = VPF.start(ConfigureVPF.getHeartbeatInterval(), false);
     try {
       NativeRuntime.println(myMain.$hash$imm(userArgs).utf8());
     } catch (StackOverflowError e) {
@@ -32,6 +35,8 @@ public class FearlessMain {
     catch (Throwable t) {
       var msg = t.getMessage() == null ? t.getCause() : t.getMessage();
       fatal("Program crashed with: "+msg);
+    } finally {
+      shutdownVPF.run();
     }
   }
   public static Main_0 getMain(String mainName) throws NoSuchFieldException, SecurityException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, ClassCastException {

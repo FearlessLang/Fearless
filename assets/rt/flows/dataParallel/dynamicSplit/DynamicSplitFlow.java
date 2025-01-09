@@ -103,6 +103,7 @@ public final class DynamicSplitFlow {
     }
   }
 
+  @SuppressWarnings("preview")
   public void run() {
     try {
       var splitTokens = new ArrayDeque<CheckSplitResult>();

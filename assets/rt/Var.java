@@ -1,7 +1,7 @@
 package rt;
 
 public class Var implements base._MagicVarImpl_1 {
-  private Object value;
+  private volatile Object value;
   public Var(Object value) {
     this.value = value;
   }

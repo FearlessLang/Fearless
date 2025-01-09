@@ -33,6 +33,7 @@ public record EODStrategies(_Sink_1 downstream, int size, List<FlowOp_1> splitDa
     manyPar();
   }
 
+  @SuppressWarnings("preview")
   @Override public void manyPar() {
     assert nTasks > 1;
     int perWorkerSize = size / nTasks;

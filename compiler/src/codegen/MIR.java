@@ -34,7 +34,11 @@ public sealed interface MIR {
         .orElseThrow();
     }
   }
-  record Package(String name, Map<Id.DecId, TypeDef> defs, List<Fun> funs) implements MIR {}
+  record Package(String name, Map<Id.DecId, TypeDef> defs, List<Fun> funs, List<VPFCallTarget> vpfTargets) implements MIR {
+    public Package withVPFTargets(List<VPFCallTarget> vpfTargets) {
+      return new Package(name, defs, funs, Collections.unmodifiableList(vpfTargets));
+    }
+  }
   record TypeDef(Id.DecId name, List<MT.Plain> impls, List<Sig> sigs, Optional<CreateObj> singletonInstance) implements MIR {
     public TypeDef {
       // None of our literals should be compatible with each other due to conflicting methods, so we can rely on this
@@ -98,31 +102,36 @@ public sealed interface MIR {
       return v.visitX(this, checkMagic);
     }
   }
-  record MCall(E recv, Id.MethName name, List<? extends E> args, MT t, MT originalRet, Mdf mdf, EnumSet<CallVariant> variant) implements E {
+  record MCall(E recv, Id.MethName name, List<? extends E> args, MT t, MT originalRet, Mdf mdf, EnumSet<CallVariant> variant,
+               long callId, SortedSet<X> captures) implements E {
     public MCall(E recv, Id.MethName name, List<? extends E> args, MT t, Mdf mdf, EnumSet<CallVariant> variant) {
-      this(recv, name, args, t, t, mdf, variant);
+      this(recv, name, args, t, t, mdf, variant, -1, Collections.emptySortedSet());
     }
 
     public MCall withRecv(E recv) {
-      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+      return new MCall(recv, name, args, t, originalRet, mdf, variant, callId, captures);
+    }
+    public MCall withArgs(List<VPFCall.VPFArg> args) {
+      return new MCall(recv, name, args, t, originalRet, mdf, variant, callId, captures);
     }
 
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitMCall(this, checkMagic);
     }
     public MCall withVariants(EnumSet<CallVariant> variant) {
-      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+      return new MCall(recv, name, args, t, originalRet, mdf, variant, callId, captures);
     }
 
     public enum CallVariant {
       Standard,
       PipelineParallelFlow,
       DataParallelFlow,
-      SafeMutSourceFlow;
+      SafeMutSourceFlow,
+      VPFParallelisable;
 
       public boolean isStandard() { return this == Standard; }
     }
-    public boolean canParallelise() {
+    public boolean canParalleliseFlows() {
       return variant.contains(CallVariant.PipelineParallelFlow) || variant.contains(CallVariant.DataParallelFlow);
     }
   }
@@ -146,6 +155,73 @@ public sealed interface MIR {
     }
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitBoolExpr(this, checkMagic);
+    }
+  }
+
+  record VPFCall(MIR.MCall original, FName parentFun, VPFArg recv, List<VPFArg> args) implements E {
+    public VPFCall {
+      assert original.variant().contains(MCall.CallVariant.VPFParallelisable);
+    }
+    @Override public MT t() {
+      return original.t();
+    }
+    @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
+      return v.visitVPFCall(this, checkMagic);
+    }
+
+    public SortedSet<X> targetArgs() {
+      return original.captures();
+    }
+
+    public VPFCall withParentFun(FName name) {
+      return new VPFCall(original, name, recv, args);
+    }
+
+    sealed public interface VPFArg extends E  {
+      E e();
+      static VPFArg of(int i, MIR.E e) {
+        return e.accept(new MIRVisitor<>() {
+          @Override public VPFArg visitCreateObj(MIR.CreateObj createObj, boolean checkMagic) {
+            return new Plain(i, e);
+          }
+          @Override public VPFArg visitX(MIR.X x, boolean checkMagic) {
+            return new Plain(i, e);
+          }
+          @Override public VPFArg visitMCall(MIR.MCall call, boolean checkMagic) {
+            return new Spawn(i, call);
+          }
+          @Override public VPFArg visitVPFCall(VPFCall vpfCall, boolean checkMagic) {
+            return new Spawn(i, vpfCall);
+          }
+          @Override public VPFArg visitBoolExpr(BoolExpr expr, boolean checkMagic) {
+            return new Spawn(i, expr);
+          }
+        }, true);
+      }
+      record Spawn(int i, MIR.E e) implements VPFArg {
+        @Override public MT t() {
+          return e.t();
+        }
+        @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
+          return v.visitSpawnVPFArg(this, checkMagic);
+        }
+        @Override public E e() {
+          return e;
+        }
+      }
+      record Plain(int i, MIR.E e) implements VPFArg {
+        @Override public MT t() {
+          return e.t();
+        }
+        @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
+          return v.visitPlainVPFArg(this, checkMagic);
+        }
+      }
+    }
+  }
+  record VPFCallTarget(VPFCall call) implements MIR {
+    public SortedSet<X> args() {
+      return call.targetArgs();
     }
   }
 
