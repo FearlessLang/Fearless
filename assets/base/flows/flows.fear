@@ -133,7 +133,7 @@ _FlowExtensions: {
 
   .enumerate[E:imm]: mut Extension[mut Flow[E], mut Flow[Enumerated[E]]] -> {flow ->
     flow.actor[mut Count[Nat],Enumerated[E]](Count.nat(0), {downstream, i, e ->
-      Block#(downstream#(_Enumerateds#(i++, e)), {})
+      Block#(downstream#(_Enumerateds#(i.update{i' -> i' + 1}, e)), {})
       })
     },
   }

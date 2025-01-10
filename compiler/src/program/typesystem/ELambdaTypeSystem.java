@@ -8,7 +8,9 @@ import failure.CompileError;
 import failure.Fail;
 import failure.FailOr;
 import files.Pos;
+import id.Id;
 import id.Mdf;
+import magic.Magic;
 import utils.Box;
 import utils.Bug;
 import utils.Streams;
@@ -48,6 +50,20 @@ interface ELambdaTypeSystem extends ETypeSystem{
       return err1.flatMap(_ ->self.bothT(d));
     });
   }
+  /// Some types in base are likely to be used by the runtime in ways that potentially
+  /// violate assumptions we make for things like VPF. This method identifies those
+  /// types so we can avoid optimising them.
+  @SuppressWarnings("preview")
+  private boolean isRuntimeInvoked(Id.DecId id) {
+    if (isRuntimeInvoked.orElse(false)) {
+      return true;
+    }
+    if (!id.pkg().startsWith("base")) {
+      return false;
+    }
+    var supers = ((ast.Program)p()).superDecIds(id);
+    return supers.contains(Magic.FlowOp) || supers.contains(Magic.FlowSink);
+  }
   private List<E.Meth> filteredByMdf(E.Lambda b){
     return b.meths().stream()
     .filter(m->filterByMdf(b.mdf(), m.mdf()))
@@ -74,18 +90,21 @@ interface ELambdaTypeSystem extends ETypeSystem{
     }
     return FailOr.ok();
   }
+  @SuppressWarnings("preview")
   default FailOr<T> bothT(Dec d){
-    var b = d.lambda();
-    var xbs = xbs().addBounds(d.gxs(),d.bounds());
-    var invalidGens = GenericBounds.validGenericLambda(p(), xbs, b);
-    if (invalidGens instanceof FailOr.Fail<Void> fail) {
-      return fail.mapErr(err->()->err.get().pos(b.pos())).cast();
-    }
-    T selfT= new T(b.mdf(), d.toIT());
-    var selfName=b.selfName();
-    var mRes= FailOr.fold(b.meths(),
-      mi->methOkOuter(xbs, selfT, selfName, mi));
-    return mRes.map(_ ->selfT);
+    return ScopedValue.callWhere(ETypeSystem.isRuntimeInvoked, isRuntimeInvoked(d.name()), ()->{
+      var b = d.lambda();
+      var xbs = xbs().addBounds(d.gxs(),d.bounds());
+      var invalidGens = GenericBounds.validGenericLambda(p(), xbs, b);
+      if (invalidGens instanceof FailOr.Fail<Void> fail) {
+        return fail.mapErr(err->()->err.get().pos(b.pos())).cast();
+      }
+      T selfT= new T(b.mdf(), d.toIT());
+      var selfName=b.selfName();
+      var mRes= FailOr.fold(b.meths(),
+        mi->methOkOuter(xbs, selfT, selfName, mi));
+      return mRes.map(_ ->selfT);
+    });
   }
   private FailOr<Void> sigOk(Sig sig,Optional<Pos> p){
     var ts= Stream.concat(sig.ts().stream(),Stream.of(sig.ret()));

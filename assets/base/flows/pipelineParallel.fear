@@ -75,7 +75,9 @@ _PipelineParallelFlow: _FlowFactory{
       .let stopped = {Vars#[Bool]False}
       .do {source.for(_PipelineParallelSink#[E]{
         #(e) -> acc' := (f#(acc'.get, e)),
-        .stop -> stopped := True,
+        .stop -> Block#
+          .do {stopped := True}
+          .return {source.stop},
         .pushError(info) -> stopped* ? {
           .then -> {},
           .else -> Error!info,

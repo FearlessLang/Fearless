@@ -32,7 +32,9 @@ public interface Range extends base.flows._FlowRange_0 {
         sink_m$.stop$mut();
         return Void_0.$self;
       }
-      sink_m$.$hash$mut(this.cursor++);
+      var cursor = this.cursor;
+      sink_m$.$hash$mut(cursor);
+      this.cursor++;
       if (!this.isRunning()) {
         sink_m$.stop$mut();
       }

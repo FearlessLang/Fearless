@@ -339,7 +339,7 @@ public class TestFlowSemantics {
       }
     Ctxs: F[mut Count[Nat], mut Ctx]{cs -> Block#
       .return {mut Ctx: base.ToIso[Ctx]{'ctx
-        .iso -> Ctxs#(Count.nat(cs++)),
+        .iso -> Ctxs#(Count.nat(cs.update{cs' -> cs' + 1})),
         .self -> ctx,
         read .n: Nat -> cs.get,
         }}
@@ -357,7 +357,7 @@ public class TestFlowSemantics {
       }
     Ctxs: F[mut Count[Nat], mut Ctx]{cs -> Block#
       .return {mut Ctx: base.ToIso[Ctx]{'ctx
-        .iso -> Ctxs#(Count.nat(cs++)),
+        .iso -> Ctxs#(Count.nat(cs.update{cs' -> cs' + 1})),
         .self -> ctx,
         read .n: Nat -> cs.get,
         }}
@@ -375,7 +375,7 @@ public class TestFlowSemantics {
       }
     Ctxs: F[mut Count[Nat], mut Ctx]{cs -> Block#
       .return {mut Ctx: base.ToIso[Ctx]{'ctx
-        .iso -> Ctxs#(Count.nat(cs++)),
+        .iso -> Ctxs#(Count.nat(cs.update{cs' -> cs' + 1})),
         .self -> ctx,
         read .n: Nat -> cs.get,
         }}

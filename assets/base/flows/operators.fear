@@ -13,7 +13,7 @@ FlowOp[E]: {
   mut .isRunning: Bool,
   mut .for(downstream: mut _Sink[E]): Void -> Block#
     .loop {Block#
-      .if {this.isRunning.not} .return {ControlFlow.break}
+      .if {this.isRunning.not} .return {Block#(downstream.stop, ControlFlow.break)}
       .do {this.step(downstream)}
       .return {ControlFlow.continue}
       }

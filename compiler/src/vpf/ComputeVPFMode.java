@@ -19,19 +19,19 @@ public interface ComputeVPFMode {
   /// A. All arguments can be type-checked in an environment where all mut and mutH bindings are weakened to read and
   /// readH respectively.
   /// B. All arguments except one can be type-checked in an environment where all mut, mutH, read, and readH bindings are
-  /// not present in Gamma. (This is currently disabled because it is incompatible with flows)
+  /// not present in Gamma.
   @SuppressWarnings("preview")
   static VPFCallMode of(ETypeSystem ts, E.MCall call) {
     // Sadly, the flow runtime (which is somewhat magical) can break assumptions around
     // nothing else running that could mutate a thing a read or readH is pointing to in A,
     // so if we have both VPF and flows running we have to make sure that VPF is not parallelising
     // any code that the flow runtime could mutate in parallel.
-    if (TraitTypeSystem.pkg.get().equals("base.flows")) {
-      return VPFCallMode.Sequential;
-    }
+//    if (TraitTypeSystem.pkg.get().equals("base.flows") || ETypeSystem.isRuntimeInvoked.get()) {
+//      return VPFCallMode.Sequential;
+//    }
 
     // must have at least 2 calls (incl. receiver)
-    var subCalls = Stream.concat(Stream.of(call.receiver()), call.es().stream())
+    var subCalls = callArgsInclRecv(call)
       .filter(e -> e instanceof E.MCall)
       .limit(2)
       .count();
@@ -43,11 +43,10 @@ public interface ComputeVPFMode {
     if (canPromoteNoMut == VPFCallMode.Parallel) {
       return canPromoteNoMut;
     }
-//    TODO: this breaks flows in weird and racy ways:
-//    var canPromoteOnlyOneLikeMut = canPromoteOnlyOneLikeMut(ts, call);
-//    if (canPromoteOnlyOneLikeMut == VPFCallMode.Parallel) {
-//      return canPromoteOnlyOneLikeMut;
-//    }
+    var canPromoteOnlyOneLikeMut = canPromoteOnlyOneLikeMut(ts, call);
+    if (canPromoteOnlyOneLikeMut == VPFCallMode.Parallel) {
+      return canPromoteOnlyOneLikeMut;
+    }
     return VPFCallMode.Sequential;
   }
 
@@ -73,7 +72,7 @@ public interface ComputeVPFMode {
     };
 
     ETypeSystem stricterTs = ts.withGamma(weakenedGamma);
-    var isPromotable = call.es().stream()
+    var isPromotable = callArgsInclRecv(call)
       .allMatch(arg -> arg.accept(stricterTs).isRes());
     return isPromotable ? VPFCallMode.Parallel : VPFCallMode.Sequential;
   }
@@ -96,18 +95,17 @@ public interface ComputeVPFMode {
 
     ETypeSystem stricterTs = ts.withGamma(weakenedGamma);
 
-    for (int i = 0; i < call.es().size(); ++i) {
-      final int excludedArg = i;
-      var allOk = IntStream.range(0, call.es().size())
-        .filter(j -> j != excludedArg)
-        .mapToObj(j -> call.es().get(j).accept(stricterTs))
-        .allMatch(FailOr::isRes);
-      // we don't need to check excludedArg because we only check for a VPF
-      // promotion after the base method call has already passed type checking
-      if (allOk) {
-        return VPFCallMode.Parallel;
-      }
-    }
-    return VPFCallMode.Sequential;
+    var allArgs = callArgsInclRecv(call).toList();
+    var allOk = IntStream.range(0, allArgs.size())
+      .anyMatch(i -> IntStream.range(0, allArgs.size())
+        .filter(j -> j != i)
+        .mapToObj(j -> allArgs.get(j).accept(stricterTs))
+        .allMatch(FailOr::isRes)
+      );
+    return allOk ? VPFCallMode.Parallel : VPFCallMode.Sequential;
+  }
+
+  private static Stream<E> callArgsInclRecv(E.MCall call) {
+    return Stream.concat(Stream.of(call.receiver()), call.es().stream());
   }
 }

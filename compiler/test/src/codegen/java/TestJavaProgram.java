@@ -394,7 +394,7 @@ public class TestJavaProgram {
         .do{ res* := "mutability!" }
         .do{ Block#(counter++) }
         .if{ False }.return{ Vars#[Str]"Short cut" }
-        .if{ True }.do{ Block#[Int](counter *= +9000) } // MY POWER LEVELS ARE OVER 9000!!!!!!
+        .if{ True }.do{counter *= +9000} // MY POWER LEVELS ARE OVER 9000!!!!!!
         .if{ True }.do{ res* := "moar mutability" }
         .if{ retCounter.not }.return{ res* }
         .return{ Vars#(counter*.str) }

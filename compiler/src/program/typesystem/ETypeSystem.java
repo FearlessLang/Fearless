@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface ETypeSystem extends Visitor<FailOr<T>> {
+  @SuppressWarnings("preview")
+  ScopedValue<Boolean> isRuntimeInvoked = ScopedValue.newInstance();
+
   Program p();
   Gamma g();
   XBs xbs();

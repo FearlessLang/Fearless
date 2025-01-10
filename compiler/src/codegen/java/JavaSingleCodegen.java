@@ -165,7 +165,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   @Override public String visitVPFCall(MIR.VPFCall vpfCall, boolean checkMagic) {
-    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
+//    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
     var targetName = id.getVPFTargetName(this.pkg, vpfCall);
 //    var fun = this.funMap.get(vpfCall.parentFun());
 //    if (fun != currentFun) {
@@ -179,7 +179,7 @@ public class JavaSingleCodegen implements MIRVisitor<String> {
   }
 
   public String visitVPFCallTarget(MIR.VPFCallTarget vpfTarget) {
-    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
+//    assert !pkg.equals("base.flows") : "VPF cannot parallelise the flow runtime";
     var call = vpfTarget.call();
     var name = id.getRelativeVPFTargetName(call);
 //    var fun = this.funMap.get(call.parentFun());
