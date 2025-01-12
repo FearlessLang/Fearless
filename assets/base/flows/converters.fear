@@ -56,18 +56,18 @@ _MutSourceCollection[E]: {
            .stopUp -> cursor := (dup.size),
            .step(downstream) -> Block#
              .let[Nat] cursor' = {cursor.get}
-             .if {self.isRunning.not} .return{Block#(downstream.stopDown, self.stopUp)}
+             .if {self.isRunning.not} .return{downstream.stopDown}
              .do {downstream#(dup.get(cursor'))}
              .do {cursor++}
-             .if {self.isRunning.not} .return{Block#(downstream.stopDown, self.stopUp)}
+             .if {self.isRunning.not} .return{downstream.stopDown}
              .return {{}},
            .for(downstream) -> Block#[Void]
              .loop {Block#
                .let[Nat] cursor' = {cursor.get}
-               .if {self.isRunning.not} .return {Block#(downstream.stopDown, self.stopUp, ControlFlow.break)}
+               .if {self.isRunning.not} .return {Block#(downstream.stopDown, ControlFlow.break)}
                .do {downstream#(dup.get(cursor'))}
                .do {cursor++}
-               .if {self.isRunning.not} .return {Block#(downstream.stopDown, self.stopUp, ControlFlow.break)}
+               .if {self.isRunning.not} .return {Block#(downstream.stopDown, ControlFlow.break)}
                .return {ControlFlow.continue}
                }.return {{}},
            }}
@@ -127,18 +127,18 @@ _SafeSource: {
       .stopUp -> cursor := (endCursor.get),
       .step(downstream) -> Block#
         .let[Nat] cursor' = {cursor.get}
-        .if {self.isRunning.not} .return{Block#(downstream.stopDown, self.stopUp)}
+        .if {self.isRunning.not} .return{downstream.stopDown}
         .do {downstream#(list.get(cursor'))}
         .do {cursor++}
-        .if {self.isRunning.not} .return{Block#(downstream.stopDown, self.stopUp)}
+        .if {self.isRunning.not} .return{downstream.stopDown}
         .return {{}},
       .for(downstream) -> Block#[Void]
         .loop {Block#
           .let[Nat] cursor' = {cursor.get}
-          .if {self.isRunning.not} .return {Block#(downstream.stopDown, self.stopUp, ControlFlow.break)}
+          .if {self.isRunning.not} .return {Block#(downstream.stopDown, ControlFlow.break)}
           .do {downstream#(list.get(cursor'))}
           .do {cursor++}
-          .if {self.isRunning.not} .return {Block#(downstream.stop, self.stop, ControlFlow.break)}
+          .if {self.isRunning.not} .return {Block#(downstream.stopDown, ControlFlow.break)}
           .return {ControlFlow.continue}
           }.return {{}},
       .split -> self.canSplit ? {

@@ -50,7 +50,7 @@ _Filter: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#(sinkDecorator, right, predicate)},
       }},
-  .impl[E](downstream: mut _Sink[E], predicate: read F[E, Bool], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
+  .impl[E](downstream: mut _Sink[E], predicate: read F[E, Bool], sinkDecorator: _SinkDecorator): mut _Sink[E] -> sinkDecorator#{
     #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
     .stopDown -> downstream.stopDown,
     .pushError(info) -> downstream.pushError(info),
@@ -68,7 +68,7 @@ _Map: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#[E,R](sinkDecorator, right, f)},
       }},
-  .impl[E,R](downstream: mut _Sink[R], f: read F[E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
+  .impl[E,R](downstream: mut _Sink[R], f: read F[E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> sinkDecorator#{
     #(e) -> downstream#(f#e),
     .stopDown -> downstream.stopDown,
     .pushError(info) -> downstream.pushError(info),
@@ -86,11 +86,12 @@ _Map: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#[C,E,R](sinkDecorator, right, ctx'.iso, f)},
       }},
-  .impl[C,E,R](downstream: mut _Sink[R], ctx: mut ToIso[C], f: read F[iso C, E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
-    #(e) -> downstream#(f#(ctx.iso.self, e)),
-    .stopDown -> downstream.stopDown,
-    .pushError(info) -> downstream.pushError(info),
-    },
+  .impl[C,E,R](downstream: mut _Sink[R], ctx: mut ToIso[C], f: read F[iso C, E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] ->
+    sinkDecorator#{
+      #(e) -> downstream#(f#(ctx.iso.self, e)),
+      .stopDown -> downstream.stopDown,
+      .pushError(info) -> downstream.pushError(info),
+      },
   }
 
 _FlatMap: {
