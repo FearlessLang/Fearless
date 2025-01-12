@@ -21,7 +21,7 @@ final class ForkJoinWorker extends RecursiveAction {
     this.source = source;
     this.original = downstream;
     this.downstream = new _Sink_1() {
-      @Override public Void_0 stop$mut() {
+      @Override public Void_0 stopDown$mut() {
         return Void_0.$self;
       }
       @Override public Void_0 pushError$mut(Info_0 info_m$) {
@@ -53,7 +53,7 @@ final class ForkJoinWorker extends RecursiveAction {
         downstream.pushError$mut(base.Infos_0.$self.msg$imm(rt.Str.fromJavaStr(err.getMessage())));
       }
     }
-    downstream.stop$mut();
+    downstream.stopDown$mut();
   }
 
   @Override protected void compute() {

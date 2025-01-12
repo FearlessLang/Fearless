@@ -44,7 +44,7 @@ public interface PipelineParallelFlow {
       this.subject = new Subject(original);
     }
 
-    @Override public base.Void_0 stop$mut() {
+    @Override public base.Void_0 stopDown$mut() {
 //      System.out.println("Stopping subj "+subjectId);
       try {
         subject.submit(Message.Stop.INSTANCE);
@@ -118,7 +118,7 @@ public interface PipelineParallelFlow {
         }
 
         if (msg == Message.Stop.INSTANCE) {
-          downstream.stop$mut();
+          downstream.stopDown$mut();
           break;
         }
         if (msg instanceof Message.Error info) {
@@ -132,7 +132,7 @@ public interface PipelineParallelFlow {
     public void join() {
       try {
         worker.join();
-        downstream.stop$mut();
+        downstream.stopDown$mut();
         if (this.exception != null) {
           switch (exception) {
             case RuntimeException re -> throw re;

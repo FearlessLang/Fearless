@@ -9,11 +9,11 @@ package base.flows
 
 FlowOp[E]: {
   mut .step(sink: mut _Sink[E]): Void,
-  mut .stop: Void,
+  mut .stopUp: Void,
   mut .isRunning: Bool,
   mut .for(downstream: mut _Sink[E]): Void -> Block#
     .loop {Block#
-      .if {this.isRunning.not} .return {Block#(downstream.stop, ControlFlow.break)}
+      .if {this.isRunning.not} .return {Block#(downstream.stopDown, ControlFlow.break)}
       .do {this.step(downstream)}
       .return {ControlFlow.continue}
       }
@@ -29,101 +29,85 @@ FlowOp[E]: {
   }
 
 
-_Sink: {
-  #[T](s: mut _Sink[T]): mut _Sink[T] -> s,
-  }
+_SinkDecorator: {#[E](sink: mut _Sink[E]): mut _Sink[E]}
 _Sink[T]: {
   mut #(x: T): Void,
   mut .pushError(info: Info): Void,
-  mut .stop: Void,
+  mut .stopDown: Void,
   }
 
 // IMPORTANT NOTE: REUSE SINK OBJECTS! THE IDENTITY IS IMPORTANT FOR WHEN THEY ARE RAN IN PARALLEL!!!!!
 
 _Filter: {
-  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
-    .var[mut Opt[mut _Sink[E]]] sink = {{}}
-    .let[mut MF[mut _Sink[E],mut MF[mut _Sink[E]]]] newSink = {{downstream -> {
-      sinkFactory#[E]{
-        #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
-        .stop -> downstream.stop,
-        .pushError(info) -> downstream.pushError(info),
-        }
-      }}}
+  #[E](sinkDecorator: _SinkDecorator, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
+    .let sink = {Slots#[mut _Sink[E]]}
     .return{{
       .step(downstream) ->
-        this.run(sink, newSink#downstream, {sink' -> upstream.step(sink')}),
+        upstream.step(sink.getOrFill{this.impl(downstream, predicate, sinkDecorator)}),
       .for(downstream) ->
-        this.run(sink, newSink#downstream, {sink' -> upstream.for(sink')}),
-      .stop -> upstream.stop,
+        upstream.for(sink.getOrFill{this.impl(downstream, predicate, sinkDecorator)}),
+      .stopUp -> upstream.stopUp,
       .isRunning -> upstream.isRunning,
-      .split -> upstream.split.map{right -> this#(sinkFactory, right, predicate)},
+      .split -> upstream.split.map{right -> this#(sinkDecorator, right, predicate)},
       }},
-  .run[E](
-    sink: mut Var[mut Opt[mut _Sink[E]]],
-    newSink: mut MF[mut _Sink[E]],
-    task: mut MF[mut _Sink[E],Void]
-    ): Void ->
-    sink.get.match{
-      .some(sink') -> task#sink',
-      .empty -> Block#
-        .let[mut _Sink[E]] sink' = {newSink#}
-        .do {sink.set(Opts#sink')}
-        .return {task#sink'},
-      },
+  .impl[E](downstream: mut _Sink[E], predicate: read F[E, Bool], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
+    #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
+    .stopDown -> downstream.stopDown,
+    .pushError(info) -> downstream.pushError(info),
+    },
   }
-// TODO: ^ use the `this.run` pattern in the other operators to reduce code reuse.
 _Map: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] ->
-    this#[_EmptyCtx,E,R](sinkFactory, upstream, iso _EmptyCtx, {_,e -> f#e}),
-  // It would be unsound to call this with a non-iso `c` if this is run in parallel.
-  // It's okay here because the public API of this library requires that `c` is iso.
-  #[C,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], ctx: iso ToIso[C], f: read F[iso C, E, R]): mut FlowOp[R] -> Block#
-    .openIso ctx' = ctx
-    .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Vars#{}}
-    .return  {{'op
-      .step(downstream) -> sink.get.match{
-        .some(sink') -> upstream.step(sink'),
-        .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> downstream.stop,
-            #(e) -> downstream#(f#(ctx'.iso.self, e)),
-            .pushError(info) -> downstream.pushError(info),
-            })),
-          upstream.step(sink.get!)
-          )
-        },
-      .for(downstream) -> sink.get.match{
-        .some(sink') -> upstream.for(sink'),
-        .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> downstream.stop,
-            #(e) -> downstream#(f#(ctx'.iso.self, e)),
-            .pushError(info) -> downstream.pushError(info),
-            })),
-          upstream.for(sink.get!)
-          )
-        },
-      .stop -> upstream.stop,
+  #[E,R](sinkDecorator: _SinkDecorator, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
+    .let sink = {Slots#[mut _Sink[E]]}
+    .return{{
+      .step(downstream) ->
+        upstream.step(sink.getOrFill{this.impl(downstream, f, sinkDecorator)}),
+      .for(downstream) ->
+        upstream.for(sink.getOrFill{this.impl(downstream, f, sinkDecorator)}),
+      .stopUp -> upstream.stopUp,
       .isRunning -> upstream.isRunning,
-      .split -> upstream.split.map{right -> this#[C,E,R](sinkFactory, right, ctx'.iso, f)},
-    }}
+      .split -> upstream.split.map{right -> this#[E,R](sinkDecorator, right, f)},
+      }},
+  .impl[E,R](downstream: mut _Sink[R], f: read F[E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
+    #(e) -> downstream#(f#e),
+    .stopDown -> downstream.stopDown,
+    .pushError(info) -> downstream.pushError(info),
+    },
+
+  #[C,E,R](sinkDecorator: _SinkDecorator, upstream: mut FlowOp[E], ctx: iso ToIso[C], f: read F[iso C, E, R]): mut FlowOp[R] -> Block#
+    .openIso ctx' = ctx
+    .let sink = {Slots#[mut _Sink[E]]}
+    .return{{
+      .step(downstream) ->
+        upstream.step(sink.getOrFill{this.impl(downstream, ctx', f, sinkDecorator)}),
+      .for(downstream) ->
+        upstream.for(sink.getOrFill{this.impl(downstream, ctx', f, sinkDecorator)}),
+      .stopUp -> upstream.stopUp,
+      .isRunning -> upstream.isRunning,
+      .split -> upstream.split.map{right -> this#[C,E,R](sinkDecorator, right, ctx'.iso, f)},
+      }},
+  .impl[C,E,R](downstream: mut _Sink[R], ctx: mut ToIso[C], f: read F[iso C, E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> {
+    #(e) -> downstream#(f#(ctx.iso.self, e)),
+    .stopDown -> downstream.stopDown,
+    .pushError(info) -> downstream.pushError(info),
+    },
   }
+
 _FlatMap: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
+  #[E,R](sinkDecorator: _SinkDecorator, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
     .let[mut Var[Bool]] isRunning = {Vars#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[E]]]] sink = {Vars#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> Block#(isRunning := False, downstream.stop),
+          sink := (Opts#(sinkDecorator#[E]{
+            .stopDown -> Block#(isRunning := False, downstream.stopDown),
             #(e) -> Block#
               .let nestedOp = {f#e.unwrapOp(mut _UnwrapFlowToken)}
               .return {nestedOp.for{
-                #(e') -> op.isRunning ? {.then -> downstream#e', .else -> nestedOp.stop},
-                .stop -> {},
+                #(e') -> op.isRunning ? {.then -> downstream#e', .else -> nestedOp.stopUp},
+                .stopDown -> {},
                 .pushError(info) -> downstream.pushError(info),
                 }},
             .pushError(info) -> downstream.pushError(info),
@@ -134,13 +118,13 @@ _FlatMap: {
       .for(downstream) -> sink.get.match{
         .some(sink') -> upstream.for(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
-            .stop -> Block#(isRunning := False, downstream.stop),
+          sink := (Opts#(sinkDecorator#[E]{
+            .stopDown -> Block#(isRunning := False, downstream.stopDown),
             #(e) -> Block#
               .let nestedOp = {f#e.unwrapOp(mut _UnwrapFlowToken)}
               .return {nestedOp.for{
-                #(e') -> op.isRunning ? {.then -> downstream#e', .else -> nestedOp.stop},
-                .stop -> {},
+                #(e') -> op.isRunning ? {.then -> downstream#e', .else -> nestedOp.stopUp},
+                .stopDown -> {},
                 .pushError(info) -> downstream.pushError(info),
                 }},
             .pushError(info) -> downstream.pushError(info),
@@ -148,27 +132,27 @@ _FlatMap: {
           upstream.for(sink.get!)
           )
         },
-      .stop -> upstream.stop,
+      .stopUp -> upstream.stopUp,
       .isRunning -> isRunning*,
-      .split -> upstream.split.map{right -> this#(sinkFactory, right, f)},
+      .split -> upstream.split.map{right -> this#(sinkDecorator, right, f)},
       }}
   }
 
 // TODO: I'm still not 100% sure .with/1 is safe in parallel
 _With: {
-  #[A,B](sinkFactory: _Sink, upstream: mut FlowOp[A], other: mut FlowOp[B]): mut FlowOp[mut Pair[A,B]] -> Block#
+  #[A,B](sinkDecorator: _SinkDecorator, upstream: mut FlowOp[A], other: mut FlowOp[B]): mut FlowOp[mut Pair[A,B]] -> Block#
     .let[mut Var[Bool]] isRunning = {Vars#[Bool]True}
     .let[mut Var[mut Opt[mut _Sink[A]]]] sink = {Vars#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[A]{
-            .stop -> Block#(isRunning := False, downstream.stop),
+          sink := (Opts#(sinkDecorator#[A]{
+            .stopDown -> Block#(isRunning := False, downstream.stopDown),
             #(e) -> Block#
               .return {other.step{
-                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stop},
-                .stop -> op.stop,
+                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stopUp},
+                .stopDown -> op.stopUp,
                 .pushError(info) -> downstream.pushError(info),
                 }},
             .pushError(info) -> downstream.pushError(info),
@@ -179,12 +163,12 @@ _With: {
       .for(downstream) -> sink.get.match{
         .some(sink') -> upstream.for(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[A]{
-            .stop -> Block#(isRunning := False, downstream.stop),
+          sink := (Opts#(sinkDecorator#[A]{
+            .stopDown -> Block#(isRunning := False, downstream.stopDown),
             #(e) -> Block#
               .return {other.step{
-                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stop},
-                .stop -> op.stop,
+                #(e') -> op.isRunning ? {.then -> downstream#{.a -> e, .b -> e'}, .else -> other.stopUp},
+                .stopDown -> op.stopUp,
                 .pushError(info) -> downstream.pushError(info),
                 }},
             .pushError(info) -> downstream.pushError(info),
@@ -192,11 +176,11 @@ _With: {
           upstream.for(sink.get!)
           )
         },
-      .stop -> upstream.stop,
+      .stopUp -> upstream.stopUp,
       .isRunning -> isRunning*,
       .split -> Block#
         .if {upstream.canSplit.not} .return {{}}
         .if {other.canSplit.not} .return {{}}
-        .return {Opts#(this#(sinkFactory, upstream.split!, other.split!))},
+        .return {Opts#(this#(sinkDecorator, upstream.split!, other.split!))},
       }}
   }

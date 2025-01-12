@@ -1,8 +1,6 @@
 package base.flows
 
-_PipelineParallelSink: _Sink{
-  #[T](s: mut _Sink[T]): mut _Sink[T] -> Magic!,
-  }
+_PipelineParallelSink: _SinkDecorator{s -> Magic!}
 _PipelineParallelSink[T]: _Sink[T]
 
 _PipelineParallelFlow: _FlowFactory{
@@ -23,70 +21,11 @@ _PipelineParallelFlow: _FlowFactory{
     .with(other) -> this.fromOp(_With#(_PipelineParallelSink, source, other.unwrapOp(mut _UnwrapFlowToken)), {}),
 
     // terminals
-    mut .first: mut Opt[E] -> Block#
-      .let[mut Var[mut Opt[E]]] res = {Vars#mut Opt[E]}
-      .let stopped = {Vars#[Bool]False}
-      .do {source.for(_PipelineParallelSink#[E]{'runner
-        .stop -> Block#
-          .do {stopped := True}
-          .return {source.stop},
-        .pushError(info) -> stopped* ? {
-          .then -> {},
-          .else -> Error!info,
-          },
-        #(e) -> res.get.isEmpty ? {
-          .then -> Block#
-            .do {res := (Opts#e)}
-            .return {runner.stop},
-          .else -> {},
-          },
-        })}
-      .do {source.stop}
-      .return {res.get},
-
-    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> Block#
-      .let[mut Var[mut Opt[R]]] res = {Vars#mut Opt[R]}
-      .let stopped = {Vars#[Bool]False}
-      .do {source.for(_PipelineParallelSink#[E]{'runner
-        .stop -> Block#
-          .do {stopped := True}
-          .return {source.stop},
-        .pushError(info) -> stopped* ? {
-          .then -> {},
-          .else -> Error!info,
-          },
-        #(e) -> res.get.isEmpty ? {
-          .then -> f#e.match{
-            .some(e') -> Block#
-              .do{res := (Opts#e')}
-              .return {runner.stop},
-            .empty -> {},
-            },
-          .else -> {},
-          },
-        })}
-      .do {source.stop}
-      .return {res.get},
-
-    mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S -> Block#
-      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
-      .openIso initialValueSupplier = acc
-      .let[mut Var[S]] acc' = {Vars#(initialValueSupplier#)}
-      .let stopped = {Vars#[Bool]False}
-      .do {source.for(_PipelineParallelSink#[E]{
-        #(e) -> acc' := (f#(acc'.get, e)),
-        .stop -> Block#
-          .do {stopped := True}
-          .return {source.stop},
-        .pushError(info) -> stopped* ? {
-          .then -> {},
-          .else -> Error!info,
-          },
-        })}
-      .do {source.stop}
-      .return {acc'.get},
-
-    .size -> size.match{
+    mut .first: mut Opt[E] -> _First[E]#(source, _PipelineParallelSink),
+    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> _FindMap[E,R]#(source, f, _PipelineParallelSink),
+    mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S -> _Fold[S,E]#(source, acc#, f, _PipelineParallelSink),
+    .size -> size,
+    .count -> size.match{
       .some(n) -> n,
       .empty -> self.fold[Nat]({0}, {acc, _ -> acc + 1}),
       },

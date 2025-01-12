@@ -136,14 +136,14 @@ public interface Str extends base.Str_0 {
 			}
 			@Override public Void_0 step$mut(_Sink_1 sink_m$) {
 				if (this.cur >= this.end) {
-					sink_m$.stop$mut();
+					sink_m$.stopDown$mut();
 					return Void_0.$self;
 				}
 				var ch = charAtUnchecked(this.cur++);
 				sink_m$.$hash$mut(ch);
 				return Void_0.$self;
 			}
-			@Override public Void_0 stop$mut() {
+			@Override public Void_0 stopUp$mut() {
 				this.cur = size$imm();
 				return Void_0.$self;
 			}
@@ -154,7 +154,7 @@ public interface Str extends base.Str_0 {
 				for (; this.cur < end; ++this.cur) {
 					downstream_m$.$hash$mut(charAtUnchecked(this.cur));
 				}
-				downstream_m$.stop$mut();
+				downstream_m$.stopDown$mut();
 				return Void_0.$self;
 			}
 			@Override public Opt_1 split$mut() {

@@ -40,7 +40,7 @@ public final class DynamicSplitFlow {
     this.es = new ArrayDeque<>();
     this.splitResults = new ArrayDeque<>();
     this.downstream = new _Sink_1() {
-      @Override public Void_0 stop$mut() { return Void_0.$self; }
+      @Override public Void_0 stopDown$mut() { return Void_0.$self; }
       @Override public Void_0 pushError$mut(Info_0 info_m$) {
         es.add(new Error(info_m$));
         return Void_0.$self;
@@ -65,7 +65,7 @@ public final class DynamicSplitFlow {
     res.run();
     sync.arriveAndAwaitAdvance();
     flattenResults(res, downstream);
-    downstream.stop$mut();
+    downstream.stopDown$mut();
     var actualException = exception.get();
     if (actualException != null) {
       throw actualException;

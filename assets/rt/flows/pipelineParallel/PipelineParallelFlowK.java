@@ -47,8 +47,8 @@ public interface PipelineParallelFlowK extends _PipelineParallelFlow_0 {
       }
     }
 
-    @Override public Void_0 stop$mut() {
-      return original.stop$mut();
+    @Override public Void_0 stopUp$mut() {
+      return original.stopUp$mut();
     }
 
     @Override public Bool_0 isRunning$mut() {

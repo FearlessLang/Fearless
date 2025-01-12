@@ -101,7 +101,10 @@ _TerminalOps[E]: Sealed{
   mut .last: mut Opt[E] -> this.fold[mut Opt[E]]({{}}, {_, e -> Opts#e}),
   mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R],
   mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S,
-  mut .size: Nat,
+  /// Get the size of the flow if it is known. This does not consume the flow.
+  read .size: Opt[Nat],
+  /// Count the number of elements in the flow.
+  mut  .count: Nat,
 
   mut .find(predicate: read F[E, Bool]): mut Opt[E] -> this.findMap{e -> predicate#e ? {.then -> Opts#e, .else -> {}}},
   mut .first(predicate: read F[E, Bool]): mut Opt[E] -> this.find(predicate),
@@ -155,10 +158,11 @@ EmptyFlow[E]: Flow[E]{
   .any(p) -> False,
   .all(p) -> False,
   .fold(acc, _) -> acc#,
-  .size -> 0,
+  .size -> Opts#0,
+  .count -> 0,
   .unwrapOp(_) -> {
     .step(_) -> {},
-    .stop -> {},
+    .stopUp -> {},
     .isRunning -> False,
     },
   }

@@ -5,7 +5,7 @@ import base.Void_0;
 import base.flows._Sink_1;
 
 public record DelayedStopSink(_Sink_1 original) implements _Sink_1 {
-  @Override public Void_0 stop$mut() {
+  @Override public Void_0 stopDown$mut() {
     return Void_0.$self;
   }
 
@@ -18,6 +18,6 @@ public record DelayedStopSink(_Sink_1 original) implements _Sink_1 {
   }
 
   public void stop() {
-    original.stop$mut();
+    original.stopDown$mut();
   }
 }

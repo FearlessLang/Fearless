@@ -16,11 +16,11 @@ public interface SpliteratorFlowOp {
       @Override public Void_0 step$mut(_Sink_1 sink_m$) {
         if (hasStopped || !spliterator.tryAdvance(sink_m$::$hash$mut)) {
           hasStopped = true;
-          sink_m$.stop$mut();
+          sink_m$.stopDown$mut();
         }
         return Void_0.$self;
       }
-      @Override public Void_0 stop$mut() {
+      @Override public Void_0 stopUp$mut() {
         hasStopped = true;
         return Void_0.$self;
       }
@@ -29,7 +29,7 @@ public interface SpliteratorFlowOp {
       }
       @Override public Void_0 for$mut(_Sink_1 downstream_m$) {
         spliterator.forEachRemaining(downstream_m$::$hash$mut);
-        downstream_m$.stop$mut();
+        downstream_m$.stopDown$mut();
         return Void_0.$self;
       }
       @Override public Opt_1 split$mut() {
