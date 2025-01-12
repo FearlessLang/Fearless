@@ -79,8 +79,8 @@ _NonTerminalOps[E]: {
 
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
   /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
-  /// flows stop.
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
+  /// flows stop. Currently disabled, see [operators/with.fear] for more info.
+//  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
   mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
 
@@ -143,7 +143,7 @@ _FlowExtensions: {
 
 EmptyFlow[E]: Flow[E]{
   .filter(p) -> this,
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
+//  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
 
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   .map(_,_) -> this.map({_ -> Unreachable!}),

@@ -21,7 +21,7 @@ _RestrictFlowReuse: {
       .limit(n) -> Block#(_CheckFlowReuse#isTail, flow.limit(n)),
       .map(f) -> Block#(_CheckFlowReuse#isTail, flow.map(f)),
       .map(ctx, f) -> Block#(_CheckFlowReuse#isTail, flow.map(ctx, f)),
-      .with(other) -> Block#(_CheckFlowReuse#isTail, flow.with(other)),
+//      .with(other) -> Block#(_CheckFlowReuse#isTail, flow.with(other)),
       .count -> Block#(_CheckFlowReuse#isTail, flow.count),
     }},
   }

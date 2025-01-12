@@ -272,6 +272,13 @@ public interface ListK extends base.List_0 {
       return Void_0.$self;
     }
 
+    @Override public base.Opt_1 takeFirst$mut() {
+      if (inner.isEmpty()) {
+        return base.Opt_1.$self;
+      }
+      return base.Opts_0.$self.$hash$imm(inner.removeFirst());
+    }
+
     @Override public Opt_1 tryGet$imm(long i_m$) {
       if (i_m$ >= inner.size()) { return Opt_1.$self; }
       return Opts_0.$self.$hash$imm(inner.get((int) i_m$));
@@ -320,15 +327,16 @@ public interface ListK extends base.List_0 {
       return Void_0.$self;
     }
 
-    @Override public Bool_0 $equals$equals$mut(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$mut$fun(eq, other, this);
-    }
-    @Override public Bool_0 $equals$equals$read(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$mut$fun(eq, other, this);
-    }
-    @Override public Bool_0 $equals$equals$imm(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$mut$fun(eq, other, this);
-    }
+    // TODO: disabled until I fix .with in flows
+//    @Override public Bool_0 $equals$equals$mut(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$mut$fun(eq, other, this);
+//    }
+//    @Override public Bool_0 $equals$equals$read(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$mut$fun(eq, other, this);
+//    }
+//    @Override public Bool_0 $equals$equals$imm(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$mut$fun(eq, other, this);
+//    }
 
     @Override public Long size$read() {
       return (long) inner.size();
@@ -370,6 +378,10 @@ public interface ListK extends base.List_0 {
     }
 
     @Override public Void_0 addAll$mut(List_1 other_m$) {
+      throw new RuntimeException("Unreachable code");
+    }
+
+    @Override public base.Opt_1 takeFirst$mut() {
       throw new RuntimeException("Unreachable code");
     }
 
@@ -419,15 +431,16 @@ public interface ListK extends base.List_0 {
       throw new RuntimeException("Unreachable code");
     }
 
-    @Override public Bool_0 $equals$equals$mut(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$mut$fun(eq, other, this);
-    }
-    @Override public Bool_0 $equals$equals$read(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$read$fun(eq, other, this);
-    }
-    @Override public Bool_0 $equals$equals$imm(base.F_3 eq, base.List_1 other) {
-      return List_1.$equals$equals$imm$fun(eq, other, this);
-    }
+    // TODO: disabled until I fix .with in flows
+//    @Override public Bool_0 $equals$equals$mut(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$mut$fun(eq, other, this);
+//    }
+//    @Override public Bool_0 $equals$equals$read(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$read$fun(eq, other, this);
+//    }
+//    @Override public Bool_0 $equals$equals$imm(base.F_3 eq, base.List_1 other) {
+//      return List_1.$equals$equals$imm$fun(eq, other, this);
+//    }
 
     @Override public Long size$read() {
       return (long) inner.capacity();

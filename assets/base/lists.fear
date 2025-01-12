@@ -211,26 +211,29 @@ List[E]: Collection,Sealed{
   mut +(e: E): mut List[E] -> Block#(this.add(e), this),
   mut .addAll(other: mut List[E]): Void -> other.iter.for{e -> this.add(e)},
 
+  mut .takeFirst: mut Opt[E],
+
   mut .clear: Void,
 
-  mut  ==(eq: read F[E, E, Bool], other: mut List[E]): Bool ->
-    this.size == (other.size)
-    && {this.flow
-      .with(other.flow)
-      .all{ab -> eq#(ab.a, ab.b)}
-      },
-  read ==(eq: read F[read/imm E, read/imm E, Bool], other: read List[E]): Bool ->
-    this.size == (other.size)
-    && {this.flow
-      .with(other.flow)
-      .all{ab -> eq#(ab.a, ab.b)}
-      },
-  imm  ==(eq: F[imm E, imm E, Bool], other: List[E]): Bool ->
-    this.size == (other.size)
-    && {this.flow
-      .with(other.flow)
-      .all{ab -> eq#(ab.a, ab.b)}
-      },
+// TODO: disabled until I fix .with
+//  mut  ==(eq: read F[E, E, Bool], other: mut List[E]): Bool ->
+//    this.size == (other.size)
+//    && {this.flow
+//      .with(other.flow)
+//      .all{ab -> eq#(ab.a, ab.b)}
+//      },
+//  read ==(eq: read F[read/imm E, read/imm E, Bool], other: read List[E]): Bool ->
+//    this.size == (other.size)
+//    && {this.flow
+//      .with(other.flow)
+//      .all{ab -> eq#(ab.a, ab.b)}
+//      },
+//  imm  ==(eq: F[imm E, imm E, Bool], other: List[E]): Bool ->
+//    this.size == (other.size)
+//    && {this.flow
+//      .with(other.flow)
+//      .all{ab -> eq#(ab.a, ab.b)}
+//      },
 
   mut .flow: mut Flow[E] -> Block#
     .let[mut Count[Nat]] cursor = {Count.nat(0)}
