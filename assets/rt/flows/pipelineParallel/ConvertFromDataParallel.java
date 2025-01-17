@@ -41,7 +41,7 @@ class DPSource implements FlowOp_1 {
     hasStarted = true;
     Thread.ofVirtual().start(()->
       source.for$mut(new _Sink_1() {
-        @Override public Void_0 stop$mut() {
+        @Override public Void_0 stopDown$mut() {
           buffer.offer(PipelineParallelFlow.Message.Stop.INSTANCE);
           return Void_0.$self;
         }
@@ -77,14 +77,14 @@ class DPSource implements FlowOp_1 {
       throw new RuntimeException(e);
     }
     if (!isRunning) {
-      sink.stop$mut();
-      this.stop$mut();
+      sink.stopDown$mut();
+      this.stopUp$mut();
     }
     return Void_0.$self;
   }
-  @Override public Void_0 stop$mut() {
+  @Override public Void_0 stopUp$mut() {
     isRunning = false;
-    source.stop$mut();
+    source.stopUp$mut();
     return Void_0.$self;
   }
   @Override public Bool_0 isRunning$mut() {

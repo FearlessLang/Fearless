@@ -101,6 +101,9 @@ public interface Base {
     alias base.Opt as Opt,
     alias base.OptMap as OptMap,
     
+    alias base.Slots as Slots,
+    alias base.Slot as Slot,
+    
     alias base.Int as Int,
     alias base.Float as Float,
     alias base.Nat as Nat,

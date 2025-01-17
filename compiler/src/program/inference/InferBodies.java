@@ -47,7 +47,10 @@ public record InferBodies(ast.Program p) {
     var iV = InjectionVisitor.of(dec.bounds())
       .withMoreBounds(coreMeth.sig().bounds());
     var type = refiner.fixType(e, coreMeth.sig().toAstFullSig().ret());
-    var newBody = fixInferStep(iGOf(dec, coreMeth), type, 0).accept(iV);
+    ast.E newBody;try{newBody = fixInferStep(iGOf(dec, coreMeth), type, 0).accept(iV);}
+    catch (StackOverflowError err) {
+      throw Fail.inferFailed(e.toString()).pos(e.pos());
+    }
     return coreMeth.withBody(Optional.of(newBody));
   }
 

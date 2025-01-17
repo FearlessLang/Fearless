@@ -1738,4 +1738,15 @@ public class TestJavaProgram {
     
     Test: Main{sys -> sys.io.println(BadMutation# .str)}
     """, Base.mutBaseAliases);}
+
+  @Test void isEmptyIsSomeOpt() {ok(new Res("Empty: Works\nSome: Works Hello", "", 0), """
+    package test
+    Test: Main{sys -> Block#
+      .do {Opt[Str].ifEmpty{sys.io.println("Empty: Works")}}
+      .do {Opts#("Hello").ifEmpty{sys.io.println("Empty: Broken")}}
+      .do {Opt[Str].ifSome{x -> sys.io.println("Some: Broken " + x)}}
+      .do {Opts#[Str]("Hello").ifSome{x -> sys.io.println("Some: Works " + x)}}
+      .return {{}}
+    }
+    """, Base.mutBaseAliases);}
 }

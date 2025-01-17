@@ -79,8 +79,8 @@ _NonTerminalOps[E]: {
 
   mut .flatMap[R](f: read F[E, mut Flow[R]]): mut Flow[R],
   /// Combine this flow with another flow, producing a flow of pairs. The resulting flow will stop when either of the source
-  /// flows stop.
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
+  /// flows stop. Currently disabled, see [operators/with.fear] for more info.
+//  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]],
   mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R],
   mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R],
 
@@ -101,7 +101,10 @@ _TerminalOps[E]: Sealed{
   mut .last: mut Opt[E] -> this.fold[mut Opt[E]]({{}}, {_, e -> Opts#e}),
   mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R],
   mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S,
-  mut .size: Nat,
+  /// Get the size of the flow if it is known. This does not consume the flow.
+  read .size: Opt[Nat],
+  /// Count the number of elements in the flow.
+  mut  .count: Nat,
 
   mut .find(predicate: read F[E, Bool]): mut Opt[E] -> this.findMap{e -> predicate#e ? {.then -> Opts#e, .else -> {}}},
   mut .first(predicate: read F[E, Bool]): mut Opt[E] -> this.find(predicate),
@@ -140,7 +143,7 @@ _FlowExtensions: {
 
 EmptyFlow[E]: Flow[E]{
   .filter(p) -> this,
-  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
+//  mut .with[EB](other: mut Flow[EB]): mut Flow[mut Pair[E,EB]] -> mut EmptyFlow[mut Pair[E,EB]],
 
   mut .map[R](f: read F[E, R]): mut Flow[R] -> mut EmptyFlow[R],
   .map(_,_) -> this.map({_ -> Unreachable!}),
@@ -155,10 +158,11 @@ EmptyFlow[E]: Flow[E]{
   .any(p) -> False,
   .all(p) -> False,
   .fold(acc, _) -> acc#,
-  .size -> 0,
+  .size -> Opts#0,
+  .count -> 0,
   .unwrapOp(_) -> {
     .step(_) -> {},
-    .stop -> {},
+    .stopUp -> {},
     .isRunning -> False,
     },
   }

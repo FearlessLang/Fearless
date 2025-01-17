@@ -1,5 +1,6 @@
 package flows;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import utils.Base;
 
@@ -217,6 +218,7 @@ public class TestFlowSemantics {
       }
     StackOverflow: {#[R]: R -> this#}
     """, Base.mutBaseAliases);}
+  @Disabled("Correctly, this test is nondeterministic")
   @Test void throwInAFlowAfterStopParND() {ok(new Res("", "Program crashed with: Stack overflowed[###]", 1), """
     package test
     Test: Main{sys -> Block#

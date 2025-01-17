@@ -25,7 +25,7 @@ public final class BufferSink implements _Sink_1 {
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      original.stop$mut();
+      original.stopDown$mut();
     }
     @Override public void run() {
       while (true) {
@@ -85,7 +85,7 @@ public final class BufferSink implements _Sink_1 {
     flusher.toFlush.add(new FlusherElement.Sink(this));
   }
 
-  @Override public Void_0 stop$mut() {
+  @Override public Void_0 stopDown$mut() {
 //    return original.stop$mut();
     return Void_0.$self;
   }

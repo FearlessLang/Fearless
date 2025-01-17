@@ -4,70 +4,25 @@ _SeqFlow: _FlowFactory{
   .fromOp[E](source: mut FlowOp[E], size: Opt[Nat]): mut Flow[E] -> _RestrictFlowReuse#{'self
     .unwrapOp(_) -> source,
     // non-terminals
-    .filter(p) -> this.fromOp(_Filter#(_Sink, source, p), {}),
+    .filter(p) -> this.fromOp(_Filter#({s->s}, source, p), {}),
 
-    .map(f) -> this.fromOp(_Map#(_Sink, source, f), size),
-    .map(ctx, f) -> this.fromOp(_Map#(_Sink, source, ctx, f), size),
+    .map(f) -> this.fromOp(_Map#({s->s}, source, f), size),
+    .map(ctx, f) -> this.fromOp(_Map#({s->s}, source, ctx, f), size),
 
-    .flatMap(f) -> this.fromOp(_FlatMap#(_Sink, source, f), {}),
+    .flatMap(f) -> this.fromOp(_FlatMap#({s->s}, source, f), {}),
     mut .actor[S,R](state: iso S, f: read ActorImpl[S,E,R]): mut Flow[imm R] ->
-      this.fromOp(_Actor#[S,E,R](_Sink, source, state, f), {}),
+      this.fromOp(_Actor#[S,E,R]({s->s}, source, state, f), {}),
     mut .actorMut[S,R](state: iso S, f: read ActorImplMut[S,E,R]): mut Flow[R] ->
-      this.fromOp(_Actor.anyRet[S,E,R](_Sink, source, state, f), {}),
-    .limit(n) -> this.fromOp(_Limit#(_Sink, source, n), _LimitSize#(n, size)),
-    .with(other) -> this.fromOp(_With#(_Sink, source, other.unwrapOp(mut _UnwrapFlowToken)), {}),
+      this.fromOp(_Actor.anyRet[S,E,R]({s->s}, source, state, f), {}),
+    .limit(n) -> this.fromOp(_Limit#({s->s}, source, n), _LimitSize#(n, size)),
+//    .with(other) -> this.fromOp(_With#({s->s}, source, other.unwrapOp(mut _UnwrapFlowToken)), {}),
 
     // terminals
-    mut .first: mut Opt[E] -> Block#
-      .let[mut Var[mut Opt[E]]] res = {Vars#mut Opt[E]}
-      .do {source.for(mut _Sink[E]{'runner
-        .stop -> source.stop,
-        .pushError(info) -> Error!info,
-        #(e) -> res.get.isEmpty ? {
-          .then -> Block#
-            .do {res := (Opts#e)}
-            .return {runner.stop},
-          .else -> {},
-          },
-        })}
-      .do {source.stop}
-      .return {res.get},
-
-    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> Block#
-      .let[mut Var[mut Opt[R]]] res = {Vars#mut Opt[R]}
-      .do {source.for(mut _Sink[E]{'runner
-        .stop -> source.stop,
-        .pushError(info) -> Error!info,
-        #(e) -> res.get.isEmpty ? {
-          .then -> f#e.match{
-            .some(e') -> Block#
-              .do{res := (Opts#e')}
-              .return {runner.stop},
-            .empty -> {},
-            },
-          .else -> {},
-          },
-        })}
-      .do {source.stop}
-      .return {res.get},
-
-    mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S -> Block#
-      .if {source.isFinite.not} .error {TerminalOnInfiniteError#}
-      .openIso initialValueSupplier = acc
-      .let[mut Var[S]] acc' = {Vars#(initialValueSupplier#)}
-      .let stopped = {Vars#[Bool]False}
-      .do {source.for(mut _Sink[E]{
-        .stop -> stopped := True,
-        .pushError(info) -> stopped* ? {
-          .then -> {},
-          .else -> Error!info,
-          },
-        #(e) -> acc' := (f#(acc'.get, e)),
-        })}
-      .do {source.stop}
-      .return {acc'.get},
-
-    .size -> size.match{
+    mut .first: mut Opt[E] -> _First[E]#(source, {s->s}),
+    mut .findMap[R](f: read F[E, mut Opt[R]]): mut Opt[R] -> _FindMap[E,R]#(source, f, {s->s}),
+    mut .fold[S](acc: iso MF[S], f: read F[S,E,S]): S -> _Fold[S,E]#(source, acc#, f, {s->s}),
+    .size -> size,
+    .count -> size.match{
       .some(n) -> n,
       .empty -> self.fold[Nat]({0}, {acc, _ -> acc + 1}),
       },
@@ -77,14 +32,14 @@ _SeqFlow: _FlowFactory{
     .let[mut Var[mut Opt[E]]] seq = { Vars#(Opts#e) }
     .let[mut FlowOp[E]] source = {{'self
       .isRunning -> seq.get.isSome,
-      .stop -> seq := {},
+      .stopUp -> seq := {},
       .step(downstream) -> seq.swap(mut Opt[E]).match{
-        .some(x) -> downstream#x,
-        .empty -> Block#(downstream.stop, self.stop),
+        .some(x) -> Block#(downstream#x, self.stopUp, downstream.stopDown),
+        .empty -> {},
         },
       .for(downstream) -> seq.swap(mut Opt[E]).match{
-        .some(x) -> Block#(downstream#x, downstream.stop, self.stop),
-        .empty -> Block#(downstream.stop, self.stop),
+        .some(x) -> Block#(downstream#x, self.stopUp, downstream.stopDown),
+        .empty -> {},
         },
       }}
     .return {this.fromOp(source, Opts#1)},

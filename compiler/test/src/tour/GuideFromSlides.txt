@@ -1332,13 +1332,13 @@ _Sink[T]: {
 
 
 _Filter: {
-  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
+  #[E](sinkDecorator: _Sink, upstream: mut FlowOp[E], predicate: read F[E, Bool]): mut FlowOp[E] -> Block#
     .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
+          sink := (Opts#(sinkDecorator#[E]{
             .stop -> downstream.stop,
             #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},
             })),
@@ -1350,13 +1350,13 @@ _Filter: {
       }}
   }
 _Map: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
+  #[E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], f: read F[E, R]): mut FlowOp[R] -> Block#
     .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return  {{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
+          sink := (Opts#(sinkDecorator#[E]{
             .stop -> downstream.stop,
             #(e) -> downstream#(f#e),
             })),
@@ -1368,14 +1368,14 @@ _Map: {
     }}
   }
 _FlatMap: {
-  #[E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
+  #[E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], f: read F[E, mut Flow[R]]): mut FlowOp[R] -> Block#
     .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
     .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return{{'op
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#(
-          sink := (Opts#(sinkFactory#[E]{
+          sink := (Opts#(sinkDecorator#[E]{
             .stop -> Block#(isRunning := False, downstream.stop),
             #(e) -> f#e.list.iter.filter{_ -> op.isRunning}.for{e' -> downstream#e'},
             })),
@@ -1548,7 +1548,7 @@ _SeqFlow: {
 package base.flows
 
 _Limit: {
-  #[E](sinkFactory: _Sink, upstream: mut FlowOp[E], n: Nat): mut FlowOp[E] -> Block#
+  #[E](sinkDecorator: _Sink, upstream: mut FlowOp[E], n: Nat): mut FlowOp[E] -> Block#
     .let[mut Count[Nat]] remaining = {Count.nat(n)}
     .let[mut Ref[mut Opt[mut _Sink[E]]]] sink = {Ref#{}}
     .return {{ 'runner
@@ -1559,7 +1559,7 @@ _Limit: {
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#
           .if {n == 0u} .return {runner.stop}
-          .do {sink := (Opts#(sinkFactory#[E]{
+          .do {sink := (Opts#(sinkDecorator#[E]{
             .stop -> downstream.stop,
             #(e) -> remaining* == 0u || (remaining-- == 0u) ? {
               .then -> runner.stop,
@@ -1572,14 +1572,14 @@ _Limit: {
   }
 
 _Actor: {
-  #[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] ->
-    _InternalActor#[S,E,R](sinkFactory, upstream, state, f, onComplete),
+  #[S,E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] ->
+    _InternalActor#[S,E,R](sinkDecorator, upstream, state, f, onComplete),
 
-  .anyRet[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] ->
-    _InternalActor.anyRet[S,E,R](sinkFactory, upstream, state, f, onComplete),
+  .anyRet[S,E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], state: iso S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] ->
+    _InternalActor.anyRet[S,E,R](sinkDecorator, upstream, state, f, onComplete),
   }
 _InternalActor: {
-  #[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] -> Block#
+  #[S,E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], state: S, f: read ActorImpl[S,E,R], onComplete: mut Consumer[S]): mut FlowOp[imm R] -> Block#
     .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
     .return {{'op
       .stop -> op.isRunning ? {
@@ -1587,7 +1587,7 @@ _InternalActor: {
        .else -> {}
        },
       .isRunning -> isRunning*,
-      .step(downstream) -> upstream.step(sinkFactory#[E]{
+      .step(downstream) -> upstream.step(sinkDecorator#[E]{
         .stop -> Block#(downstream.stop, op.stop),
         #(e) -> f#(downstream, state, e).match{
           .continue -> {},
@@ -1596,7 +1596,7 @@ _InternalActor: {
         }),
       }},
 
-  .anyRet[S,E,R](sinkFactory: _Sink, upstream: mut FlowOp[E], state: mut S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] -> Block#
+  .anyRet[S,E,R](sinkDecorator: _Sink, upstream: mut FlowOp[E], state: mut S, f: read ActorImplMut[S,E,R], onComplete: mut Consumer[mut S]): mut FlowOp[R] -> Block#
     .let[mut Ref[Bool]] isRunning = {Ref#[Bool]True}
     .return {{'op
       .stop -> op.isRunning ? {
@@ -1604,7 +1604,7 @@ _InternalActor: {
        .else -> {}
        },
       .isRunning -> isRunning*,
-      .step(downstream) -> upstream.step(sinkFactory#[E]{
+      .step(downstream) -> upstream.step(sinkDecorator#[E]{
         .stop -> Block#(downstream.stop, op.stop),
         #(e) -> f#(downstream, state, e).match{
           .continue -> {},

@@ -39,7 +39,11 @@ alias base.Vars as Vars,
 alias base.Count as Count,
 alias base.VarImm as VarImm,
 
+alias base.Opts as Opts,
 alias base.Opt as Opt,
+
+alias base.Slots as Slots,
+alias base.Slot as Slot,
 
 alias base.Int as Int,
 alias base.Float as Float,
