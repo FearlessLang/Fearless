@@ -546,13 +546,13 @@ public class Ex17FlowsTest {
     package test
     Student: {.name: Str, .age: Nat, .grades: LList[Grade]}
     Grade: {.assessment: Str, .score: Float}
-    Stats: {.avg: Float, .n: Float}
+    Stats: {.avg: Float -> 0.0, .n: Float -> 0.0}
     RollingAvg: {#(students: LList[Student]): Str ->
       students.flow
         .flatMap{s -> s.grades.flow}
         .map{g -> g.score}
-        .scan[Stats](
-          {.avg -> 0.0, .n -> 0.0},
+        .scan(
+          Stats,
           {acc, n -> Stats{
             .avg -> (acc.avg * (acc.n) + n) / (acc.n + 1.0),
             .n -> acc.n + 1.0
