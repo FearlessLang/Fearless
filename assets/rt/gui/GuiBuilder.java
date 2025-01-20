@@ -1,5 +1,6 @@
 package rt.gui;
 
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.event.KeyEvent;
@@ -36,8 +37,10 @@ public class GuiBuilder implements GuiBuilder_0{
   }
   @Override
   public GuiBuilder_0 flex$mut(MF_2 gb_m$) {
-    // TODO Auto-generated method stub
-    return null;
+    GuiBuilder flowBuilder = new GuiBuilder(new FlowLayout());
+    gb_m$.$hash$mut(flowBuilder);
+    panel.add(flowBuilder.panel);
+    return this;
   }
 
   @Override
