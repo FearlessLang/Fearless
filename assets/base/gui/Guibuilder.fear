@@ -9,6 +9,7 @@ package base.gui
     alias base.MF as MF,
     alias base.Main as Main,
     alias base.Block as Block,
+    alias base.Nat as Nat,
 
 GuiBuilder: {
   mut .build(title: Str): mut GuiEvents,
@@ -16,15 +17,19 @@ GuiBuilder: {
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
   mut .canvas(height: Int, width: Int, gb: mut GraphicBuilder, // change to Nat
      slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
+  mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
+Label: {}
 HasEnable:{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
 }
-
+Actionable:{
+  mut .addActionListener(listener: MF[Void]) :Void,
+}
 GraphicBuilder:{
   mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,
   mut .color(r: Int, g: Int, b: Int): GraphicBuilder,
@@ -50,12 +55,6 @@ GuiEvents:{
  // mut .start(title: Str) :mut GuiEvents ->this,
   mut .stop : Void,
 }
-
-Example:Main {sys -> Block#
-      .let io = {UnrestrictedIO#sys}
-      .return {io.println("Hello, World!")}
-      }
-    //prints Hello, World!
 
 Image:{}
 Graphic:{}

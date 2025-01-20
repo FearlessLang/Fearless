@@ -71,9 +71,17 @@ public class GuiBuilder implements GuiBuilder_0{
   @Override
   public GuiBuilder_0 button$mut(Str label_m$, MF_1 f_m$, MF_2 slot_m$) {
     Button b =new Button(Str.toJavaStr(label_m$.utf8()));
-    b.addActionListener(f_m$);
+    b.addActionListener$mut(f_m$);
     slot_m$.$hash$mut(b);
     panel.add(b.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 label$mut(Str label_m$, MF_2 slot_m$) {
+    Label l = new Label(Str.toJavaStr(label_m$.utf8()));
+    slot_m$.$hash$mut(l);
+    panel.add(l.getImpl());
     return this;
   }
 

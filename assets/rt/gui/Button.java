@@ -27,9 +27,9 @@ public class Button implements Button_0{
     return button.isEnabled()? True_0.$self: False_0.$self; 
   }
   
-  public Button addActionListener(MF_1 listener) {
+  public Void_0 addActionListener$mut(MF_1 listener) {
     button.addActionListener(listenere -> listener.$hash$mut());
-    return this;
+    return Void_0.$self;
   }
   
   public JComponent getImpl() {
