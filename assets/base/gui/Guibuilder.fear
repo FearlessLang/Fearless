@@ -1,0 +1,61 @@
+package base.gui
+    alias base.Str as Str,
+    alias base.Int as Int,
+    alias base.Float as Float,
+    alias base.List as List,
+    alias base.Bool as Bool,
+    alias base.Void as Void,
+    alias base.caps.UnrestrictedIO as UnrestrictedIO,
+    alias base.MF as MF,
+    alias base.Main as Main,
+    alias base.Block as Block,
+
+GuiBuilder: {
+  mut .build(title: Str): mut GuiEvents,
+  mut .button(label: Str, f: mut MF[Void] ,
+     slot: mut MF[mut Button,Void]): mut GuiBuilder,
+  mut .canvas(height: Int, width: Int, gb: mut GraphicBuilder, // change to Nat
+     slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
+  mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+}
+Button: HasEnable {}
+Canvas:{}
+HasEnable:{
+ read .enable : Bool,
+ mut .enable(b : Bool) :Void,
+}
+
+GraphicBuilder:{
+  mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,
+  mut .color(r: Int, g: Int, b: Int): GraphicBuilder,
+  mut .image(x: Int, y: Int, width: Int, height: Int, img: Image):
+   mut GraphicBuilder,
+  mut .rotate(theta: Float): mut GraphicBuilder,
+  mut .translate(tx: Float, ty: Float): mut GraphicBuilder,
+  mut .scale(sx: Float, sy: Float): mut GraphicBuilder,
+  mut .stroke(width: Float): mut GraphicBuilder,
+  mut .dashedStroke(width: Float, dashPattern: List[Float],
+     dashPhase: Float): mut GraphicBuilder,
+  mut .dottedStroke(width: Float, dotLength: Float,
+     gapLength: Float): mut GraphicBuilder,
+  mut .gapLength(name: Str, style: Int, size: Int): mut GraphicBuilder,
+  mut .drawString(text: Str, x: Int, y: Int): mut GraphicBuilder,
+  mut .rect(x: Int, y: Int, width: Int,
+     height: Int, fill: Bool): mut GraphicBuilder,
+  mut .oval(x: Int, y: Int, width: Int,
+     height: Int, fill: Bool): mut GraphicBuilder,
+  mut .build(g: Graphic): mut GraphicBuilder,
+}
+GuiEvents:{
+ // mut .start(title: Str) :mut GuiEvents ->this,
+  mut .stop : Void,
+}
+
+Example:Main {sys -> Block#
+      .let io = {UnrestrictedIO#sys}
+      .return {io.println("Hello, World!")}
+      }
+    //prints Hello, World!
+
+Image:{}
+Graphic:{}
