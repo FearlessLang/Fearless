@@ -9,8 +9,8 @@ public final class VPF {
   private static ExecutorService executor;
   private static volatile boolean heartbeat = true;
   private static final AtomicLong running = new AtomicLong(0);
-  private static final ScheduledExecutorService heartbeatSideEffectsThread = Executors.newSingleThreadScheduledExecutor();
-  private static final ScheduledExecutorService heartbeatThread = Executors.newSingleThreadScheduledExecutor();
+  private static ScheduledExecutorService heartbeatSideEffectsThread;
+  private static ScheduledExecutorService heartbeatThread;
   private static ScheduledFuture<?> heart;
   private static long HEARTBEAT_INTERVAL;
   private static boolean heartbeatEffectsEnabled;
@@ -19,6 +19,8 @@ public final class VPF {
   public static Runnable start(long heartbeatInterval, boolean enableHBEffects) {
     assert running.get() == 0 : running.get();
     VPF.executor = Executors.newVirtualThreadPerTaskExecutor();
+    heartbeatThread = Executors.newSingleThreadScheduledExecutor();
+    heartbeatSideEffectsThread = Executors.newSingleThreadScheduledExecutor();
     HEARTBEAT_INTERVAL = heartbeatInterval;
     heartbeatEffectsEnabled = enableHBEffects;
 
