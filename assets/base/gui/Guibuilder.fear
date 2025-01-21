@@ -25,6 +25,8 @@ GuiBuilder: {
   mut .passwordField(defaultPw: Str, f: mut MF[Void],
   	 slot: mut MF[mut PasswordField,Void]): mut GuiBuilder,
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
+  mut .radioButton(label: Str, f: mut MF[Void],
+  	 slot: mut MF[mut RadioButton,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
@@ -33,6 +35,8 @@ CheckBox: HasEnable{read .isSelected : Bool,}
 ComboBox: HasEnable{}
 Label: {}
 PasswordField: HasEnable{}
+RadioButton: HasEnable{
+  read .isSelected : Bool,}
 HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,

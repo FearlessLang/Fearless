@@ -126,4 +126,13 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
   }
 
+  @Override
+  public GuiBuilder_0 radioButton$mut(Str label_m$, MF_1 f_m$, MF_2 slot_m$) {
+    RadioButton r =new RadioButton(Str.toJavaStr(label_m$.utf8()));
+    r.addActionListener$mut(f_m$);
+    slot_m$.$hash$mut(r);
+    panel.add(r.getImpl());
+    return this;
+  }
+
 }
