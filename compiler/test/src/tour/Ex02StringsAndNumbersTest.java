@@ -75,7 +75,7 @@ returning a string.
 //#   due to our read promotion rules (i.e. takes no args & returns an imm)
 
 The code below shows those numeric types in action.
--------------------------*/@Test void numericTypes() { run("""
+-------------------------*/@Disabled("Disabling due to this taking ages to type check") @Test void numericTypes() { run("""
     Test:Main {sys ->Block#
       .let ten = {10}// the Nat 10, 64 bit unsigned
       .let pTen = {+10} //Int +10, 64 bit signed

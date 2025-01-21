@@ -213,6 +213,14 @@ List[E]: Collection,Sealed{
 
   mut .takeFirst: mut Opt[E],
 
+  read .as[R:imm](f: mut MF[read/imm E, R]): List[R] -> Block#
+    .let[mut IsoPod[iso List[R]]] res = {IsoPod#(List.withCapacity(this.size))}
+    .do {this.iter
+      .map{e -> f#e}
+      .for{e -> res.mutate{l -> l.add(e)}!}
+      }
+    .return {res!},
+
   mut .clear: Void,
 
 // TODO: disabled until I fix .with
@@ -336,6 +344,7 @@ List[E]: Collection,Sealed{
     .var -> Count.nat(0),
     .in(cursor) -> { .next -> this.tryGet(cursor.update{c -> c + 1}) }
     },
+  read .subList(from: Nat, to: Nat): read ListView[E] -> ListViews.subList[E](this, from, to),
   }
 
 // Right now this is invalid if the list gets mutated for any reason, Could Repr help?
@@ -346,6 +355,17 @@ ListView[E]: List[E]{
   read .tryExpose(list: mut List[E], i: Nat): mut Opt[E],
   }
 ListViews: {
+  .id[E](list: read List[E]): read ListView[E] -> {
+    .inner -> list,
+    .size -> list.size,
+    .isEmpty -> list.isEmpty,
+    .expose(rawList, i) -> rawList.get(i),
+    .tryExpose(rawList, i) -> rawList.tryGet(i),
+    .get(i) -> list.get(i),
+    read .tryGet(i: Nat): mut Opt[read/imm E] -> list.tryGet(i),
+    imm  .tryGet(i: Nat): mut Opt[imm E] -> list.tryGet(i),
+    },
+
   .subList[E](list: read List[E], from: Nat, to: Nat): read ListView[E] -> Block#
     .assert({from <= to}, "Invalid range for the list proxy, "+(from.str)+" is greater than "+(to.str))
     .assert({to <= (list.size)}, "Invalid range for the list proxy, "+(to.str)+" is greater than the list size ("+(list.size.str)+")")

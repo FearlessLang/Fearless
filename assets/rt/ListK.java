@@ -327,6 +327,13 @@ public interface ListK extends base.List_0 {
       return Void_0.$self;
     }
 
+    @Override public base.ListView_1 subList$read(long from, long to) {
+      return List_1.subList$read$fun(from, to, this);
+    }
+    @Override public base.List_1 as$read(base.MF_2 f) {
+      return List_1.as$read$fun(f, this);
+    }
+
     // TODO: disabled until I fix .with in flows
 //    @Override public Bool_0 $equals$equals$mut(base.F_3 eq, base.List_1 other) {
 //      return List_1.$equals$equals$mut$fun(eq, other, this);
@@ -429,6 +436,14 @@ public interface ListK extends base.List_0 {
 
     @Override public Void_0 clear$mut() {
       throw new RuntimeException("Unreachable code");
+    }
+
+    @Override public base.ListView_1 subList$read(long from, long to) {
+      return List_1.subList$read$fun(from, to, this);
+    }
+
+    @Override public base.List_1 as$read(base.MF_2 f) {
+      return List_1.as$read$fun(f, this);
     }
 
     // TODO: disabled until I fix .with in flows

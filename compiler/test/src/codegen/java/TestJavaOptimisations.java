@@ -119,8 +119,8 @@ public class TestJavaOptimisations {
     package test;
     public interface Test_0 extends base.Main_0{
     Test_0 $self = new Test_0Impl();
-    base.Void_0 $hash$imm(base.caps.System_0 fear0$_m$);
-    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear0$_m$, test.Test_0 $this) {
+    base.Void_0 $hash$imm(base.caps.System_0 fear[###]$_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 fear[###]$_m$, test.Test_0 $this) {
       var n_m$ = 5L;
     var n2_m$ = 10L;
     var n3_m$ = base.Vars_0.$self.$hash$imm(15L);
@@ -300,5 +300,32 @@ public class TestJavaOptimisations {
       .map{ch -> ch == "H" ? {.then -> "J", .else -> ch}}
       .join ""
       )}
+    """, Base.mutBaseAliases);}
+
+  @Test void asIdFn() {ok("""
+    package test;
+    public interface Test_0 extends base.Main_0{
+    Test_0 $self = new Test_0Impl();
+    base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
+      return base.Block_0.$self.$hash$imm(((base.List_1)rt.ListK.$self.$hash$imm()));
+    }
+    }
+    """, "/test/Test_0.java", """
+    package test
+    Test: Main{sys -> Block#(List#[Nat].as{x->x})}
+    """, Base.mutBaseAliases);}
+  @Test void asNonIdFn() {ok("""
+    package test;
+    public interface Test_0 extends base.Main_0{
+    Test_0 $self = new Test_0Impl();
+    base.Void_0 $hash$imm(base.caps.System_0 sys_m$);
+    static base.Void_0 $hash$imm$fun(base.caps.System_0 sys_m$, test.Test_0 $this) {
+      return base.Block_0.$self.$hash$imm(((base.List_1)rt.ListK.$self.$hash$imm()).as$read(test.Fear[###]$_0.$self));
+    }
+    }
+    """, "/test/Test_0.java", """
+    package test
+    Test: Main{sys -> Block#(List#[Nat].as{x->x * 2})}
     """, Base.mutBaseAliases);}
 }

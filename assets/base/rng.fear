@@ -11,13 +11,16 @@ alias base.Sealed as Sealed,
 FRandom: F[Nat, mut Random]{seed -> Block#
   .if {seed == 0} .error {Infos.msg "Seed may not be zero"}
   .var[Nat] prev = {seed}
-  .return {{
+  .return {{'self
     .nat -> Block#
       .do {prev := ((prev.get) * 6364136223846793005 + 1 .shiftRight 33)}
       .return {prev.get},
+
+    .self -> self,
+    .iso -> FRandom#(prev.get),
     }}
   }
-Random: {
+Random: base.ToIso[Random]{
   /// Generate a random number between zero and 2147483647 (2^32)
   mut .nat: Nat,
   /// Generate a random float in the range. This is a simple approach, and may have some bias. A more
@@ -28,4 +31,5 @@ Random: {
 
   /// Generate a random number between zero and one (inclusive)
   mut .float: Float -> this.nat.float / 2147483647.0,
+  mut .iso: iso Random,
   }

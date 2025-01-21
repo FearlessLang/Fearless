@@ -35,6 +35,9 @@ public class OptimisationBuilder {
   public OptimisationBuilder withVPFOptimisation() {
     return withOptimisation(new VPFOptimisation());
   }
+  public OptimisationBuilder withAsIdFnOptimisation() {
+    return withOptimisation(new AsIdFnOptimisation(magic));
+  }
   public OptimisationBuilder withOptimisation(MIRCloneVisitor optimisation) {
     passes.add(optimisation);
     return this;

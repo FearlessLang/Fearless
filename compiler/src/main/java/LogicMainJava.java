@@ -28,6 +28,7 @@ public interface LogicMainJava extends FullLogicMain<JavaProgram> {
     var mir = new MIRInjectionVisitor(cachedPkg(),program, resolvedCalls).visitProgram();
     var magic = new JavaMagicImpls(null, null, mir.p());
     return new OptimisationBuilder(magic)
+      .withAsIdFnOptimisation()
       .withBoolIfOptimisation()
       .withBlockOptimisation()
       .withVPFOptimisation()
