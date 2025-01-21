@@ -161,7 +161,9 @@ interface ELambdaTypeSystem extends ETypeSystem{
 //    }
 
     var isoPromotion = mOkIsoPromotion(selfName, selfT, litT, m, sig);
-    if(ret.mdf().isIso() || isoPromotion.isEmpty()){ return FailOr.opt(isoPromotion); }
+    if(ret.mdf().isIso() || isoPromotion.isEmpty()){
+      return FailOr.opt(isoPromotion);
+    }
 
     var selfTRes = gg.get(selfName);
     if (!selfTRes.isRes()) { return selfTRes.cast(); }

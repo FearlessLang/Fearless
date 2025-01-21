@@ -15,8 +15,9 @@ public class TypeSystemCache {
   record LambdaRef(Program p, E.Lambda.LambdaId id, Mdf mdf) {}
   private final Map<LambdaRef, FailOr<T>> litTCache = new WeakHashMap<>();
   public FailOr<T> litT(Program p, E.Lambda lit, Supplier<FailOr<T>> compute) {
-    var id = new LambdaRef(p, lit.id(), lit.mdf());
-    return computeIfNotCached(id, litTCache, compute);
+//    var id = new LambdaRef(p, lit.id(), lit.mdf());
+//    return computeIfNotCached(id, litTCache, compute);
+    return compute.get();
   }
 
   private <K,R> R computeIfNotCached(K key, Map<K, R> cache, Supplier<R> compute) {
