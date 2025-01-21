@@ -376,7 +376,7 @@ Many maps are on Str or Int types
       .let slot = {Slots#[Nat]}
       .do {io.println(slot.getOrFill{1337}.str)}
       .do {io.println(slot.getOrFill{1234}.str)}
-      .do {io.println(slot.match{
+      .do {io.println(slot.get{
         .some(x) -> x * 2,
         .empty -> 0,
         }.str)}

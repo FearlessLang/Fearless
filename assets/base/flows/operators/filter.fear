@@ -12,6 +12,7 @@ _Filter: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#(sinkDecorator, right, predicate)},
       .canSplit -> upstream.canSplit,
+      .isFinite -> upstream.isFinite,
       }},
   .impl[E](downstream: mut _Sink[E], predicate: read F[E, Bool], sinkDecorator: _SinkDecorator): mut _Sink[E] -> sinkDecorator#{
     #(e) -> predicate#e ? {.then -> downstream#e, .else -> {}},

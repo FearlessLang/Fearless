@@ -2,7 +2,7 @@ package base
 Slots: {#[E]: mut Slot[E] -> Block#
   .var[mut Opt[E]] e = {{}}
   .return {mut Slot[E]: {'slot
-    mut .match(m: mut SlotMatch[E]): E -> e.get.match{
+    mut .get(m: mut SlotMatch[E]): E -> e.get.match{
       .some(x) -> slot.update(m.some x),
       .empty -> slot.update(m.empty),
       },

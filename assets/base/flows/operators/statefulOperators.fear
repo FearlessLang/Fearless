@@ -57,6 +57,7 @@ _InternalActor: {
        .else -> {}
        },
       .isRunning -> isRunning*,
+      .isFinite -> upstream.isFinite,
       .step(downstream) -> sink.get.match{
         .some(sink') -> upstream.step(sink'),
         .empty -> Block#

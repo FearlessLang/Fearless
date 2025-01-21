@@ -120,6 +120,10 @@ public final class DataParallelFlow implements Flow_1 {
     return _NonTerminalOps_1.mapFilter$mut$fun(f_m$, this);
   }
 
+  public Flow_1 assumeFinite$mut() {
+    return $this.fromOp$imm(_AssumeFinite_1.$self.$hash$read(source_m$), this.size_m$);
+  }
+
   public Flow_1 peek$mut(F_2 f_m$) {
     return _NonTerminalOps_1.peek$mut$fun(f_m$, this);
   }

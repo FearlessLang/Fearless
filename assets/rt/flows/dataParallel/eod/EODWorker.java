@@ -37,10 +37,6 @@ public final class EODWorker implements Runnable {
   }
 
   @Override public void run() {
-    impl();
-  }
-
-  public void impl() {
     try {
       source.for$mut(downstream);
     } catch (FearlessError err) {

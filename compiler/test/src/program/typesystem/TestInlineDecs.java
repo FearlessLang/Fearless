@@ -304,4 +304,37 @@ public class TestInlineDecs {
     package test
     A: {.m[X:mut,read]: mut Foo[mut X] -> mut Foo[X:mut,read]: {}}
     """);}
+
+  @Test void diffOrderFunnelling() {ok("""
+    package test
+    Foo: {.m[X:imm,Y:imm](x: X, y: Y): Box[X,Y] ->
+      Anon[Y:imm, X:imm]: Box[X,Y]{.x -> x, .y -> y}
+      }
+    Box[X:imm,Y:imm]: {.x: X, .y: Y}
+    """);}
+  @Test void diffOrderFunnellingMustOnlyUseInScope() {fail("""
+    In position [###]/Dummy0.fear:4:22
+    [E28 undefinedName]
+    The identifier "Z" is undefined or cannot be captured.
+    """, """
+    package test
+    Foo: {.m[X:imm,Y:imm](x: X, y: Y): Box[X,Y] ->
+      Box[X,Y]{'b
+        .x -> x, .y -> y, .z: Z -> b.z}
+      }
+    Box[X:imm,Y:imm]: {.x: X, .y: Y}
+    """);}
+
+  @Test void extraFunnelling() {fail("""
+    In position [###]/Dummy0.fear:4:22
+    [E28 undefinedName]
+    The identifier "Z" is undefined or cannot be captured.
+    """, """
+    package test
+    Foo: {.m[X:imm,Y:imm](x: X, y: Y): Box[X,Y] ->
+      Anon[Y:imm, X:imm, Z:imm]: Box[X,Y]{'b
+        .x -> x, .y -> y, .z: Z -> b.z}
+      }
+    Box[X:imm,Y:imm]: {.x: X, .y: Y}
+    """);}
 }

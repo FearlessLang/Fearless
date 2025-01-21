@@ -83,6 +83,7 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName(">=", 1))) { return "("+instantiate().orElseThrow()+">="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("<=", 1))) { return "("+instantiate().orElseThrow()+"<="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("==", 1))) { return "("+instantiate().orElseThrow()+"=="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("!=", 1))) { return "("+instantiate().orElseThrow()+"!="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName(".assertEq", 1))) {
           return "base._IntAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+", null)";
         }
@@ -153,6 +154,7 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName(">=", 1))) { return "(Long.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")>=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("<=", 1))) { return "(Long.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")<=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("==", 1))) { return "(Long.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")==0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("!=", 1))) { return "(Long.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")!=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName(".assertEq", 1))) {
           return "base._NatAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+", null)";
         }
@@ -212,6 +214,9 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName("<=", 1))) { return "("+instantiate().orElseThrow()+"<="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("==", 1))) {
           return "("+instantiate().orElseThrow()+"=="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)";
+        }
+        if (m.equals(new Id.MethName("!=", 1))) {
+          return "("+instantiate().orElseThrow()+"!="+args.getFirst().accept(gen, true)+"?base.True_0.$self:base.False_0.$self)";
         }
         if (m.equals(new Id.MethName(".assertEq", 1))) {
           return "base._FloatAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+", null)";
@@ -292,6 +297,7 @@ public record JavaMagicImpls(
         if (m.equals(new Id.MethName(">=", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")>=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("<=", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")<=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName("==", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")==0?base.True_0.$self:base.False_0.$self)"; }
+        if (m.equals(new Id.MethName("!=", 1))) { return "(Byte.compareUnsigned("+instantiate().orElseThrow()+","+args.getFirst().accept(gen, true)+")!=0?base.True_0.$self:base.False_0.$self)"; }
         if (m.equals(new Id.MethName(".assertEq", 1))) {
           return "base._ByteAssertionHelper_0.assertEq$imm$fun("+instantiate().orElseThrow()+", "+args.getFirst().accept(gen, true)+", null)";
         }

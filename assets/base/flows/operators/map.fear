@@ -12,6 +12,7 @@ _Map: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#[E,R](sinkDecorator, right, f)},
       .canSplit -> upstream.canSplit,
+      .isFinite -> upstream.isFinite,
       }},
   .impl[E,R](downstream: mut _Sink[R], f: read F[E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] -> sinkDecorator#{
     #(e) -> downstream#(f#e),
@@ -31,6 +32,7 @@ _Map: {
       .isRunning -> upstream.isRunning,
       .split -> upstream.split.map{right -> this#[C,E,R](sinkDecorator, right, ctx'.iso, f)},
       .canSplit -> upstream.canSplit,
+      .isFinite -> upstream.isFinite,
       }},
   .impl[C,E,R](downstream: mut _Sink[R], ctx: mut ToIso[C], f: read F[iso C, E, R], sinkDecorator: _SinkDecorator): mut _Sink[E] ->
     sinkDecorator#{

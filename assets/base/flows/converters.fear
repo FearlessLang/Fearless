@@ -21,6 +21,7 @@ _RestrictFlowReuse: {
       .limit(n) -> Block#(_CheckFlowReuse#isTail, flow.limit(n)),
       .map(f) -> Block#(_CheckFlowReuse#isTail, flow.map(f)),
       .map(ctx, f) -> Block#(_CheckFlowReuse#isTail, flow.map(ctx, f)),
+      .assumeFinite -> Block#(_CheckFlowReuse#isTail, flow.assumeFinite),
 //      .with(other) -> Block#(_CheckFlowReuse#isTail, flow.with(other)),
       .count -> Block#(_CheckFlowReuse#isTail, flow.count),
     }},
@@ -78,6 +79,7 @@ _MutSourceCollection[E]: {
 
 _FlowConverters: Sealed{
   .range(start: Int, end: Int): mut Flow[Int] -> _FlowRange#(start, end),
+  .range(start: Int): mut Flow[Int] -> _FlowRange#start,
 //  .range(start: Int, end: Int): mut Flow[Int] -> _PipelineParallelFlow.fromOp[Int](this.range'(start, end), Opts#((end - start).nat)),
 //  .range'(start: Int, end: Int): mut FlowOp[Int] -> Block#
 //    .let cursor = {Count.int(start)}
@@ -99,6 +101,7 @@ _FlowConverters: Sealed{
   }
 _FlowRange: {
   #(start: Int, end: Int): mut Flow[Int] -> Magic!,
+  #(start: Int): mut Flow[Int] -> Magic!,
   }
 
 // Variants of the converter methods that do not clone if is safe to do so. Invoked by magic

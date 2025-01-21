@@ -14,10 +14,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import static rt.flows.FlowCreator.IS_SEQUENTIALISED;
 
 public record EODStrategies(_Sink_1 downstream, int size, List<FlowOp_1> splitData, int nTasks) implements ParallelStrategies {
-  private static final int TASKS_PER_CORE = 128;
+  private static final int TASKS_PER_CORE = 4;
   private static final int N_CPUS = Runtime.getRuntime().availableProcessors();
   public static final int PARALLELISM_POTENTIAL = TASKS_PER_CORE * N_CPUS;
-  //    public static final int PARALLELISM_POTENTIAL = 2;
+  //      public static final int PARALLELISM_POTENTIAL = 8;
   public static final Semaphore AVAILABLE_PARALLELISM = new Semaphore(PARALLELISM_POTENTIAL);
 
   @Override public void seqOnly() {
@@ -46,6 +46,8 @@ public record EODStrategies(_Sink_1 downstream, int size, List<FlowOp_1> splitDa
     };
     var flusher = BufferSink.FlushWorker.start(handler);
     var sync = new CountDownLatch(nTasks);
+    var spawned = new Thread[nTasks];
+    int knownFinishedN = 0;
     for (int i = 0; i < nTasks; ++i) {
       var subSource = splitData.get(i);
       var worker = new EODWorker(subSource, downstream, perWorkerSize, flusher, sync);
@@ -57,8 +59,18 @@ public record EODStrategies(_Sink_1 downstream, int size, List<FlowOp_1> splitDa
       var willParallelise = AVAILABLE_PARALLELISM.tryAcquire();
       if (willParallelise) {
         worker.releaseOnDone = true;
-        Thread.ofVirtual().uncaughtExceptionHandler(handler).start(worker);
+        spawned[i] = Thread.ofVirtual().uncaughtExceptionHandler(handler).start(worker);
       } else {
+        for (; knownFinishedN < i; ++knownFinishedN) {
+          var thread = spawned[knownFinishedN];
+          if (thread == null) { continue; }
+          try {
+            spawned[knownFinishedN].join();
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          spawned[knownFinishedN] = null;
+        }
         ScopedValue.runWhere(IS_SEQUENTIALISED, null, worker);
       }
     }

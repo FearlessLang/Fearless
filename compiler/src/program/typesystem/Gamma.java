@@ -20,7 +20,7 @@ public interface Gamma {
     return getO(x)
       .flatMap(res->
         res.<FailOr<T>>map(FailOr::res)
-          .orElseGet(()->FailOr.err(()->Fail.undefinedName(x.name())))
+          .orElseGet(()->FailOr.err(()->Fail.undefinedName(x.name()).pos(x.pos())))
       )
       .mapErr(err->()->err.get().parentPos(x.pos()));
   }

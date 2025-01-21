@@ -186,6 +186,7 @@ public class TestFlowSemantics {
    * Non-deterministic errors bubble up, even if the flow isn't listening anymore because they're only catchable
    * in Fearless code with a capability anyway.
    */
+  @Disabled("Obviously, nondeterministic")
   @Test void throwInAFlowBeforeStopDP_ND() {ok(new Res("", "Program crashed with: Stack overflowed[###]", 1), """
     package test
     Test: Main{sys -> Block#

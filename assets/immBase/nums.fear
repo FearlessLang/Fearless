@@ -31,6 +31,7 @@ _MathOps[T]: Sealed{
   >=(n: T): Bool,
   <=(n: T): Bool,
   ==(n: T): Bool,
+  !=(n: T): Bool,
   .assertEq(actual: T): Void,
   .assertEq(actual: T, message: Str): Void,
   }
@@ -72,6 +73,7 @@ _IntInstance: Int{
   >=n -> Magic!,
   <=n -> Magic!,
   ==n -> Magic!,
+  !=n -> Magic!,
   .assertEq(actual) -> Magic!,
   .assertEq(actual, message) -> Magic!,
   }
@@ -101,6 +103,7 @@ _NatInstance: Nat{
   >=n -> Magic!,
   <=n -> Magic!,
   ==n -> Magic!,
+  !=n -> Magic!,
   .assertEq(actual) -> Magic!,
   .assertEq(actual, message) -> Magic!,
   }
@@ -129,6 +132,7 @@ _FloatInstance: Float{
   >=n -> Magic!,
   <=n -> Magic!,
   ==n -> Magic!,
+  !=n -> Magic!,
   .assertEq(actual) -> Magic!,
   .assertEq(actual, message) -> Magic!,
   }
