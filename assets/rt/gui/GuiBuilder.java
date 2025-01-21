@@ -1,15 +1,18 @@
 package rt.gui;
 
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -96,6 +99,21 @@ public class GuiBuilder implements GuiBuilder_0{
     c.addActionListener$mut(f_m$);
     slot_m$.$hash$mut(c);
     panel.add(c.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 comboBox$mut(MF_1 f_m$, MF_2 slot_m$, MF_2 gb_m$) {
+    GuiBuilder builder = new GuiBuilder();
+    gb_m$.$hash$mut(builder);
+    Component[] components = builder.panel.getComponents();
+    assert components.length > 0 : "No items added to the ComboBox";
+    Object[] items = Arrays.stream(components)
+        .map(component -> component instanceof JLabel ? ((JLabel) component).getText() : component).toArray();
+    ComboBox comboBox = new ComboBox(items);
+    comboBox.addActionListener$mut(f_m$);
+    slot_m$.$hash$mut(comboBox);
+    panel.add(comboBox.getImpl());
     return this;
   }
 

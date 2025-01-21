@@ -15,18 +15,22 @@ GuiBuilder: {
   mut .build(title: Str): mut GuiEvents,
   mut .button(label: Str, f: mut MF[Void] ,
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
-  mut .canvas(height: Int, width: Int, gb: mut GraphicBuilder, // change to Nat
+  mut .canvas(height: Nat, width: Nat, gb: mut GraphicBuilder,
      slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
   mut .checkBox(label: Str, f: mut MF[Void],
    	 slot: mut MF[mut CheckBox,Void]): mut GuiBuilder,
+  mut .comboBox(f: mut MF[Void],
+     slot: mut MF[mut ComboBox,Void],
+     gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
 CheckBox: HasEnable{read .isSelected : Bool,}
+ComboBox: HasEnable{}
 Label: {}
-HasEnable:{
+HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
 }
