@@ -17,11 +17,14 @@ GuiBuilder: {
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
   mut .canvas(height: Int, width: Int, gb: mut GraphicBuilder, // change to Nat
      slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
+  mut .checkBox(label: Str, f: mut MF[Void],
+   	 slot: mut MF[mut CheckBox,Void]): mut GuiBuilder,
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
+CheckBox: HasEnable{read .isSelected : Bool,}
 Label: {}
 HasEnable:{
  read .enable : Bool,

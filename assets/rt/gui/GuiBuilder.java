@@ -6,7 +6,9 @@ import java.awt.LayoutManager;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Objects;
+import java.util.function.Consumer;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -85,6 +87,15 @@ public class GuiBuilder implements GuiBuilder_0{
     Label l = new Label(Str.toJavaStr(label_m$.utf8()));
     slot_m$.$hash$mut(l);
     panel.add(l.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 checkBox$mut(Str label_m$, MF_1 f_m$, MF_2 slot_m$) {
+    CheckBox c =new CheckBox(Str.toJavaStr(label_m$.utf8()));
+    c.addActionListener$mut(f_m$);
+    slot_m$.$hash$mut(c);
+    panel.add(c.getImpl());
     return this;
   }
 
