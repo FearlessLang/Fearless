@@ -117,4 +117,13 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
   }
 
+  @Override
+  public GuiBuilder_0 passwordField$mut(Str defaultPw_m$, MF_1 f_m$, MF_2 slot_m$) {
+    PasswordField p =new PasswordField(Str.toJavaStr(defaultPw_m$.utf8()));
+    p.addActionListener$mut(f_m$);
+    slot_m$.$hash$mut(p);
+    panel.add(p.getImpl());
+    return this;
+  }
+
 }

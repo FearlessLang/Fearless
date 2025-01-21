@@ -22,6 +22,8 @@ GuiBuilder: {
   mut .comboBox(f: mut MF[Void],
      slot: mut MF[mut ComboBox,Void],
      gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .passwordField(defaultPw: Str, f: mut MF[Void],
+  	 slot: mut MF[mut PasswordField,Void]): mut GuiBuilder,
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
@@ -30,6 +32,7 @@ Canvas:{}
 CheckBox: HasEnable{read .isSelected : Bool,}
 ComboBox: HasEnable{}
 Label: {}
+PasswordField: HasEnable{}
 HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
