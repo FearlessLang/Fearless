@@ -29,7 +29,7 @@ public class CheckBox implements CheckBox_0 {
   }
   
   public Void_0 addActionListener$mut(MF_1 listener) {
-    checkBox.addActionListener(listenere -> listener.$hash$mut());
+    checkBox.addActionListener(e -> listener.$hash$mut());
     return Void_0.$self;
   }
   

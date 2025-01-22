@@ -28,7 +28,7 @@ public class Button implements Button_0{
   }
   
   public Void_0 addActionListener$mut(MF_1 listener) {
-    button.addActionListener(listenere -> listener.$hash$mut());
+    button.addActionListener(e -> listener.$hash$mut());
     return Void_0.$self;
   }
   

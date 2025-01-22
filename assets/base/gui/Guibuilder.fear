@@ -27,6 +27,8 @@ GuiBuilder: {
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
   mut .radioButton(label: Str, f: mut MF[Void],
   	 slot: mut MF[mut RadioButton,Void]): mut GuiBuilder,
+  mut .textField(text: Str, events: mut MF[TextEvents,Void],
+  	 slot: mut MF[mut TextField,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
@@ -37,6 +39,7 @@ Label: {}
 PasswordField: HasEnable{}
 RadioButton: HasEnable{
   read .isSelected : Bool,}
+TextField: HasEnable{mut .addEvents(events: mut MF[TextEvents,Void]): TextField,}
 HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
@@ -69,6 +72,11 @@ GuiEvents:{
  // mut .start(title: Str) :mut GuiEvents ->this,
   mut .stop : Void,
 }
-
+TextEvents:{
+	mut .onTextChange(handler: mut MF[mut Str,Void]): TextEvents,
+	mut .onKeyPress(handler: mut MF[mut Str,Void]): TextEvents,
+	mut .onFocusGained(handler: mut MF[mut Void]): TextEvents,
+	mut .onFocusLost(handler: mut MF[mut Void]): TextEvents,
+}
 Image:{}
 Graphic:{}

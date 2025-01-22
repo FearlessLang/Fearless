@@ -135,4 +135,13 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
   }
 
+  @Override
+  public GuiBuilder_0 textField$mut(Str text_m$, MF_2 events_m$, MF_2 slot_m$) {
+    TextField tf =new TextField(Str.toJavaStr(text_m$.utf8()));
+    tf.addEvents$mut(events_m$);
+    slot_m$.$hash$mut(tf);
+    panel.add(tf.getImpl());
+    return null;
+  }
+
 }
