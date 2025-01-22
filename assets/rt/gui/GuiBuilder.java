@@ -141,7 +141,16 @@ public class GuiBuilder implements GuiBuilder_0{
     tf.addEvents$mut(events_m$);
     slot_m$.$hash$mut(tf);
     panel.add(tf.getImpl());
-    return null;
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 textArea$mut(Str text_m$, MF_2 events_m$, MF_2 slot_m$) {
+    TextArea ta =new TextArea(Str.toJavaStr(text_m$.utf8()));
+    ta.addEvents$mut(events_m$);
+    slot_m$.$hash$mut(ta);
+    panel.add(ta.getImpl());
+    return this;
   }
 
 }
