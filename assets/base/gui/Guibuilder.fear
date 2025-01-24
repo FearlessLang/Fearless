@@ -39,6 +39,8 @@ GuiBuilder: {
   mut .hbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .vbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .grid(rows: Nat, columns: Nat, gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .hsplit(gb: mut MF[mut HSplitBuilder, mut HSplitBuilder]): mut GuiBuilder,
+  mut .vsplit(gb: mut MF[mut VSplitBuilder, mut VSplitBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
@@ -60,6 +62,14 @@ HasEnable: Actionable{
 }
 Actionable:{
   mut .addActionListener(listener: MF[Void]) :Void,
+}
+HSplitBuilder:{
+  mut .left(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut HSplitBuilder,
+  mut .right(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut HSplitBuilder,
+}
+VSplitBuilder:{
+  mut .top(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
+  mut .bottom(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
 }
 GraphicBuilder:{
   mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,

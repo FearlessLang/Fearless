@@ -17,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import base.MF_1;
@@ -214,4 +215,27 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
   }
 
+  public JPanel panel() {return this.panel;  }
+
+  @Override
+  public GuiBuilder_0 hsplit$mut(MF_2 gb_m$) {
+    HSplitBuilder splitBuilder = new HSplitBuilder();
+    gb_m$.$hash$mut(splitBuilder);
+    JSplitPane splitPane = new JSplitPane();
+    splitPane.setLeftComponent(splitBuilder.leftPanel());
+    splitPane.setRightComponent(splitBuilder.rightPanel());
+    this.panel.add(splitPane);
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 vsplit$mut(MF_2 gb_m$) {
+    VSplitBuilder splitBuilder = new VSplitBuilder();
+    gb_m$.$hash$mut(splitBuilder);
+    JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+    splitPane.setTopComponent(splitBuilder.topPanel());
+    splitPane.setBottomComponent(splitBuilder.bottomPanel());
+    this.panel.add(splitPane);
+    return this;
+  }
 }
