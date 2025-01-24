@@ -8,6 +8,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import javax.swing.JComponent;
@@ -55,17 +57,28 @@ public class GuiBuilder implements GuiBuilder_0{
   }
 
   @Override
-  public GuiEvents_0 build$mut(Str title_m$) {
-    JFrame frame = new JFrame(Str.toJavaStr(title_m$.utf8()));
-    SwingUtilities.invokeLater(()->_build(frame));
-    return new GuiEvents_0() {
-
+  public Void_0 build$mut(Str title_m$) {
+    // instead of returning GuiEvents_0
+    //compleateblefuture
+    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    new GuiEvents_0() {
       @Override
-      public Void_0 stop$mut() {frame.dispose();
+      public Void_0 stop$mut(){
+        // when press x this method need to be called
+//        frame.dispose();
+        future.complete(null);
         return Void_0.$self;
       }
       
     };
+    JFrame frame = new JFrame(Str.toJavaStr(title_m$.utf8()));
+    SwingUtilities.invokeLater(()->_build(frame));
+    try {
+      future.get();
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
+    return Void_0.$self;
   }
   
   private void _build(JFrame frame) {

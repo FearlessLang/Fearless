@@ -12,7 +12,7 @@ package base.gui
     alias base.Nat as Nat,
 
 GuiBuilder: {
-  mut .build(title: Str): mut GuiEvents,
+  mut .build(title: Str): mut Void,
   mut .button(label: Str, f: mut MF[Void] ,
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
   mut .canvas(height: Nat, width: Nat, gb: mut GraphicBuilder,
