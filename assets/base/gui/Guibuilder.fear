@@ -36,7 +36,7 @@ GuiBuilder: {
 Button: HasEnable {}
 Canvas:{}
 CheckBox: HasEnable{read .isSelected : Bool,}
-ComboBox: HasEnable{}
+ComboBox: HasEnable{read .selectedItem : Nat,}
 Label: {}
 PasswordField: HasEnable{}
 RadioButton: HasEnable{

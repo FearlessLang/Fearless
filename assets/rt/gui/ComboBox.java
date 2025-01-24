@@ -39,4 +39,9 @@ public class ComboBox implements ComboBox_0 {
     return comboBox;
   }
 
+  @Override
+  public Long selectedItem$read() {
+    return Long.valueOf(comboBox.getSelectedIndex());
+  }
+
 }
