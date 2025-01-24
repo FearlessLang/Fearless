@@ -61,17 +61,18 @@ public class GuiBuilder implements GuiBuilder_0{
     // instead of returning GuiEvents_0
     //compleateblefuture
     CompletableFuture<Void> future = new CompletableFuture<Void>();
+
+    JFrame frame = new JFrame(Str.toJavaStr(title_m$.utf8()));
     new GuiEvents_0() {
       @Override
       public Void_0 stop$mut(){
         // when press x this method need to be called
-//        frame.dispose();
+        frame.dispose();
         future.complete(null);
         return Void_0.$self;
       }
       
     };
-    JFrame frame = new JFrame(Str.toJavaStr(title_m$.utf8()));
     SwingUtilities.invokeLater(()->_build(frame));
     try {
       future.get();
@@ -163,6 +164,22 @@ public class GuiBuilder implements GuiBuilder_0{
     ta.addEvents$mut(events_m$);
     slot_m$.$hash$mut(ta);
     panel.add(ta.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 vseparator$mut(long x_m$, long y_m$, MF_2 slot_m$) {
+    Vseparator v = new Vseparator(Math.toIntExact(x_m$),Math.toIntExact(y_m$));
+    slot_m$.$hash$mut(v);
+    panel.add(v.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 hseparator$mut(long x_m$, long y_m$, MF_2 slot_m$) {
+    Hseparator h = new Hseparator(Math.toIntExact(x_m$),Math.toIntExact(y_m$));
+    slot_m$.$hash$mut(h);
+    panel.add(h.getImpl());
     return this;
   }
 

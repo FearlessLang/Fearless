@@ -25,6 +25,10 @@ GuiBuilder: {
   mut .passwordField(defaultPw: Str, f: mut MF[Void],
   	 slot: mut MF[mut PasswordField,Void]): mut GuiBuilder,
   mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
+  mut .hseparator(x: Nat, y: Nat,
+     slot: mut MF[mut Hseparator,Void]): mut GuiBuilder,
+  mut .vseparator(x: Nat, y: Nat,
+     slot: mut MF[mut Vseparator,Void]): mut GuiBuilder,
   mut .radioButton(label: Str, f: mut MF[Void],
   	 slot: mut MF[mut RadioButton,Void]): mut GuiBuilder,
   mut .textField(text: Str, events: mut MF[TextEvents,Void],
@@ -38,6 +42,8 @@ Canvas:{}
 CheckBox: HasEnable{read .isSelected : Bool,}
 ComboBox: HasEnable{read .selectedItem : Nat,}
 Label: {}
+Hseparator: {}
+Vseparator: {}
 PasswordField: HasEnable{}
 RadioButton: HasEnable{
   read .isSelected : Bool,}
