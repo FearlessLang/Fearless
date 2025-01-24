@@ -3,12 +3,16 @@ package rt.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -257,5 +261,33 @@ public class GuiBuilder implements GuiBuilder_0{
     local.add(tabPane, BorderLayout.CENTER);
     this.panel.add(local);
     return this;
+  }
+
+  @Override
+  public GuiBuilder_0 gridBag$mut(MF_2 gbb_m$, MF_2 gb_m$) {
+    Objects.requireNonNull(gbb_m$, "Constraint configurator cannot be null");
+    Objects.requireNonNull(gb_m$, "Component configurator cannot be null");
+    var local = new JPanel();
+    local.setLayout(new GridBagLayout());
+    GridBagBuilder gridBagBuilder = new GridBagBuilder();
+    gbb_m$.$hash$mut(gridBagBuilder);
+    List<GridBagConstraints> constraints = gridBagBuilder.constriants();
+    GuiBuilder componentBuilder = new GuiBuilder(new GridBagLayout());
+    gb_m$.$hash$mut(componentBuilder);
+    Component[] components = componentBuilder.panel.getComponents();
+    if (components.length != constraints.size()) {
+      throw new IllegalArgumentException("Number of constraints must match the number of components");
+    }
+    IntStream.range(0, components.length).forEach(i -> {
+      Component component = components[i];
+      GridBagConstraints gbc = (GridBagConstraints) constraints.get(i);
+      gbc.fill = GridBagConstraints.BOTH; // Ensure components expand to fill their cells
+      gbc.weightx = 1.0; // Allow horizontal resizing
+      gbc.weighty = 1.0; // Allow vertical resizing
+      local.add(component, gbc); // Add component with constraints
+    });
+    this.panel.add(local);
+    return this;
+
   }
 }
