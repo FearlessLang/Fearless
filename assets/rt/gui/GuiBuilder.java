@@ -204,4 +204,14 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
   }
 
+  @Override
+  public GuiBuilder_0 grid$mut(long rows_m$, long columns_m$, MF_2 gb_m$) {
+    assert rows_m$ > 0;
+    assert columns_m$ > 0;
+    GuiBuilder gridBuilder = new GuiBuilder(new GridLayout(Math.toIntExact(rows_m$), Math.toIntExact(columns_m$)));
+    gb_m$.$hash$mut(gridBuilder);
+    panel.add(gridBuilder.panel);
+    return this;
+  }
+
 }
