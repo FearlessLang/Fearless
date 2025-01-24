@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -180,6 +181,26 @@ public class GuiBuilder implements GuiBuilder_0{
     Hseparator h = new Hseparator(Math.toIntExact(x_m$),Math.toIntExact(y_m$));
     slot_m$.$hash$mut(h);
     panel.add(h.getImpl());
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 hbox$mut(MF_2 gb_m$) {
+    Objects.requireNonNull(gb_m$);
+    GuiBuilder boxBuilder = new GuiBuilder(new FlowLayout());
+    boxBuilder.panel.setLayout(new BoxLayout(boxBuilder.panel, BoxLayout.X_AXIS));
+    gb_m$.$hash$mut(boxBuilder);
+    panel.add(boxBuilder.panel);
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 vbox$mut(MF_2 gb_m$) {
+    Objects.requireNonNull(gb_m$);
+    GuiBuilder boxBuilder = new GuiBuilder(new FlowLayout());
+    boxBuilder.panel.setLayout(new BoxLayout(boxBuilder.panel, BoxLayout.Y_AXIS));
+    gb_m$.$hash$mut(boxBuilder);
+    panel.add(boxBuilder.panel);
     return this;
   }
 

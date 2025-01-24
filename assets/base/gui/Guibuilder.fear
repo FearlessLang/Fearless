@@ -36,6 +36,8 @@ GuiBuilder: {
   mut .textArea(text: Str, events: mut MF[TextEvents,Void],
   	 slot: mut MF[mut TextArea,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .hbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .vbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
