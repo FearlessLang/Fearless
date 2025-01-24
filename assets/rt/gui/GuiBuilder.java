@@ -290,4 +290,31 @@ public class GuiBuilder implements GuiBuilder_0{
     return this;
 
   }
+
+  @Override
+  public GuiBuilder_0 zone$mut(MF_2 gb_m$) {
+    ZoneBuilder zb = new ZoneBuilder();
+    gb_m$.$hash$mut(zb);
+    return zone(zb.build());
+  }
+  
+  private GuiBuilder zone(Zone b) {
+    var local = new JPanel();
+    local.setLayout(new BorderLayout());
+    addZone(local, b.center(new GuiBuilder()), BorderLayout.CENTER);
+    addZone(local, b.north(new GuiBuilder()), BorderLayout.NORTH);
+    addZone(local, b.east(new GuiBuilder()), BorderLayout.EAST);
+    addZone(local, b.south(new GuiBuilder()), BorderLayout.SOUTH);
+    addZone(local, b.west(new GuiBuilder()), BorderLayout.WEST);
+    this.panel.add(local);
+    return this;
+  }
+  
+  private void addZone(JPanel localPanel, GuiBuilder zone, String where) {
+    GuiBuilder lzone = (GuiBuilder) zone;
+    if (lzone.panel.getComponentCount() == 0) {
+      return;
+    }
+    localPanel.add(lzone.panel, where);
+  }
 }

@@ -43,6 +43,7 @@ GuiBuilder: {
   mut .hsplit(gb: mut MF[mut HSplitBuilder, mut HSplitBuilder]): mut GuiBuilder,
   mut .vsplit(gb: mut MF[mut VSplitBuilder, mut VSplitBuilder]): mut GuiBuilder,
   mut .tabs(gb: mut MF[mut TabBuilder, mut TabBuilder]): mut GuiBuilder,
+  mut .zone(gb: mut MF[mut ZoneBuilder, mut ZoneBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
@@ -78,6 +79,13 @@ TabBuilder:{
 }
 GridBagBuilder:{
  mut .config(x: Nat, y: Nat, width: Nat, height: Nat): mut GridBagBuilder
+}
+ZoneBuilder:{
+  mut .center(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .north(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .east(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .south(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .west(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
 }
 GraphicBuilder:{
   mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,
