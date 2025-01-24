@@ -1,23 +1,21 @@
 package rt.gui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 import javax.swing.BoxLayout;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import base.MF_1;
@@ -31,6 +29,7 @@ import rt.Str;
 public class GuiBuilder implements GuiBuilder_0{
 
   private final JPanel panel;
+  @SuppressWarnings("unused")
   private final LayoutManager layout;
   
   public GuiBuilder(LayoutManager layout) {
@@ -236,6 +235,27 @@ public class GuiBuilder implements GuiBuilder_0{
     splitPane.setTopComponent(splitBuilder.topPanel());
     splitPane.setBottomComponent(splitBuilder.bottomPanel());
     this.panel.add(splitPane);
+    return this;
+  }
+
+  @Override
+  public GuiBuilder_0 tabs$mut(MF_2 gb_m$) {
+    TabBuilder tb = new TabBuilder();
+    gb_m$.$hash$mut(tb);
+    return tabs(tb.build(), tb);
+  }
+  
+  private GuiBuilder tabs(Tab t, TabBuilder tb) {
+    var local = new JPanel();
+    local.setLayout(new BorderLayout());
+    var tabPane = new JTabbedPane();
+    t.getTabs().stream()
+    .map((Tab.TabEntry entry) -> Map.entry(entry.title(), entry.getContent()))
+    .filter(entry -> entry.getValue() instanceof GuiBuilder)
+    .forEach(entry -> tabPane.addTab(entry.getKey(), ((GuiBuilder) entry.getValue()).panel));
+
+    local.add(tabPane, BorderLayout.CENTER);
+    this.panel.add(local);
     return this;
   }
 }

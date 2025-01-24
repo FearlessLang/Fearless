@@ -41,6 +41,7 @@ GuiBuilder: {
   mut .grid(rows: Nat, columns: Nat, gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .hsplit(gb: mut MF[mut HSplitBuilder, mut HSplitBuilder]): mut GuiBuilder,
   mut .vsplit(gb: mut MF[mut VSplitBuilder, mut VSplitBuilder]): mut GuiBuilder,
+  mut .tabs(gb: mut MF[mut TabBuilder, mut TabBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
 Canvas:{}
@@ -70,6 +71,9 @@ HSplitBuilder:{
 VSplitBuilder:{
   mut .top(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
   mut .bottom(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
+}
+TabBuilder:{
+ mut .tab(title: Str, gb: mut MF[mut GuiBuilder, mut GuiBuilder]):mut TabBuilder,
 }
 GraphicBuilder:{
   mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,
