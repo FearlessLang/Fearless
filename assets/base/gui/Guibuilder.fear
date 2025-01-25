@@ -35,6 +35,8 @@ GuiBuilder: {
   	 slot: mut MF[mut TextField,Void]): mut GuiBuilder,
   mut .textArea(text: Str, events: mut MF[TextEvents,Void],
   	 slot: mut MF[mut TextArea,Void]): mut GuiBuilder,
+  mut .menuBar(mb: mut MF[mut MenuBuilder, mut MenuBuilder],
+  	 slot: mut MF[mut MenuBar,Void]): mut GuiBuilder,
   mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .hbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
   mut .vbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
@@ -59,12 +61,19 @@ TextField: HasEnable{mut .addEvents(events: mut MF[TextEvents,Void]): TextField,
 TextArea: HasEnable{
   mut .addEvents(events: mut MF[TextEvents,Void]): TextArea,
 }
+MenuItem: HasEnable{}
+Menu: HasEnable{}
+MenuBar: HasEnable{}
 HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
 }
 Actionable:{
   mut .addActionListener(listener: MF[Void]) :Void,
+}
+MenuBuilder:{
+  mut .menuItem(name: Str, f:mut MF[Void], slot: mut MF[MenuItem,Void]): mut MenuBuilder,
+  mut .menu(name: Str, slot: mut MF[Menu,Void]): mut MenuBuilder,
 }
 HSplitBuilder:{
   mut .left(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut HSplitBuilder,

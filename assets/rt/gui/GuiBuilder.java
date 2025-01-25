@@ -317,4 +317,15 @@ public class GuiBuilder implements GuiBuilder_0{
     }
     localPanel.add(lzone.panel, where);
   }
+
+  @Override
+  public GuiBuilder_0 menuBar$mut(MF_2 mb_m$, MF_2 slot_m$) {
+    Objects.requireNonNull(slot_m$);
+    MenuBar menuBar = new MenuBar();
+    MenuBuilder menuBuilder = new MenuBuilder(menuBar);
+    mb_m$.$hash$mut(menuBuilder);
+    slot_m$.$hash$mut(menuBar);
+    panel.add(menuBar.getImpl());
+    return this;
+  }
 }
