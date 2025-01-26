@@ -15,7 +15,7 @@ GuiBuilder: {
   mut .build(title: Str): mut Void,
   mut .button(label: Str, f: mut MF[Void] ,
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
-  mut .canvas(height: Nat, width: Nat, gb: mut GraphicBuilder,
+  mut .canvas(height: Nat, width: Nat,
      slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
   mut .checkBox(label: Str, f: mut MF[Void],
    	 slot: mut MF[mut CheckBox,Void]): mut GuiBuilder,
@@ -48,7 +48,7 @@ GuiBuilder: {
   mut .zone(gb: mut MF[mut ZoneBuilder, mut ZoneBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
-Canvas:{}
+Canvas:{mut .paint(gb: mut MF[mut Graphics,mut Graphics]) :Void,}
 CheckBox: HasEnable{read .isSelected : Bool,}
 ComboBox: HasEnable{read .selectedItem : Nat,}
 Label: {}
@@ -96,26 +96,21 @@ ZoneBuilder:{
   mut .south(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
   mut .west(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
 }
-GraphicBuilder:{
-  mut .line(x1: Int, y1: Int, x2: Int, y2: Int): mut GraphicBuilder,
-  mut .color(r: Int, g: Int, b: Int): GraphicBuilder,
-  mut .image(x: Int, y: Int, width: Int, height: Int, img: Image):
-   mut GraphicBuilder,
-  mut .rotate(theta: Float): mut GraphicBuilder,
-  mut .translate(tx: Float, ty: Float): mut GraphicBuilder,
-  mut .scale(sx: Float, sy: Float): mut GraphicBuilder,
-  mut .stroke(width: Float): mut GraphicBuilder,
-  mut .dashedStroke(width: Float, dashPattern: List[Float],
-     dashPhase: Float): mut GraphicBuilder,
-  mut .dottedStroke(width: Float, dotLength: Float,
-     gapLength: Float): mut GraphicBuilder,
-  mut .gapLength(name: Str, style: Int, size: Int): mut GraphicBuilder,
-  mut .drawString(text: Str, x: Int, y: Int): mut GraphicBuilder,
-  mut .rect(x: Int, y: Int, width: Int,
-     height: Int, fill: Bool): mut GraphicBuilder,
-  mut .oval(x: Int, y: Int, width: Int,
-     height: Int, fill: Bool): mut GraphicBuilder,
-  mut .build(g: Graphic): mut GraphicBuilder,
+Graphics:{
+  mut .color(r: Nat, g: Nat, b: Nat): mut Graphics,
+  mut .clearScreen: mut Graphics,
+  mut .drawText(text: Str, x: Nat, y: Nat): mut Graphics,
+  mut .font(name: Str, style: Str, size: Nat): mut Graphics,
+  mut .drawLine(x1: Nat, y1: Nat, x2: Nat, y2: Nat): mut Graphics,
+  mut .stroke(width: Float): mut Graphics,
+  mut .dashedStroke(width: Float): mut Graphics,
+  mut .dottedStroke(width: Float): mut Graphics,
+  mut .drawRect(x: Nat, y: Nat, width: Nat, height: Nat, fill: Bool): mut Graphics,
+  mut .drawOval(x: Nat, y: Nat, width: Nat, height: Nat, fill: Bool): mut Graphics,
+  mut .drawPolygon(xPoints: List[Nat],yPoints: List[Nat], fill: Bool): mut Graphics,
+  mut .image(x: Nat, y: Nat, width: Nat, height: Nat, img: Str): mut Graphics,
+  mut .rotate(theta: Float): mut Graphics,
+  mut .translate(tx: Float, ty: Float): mut Graphics,
 }
 GuiEvents:{
  // mut .start(title: Str) :mut GuiEvents ->this,
@@ -127,5 +122,3 @@ TextEvents:{
 	mut .onFocusGained(handler: mut MF[mut Void]): TextEvents,
 	mut .onFocusLost(handler: mut MF[mut Void]): TextEvents,
 }
-Image:{}
-Graphic:{}

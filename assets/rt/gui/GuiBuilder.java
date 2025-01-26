@@ -25,7 +25,6 @@ import javax.swing.SwingUtilities;
 import base.MF_1;
 import base.MF_2;
 import base.Void_0;
-import base.gui.GraphicBuilder_0;
 import base.gui.GuiBuilder_0;
 import base.gui.GuiEvents_0;
 import rt.Str;
@@ -56,9 +55,11 @@ public class GuiBuilder implements GuiBuilder_0{
   }
 
   @Override
-  public GuiBuilder_0 canvas$mut(long height_m$, long width_m$, GraphicBuilder_0 gb_m$, MF_2 slot_m$) {
-    // TODO Auto-generated method stub
-    return null;
+  public GuiBuilder_0 canvas$mut(long height_m$, long width_m$, MF_2 slot_m$) {
+    Canvas c =new Canvas(Math.toIntExact(height_m$),Math.toIntExact(width_m$));
+    slot_m$.$hash$mut(c);
+    panel.add(c.getImpl());
+    return this;
   }
 
   @Override
