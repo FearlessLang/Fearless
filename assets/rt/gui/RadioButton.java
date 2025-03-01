@@ -13,12 +13,13 @@ import base.gui.RadioButton_0;
 public class RadioButton implements RadioButton_0 {
 
   private final JRadioButton radioButton;
+  private GuiBuilderState state;
   
   public RadioButton(String text) {this.radioButton = new JRadioButton(text);}
 
   @Override
   public Void_0 addActionListener$mut(MF_1 listener_m$) {
-    radioButton.addActionListener(listener -> listener_m$.$hash$mut());
+    radioButton.addActionListener(listener -> state.submitModelTask(listener_m$::$hash$mut));
     return Void_0.$self;
   }
 

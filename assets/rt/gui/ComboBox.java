@@ -15,12 +15,16 @@ import base.gui.ComboBox_0;
 public class ComboBox implements ComboBox_0 {
 
   private final JComboBox<Object> comboBox;
+  private GuiBuilderState state;
   
-  public ComboBox(Object[] items) {this.comboBox = new JComboBox<>(Objects.requireNonNull(items));}
+  public ComboBox(Object[] items, GuiBuilderState state) {
+    this.comboBox = new JComboBox<>(Objects.requireNonNull(items));
+    this.state = state;
+  }
   
   @Override
   public Void_0 addActionListener$mut(MF_1 listener_m$) {
-    comboBox.addActionListener(e -> listener_m$.$hash$mut());
+    comboBox.addActionListener(e -> state.submitModelTask(listener_m$::$hash$mut));
     return Void_0.$self;
   }
 

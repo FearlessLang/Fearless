@@ -9,9 +9,11 @@ public class MenuBuilder implements MenuBuilder_0 {
 
   private final MenuBar menuBar;
   private Menu currentMenu;
+  private GuiBuilderState state;
   
-  public MenuBuilder(MenuBar menuBar) {
+  public MenuBuilder(MenuBar menuBar, GuiBuilderState state) {
     this.menuBar = menuBar;
+    this.state = state;
   }
   
   @Override
@@ -24,7 +26,7 @@ public class MenuBuilder implements MenuBuilder_0 {
 
   @Override
   public MenuBuilder_0 menuItem$mut(Str name_m$, MF_1 f_m$, MF_2 slot_m$) {
-    MenuItem item = new MenuItem(Str.toJavaStr(name_m$.utf8()));
+    MenuItem item = new MenuItem(Str.toJavaStr(name_m$.utf8()),state);
     item.addActionListener$mut(f_m$);
     currentMenu.add(item);
     slot_m$.$hash$mut(item);

@@ -13,8 +13,12 @@ import base.gui.Button_0;
 public class Button implements Button_0{
 
   private final JButton button;
+  private GuiBuilderState state;
   
-  public Button(String text) {this.button = new JButton(text);}
+  public Button(String text,GuiBuilderState state) {
+    this.button = new JButton(text);
+    this.state = state;
+  }
   
   @Override
   public Void_0 enable$mut(Bool_0 b_m$) {
@@ -28,7 +32,7 @@ public class Button implements Button_0{
   }
   
   public Void_0 addActionListener$mut(MF_1 listener) {
-    button.addActionListener(e -> listener.$hash$mut());
+    button.addActionListener(e -> state.submitModelTask(listener::$hash$mut));
     return Void_0.$self;
   }
   

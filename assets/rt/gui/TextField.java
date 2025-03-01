@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -16,20 +17,22 @@ import base.MF_1;
 import base.MF_2;
 import base.True_0;
 import base.Void_0;
-import base.gui.TextEvents_0;
 import base.gui.TextField_0;
 
 public class TextField implements TextField_0 {
   
   private final JTextField textField;
+  private GuiBuilderState state;
   
-  public TextField(String text) { this(text, 15); }
+  public TextField(String text, GuiBuilderState state) { this(text, 15, state); }
            
-  public TextField(String text, int col) { this.textField = new JTextField(text, col); }
-
+  public TextField(String text, int col, GuiBuilderState state) {
+      this.textField = new JTextField(text, col);
+      this.state = state;
+  }
   @Override
   public Void_0 addActionListener$mut(MF_1 listener_m$) {
-    textField.addActionListener(listener -> listener_m$.$hash$mut());
+    textField.addActionListener(listener -> state.submitModelTask(listener_m$::$hash$mut));
     return Void_0.$self;
   }
 
@@ -98,6 +101,20 @@ public class TextField implements TextField_0 {
         }});
     }
     return this;
+  }
+
+  @Override
+  public Bool_0 getFocus$read() {
+    return textField.isFocusOwner()? True_0.$self: False_0.$self;
+  }
+
+  @Override
+  public Void_0 setFocus$mut(Bool_0 focus_m$) {
+    if(focus_m$ ==True_0.$self){textField.requestFocusInWindow();}
+    else {
+      JPanel topPanel =(JPanel)state.topPanel;
+      topPanel.requestFocusInWindow();}
+    return Void_0.$self;
   }
 
 }

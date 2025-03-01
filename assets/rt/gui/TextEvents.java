@@ -1,7 +1,5 @@
 package rt.gui;
 
-import java.util.function.Consumer;
-
 import base.MF_1;
 import base.MF_2;
 import base.gui.TextEvents_0;

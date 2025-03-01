@@ -13,12 +13,16 @@ import base.gui.MenuItem_0;
 public class MenuItem implements MenuItem_0 {
 
   private final JMenuItem menuItem;
+  private GuiBuilderState state;
   
-  public MenuItem(String txt) {this.menuItem = new JMenuItem(txt);}
+  public MenuItem(String txt, GuiBuilderState state) {
+    this.menuItem = new JMenuItem(txt);
+    this.state = state;
+  }
 
   @Override
   public Void_0 addActionListener$mut(MF_1 listener_m$) {
-    menuItem.addActionListener(e -> listener_m$.$hash$mut());
+    menuItem.addActionListener(e -> state.submitModelTask(listener_m$::$hash$mut));
     return Void_0.$self;
   }
 

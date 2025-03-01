@@ -7,13 +7,10 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import base.Bool_0;
-import base.False_0;
 import base.List_1;
 import base.True_0;
 import base.Void_0;

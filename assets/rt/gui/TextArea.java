@@ -7,6 +7,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -22,13 +23,15 @@ import base.gui.TextArea_0;
 public class TextArea implements TextArea_0 {
 
   private final JTextArea textArea;
+  private GuiBuilderState state;
 
-  public TextArea(String text) {
-    this(text, 10, 10);
+  public TextArea(String text, GuiBuilderState state) {
+    this(text, 10, 10, state);
   }
 
-  public TextArea(String text, int rows, int columns) {
+  public TextArea(String text, int rows, int columns, GuiBuilderState state) {
     this.textArea = new JTextArea(text, rows, columns);
+    this.state = state;
   }
   @Override
   public Void_0 addActionListener$mut(MF_1 listener_m$) {
@@ -36,7 +39,7 @@ public class TextArea implements TextArea_0 {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()) {
-          listener_m$.$hash$mut();
+          state.submitModelTask(listener_m$::$hash$mut);
         }
       }
     });
@@ -110,4 +113,17 @@ public class TextArea implements TextArea_0 {
     return textArea;
   }
 
+  @Override
+  public Bool_0 getFocus$read() {
+    return textArea.isFocusOwner()? True_0.$self: False_0.$self;
+  }
+
+  @Override
+  public Void_0 setFocus$mut(Bool_0 focus_m$) {
+    if(focus_m$ ==True_0.$self){textArea.requestFocusInWindow();}
+    else {
+      JPanel topPanel =(JPanel)state.topPanel;
+      topPanel.requestFocusInWindow();}
+    return Void_0.$self;
+  }
 }

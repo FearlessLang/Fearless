@@ -12,9 +12,11 @@ import base.gui.CheckBox_0;
 
 public class CheckBox implements CheckBox_0 {
   private final JCheckBox checkBox;
+  private GuiBuilderState state;
   
-  public CheckBox(String text) {
+  public CheckBox(String text,GuiBuilderState state) {
     this.checkBox = new JCheckBox(text);
+    this.state = state;
   }
   
   @Override
@@ -29,7 +31,7 @@ public class CheckBox implements CheckBox_0 {
   }
   
   public Void_0 addActionListener$mut(MF_1 listener) {
-    checkBox.addActionListener(e -> listener.$hash$mut());
+    checkBox.addActionListener(e -> state.submitModelTask(listener::$hash$mut));
     return Void_0.$self;
   }
   

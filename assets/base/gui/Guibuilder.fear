@@ -12,10 +12,13 @@ package base.gui
     alias base.Nat as Nat,
 
 GuiBuilder: {
-  mut .build(title: Str): mut Void,
+  mut .build(title: Str): Void,
+  mut .build(title: Str, frameIntervalMs: Nat,dataUpdateIntervalMs: Nat, logic: mut AnimationLogic): Void,
   mut .button(label: Str, f: mut MF[Void] ,
      slot: mut MF[mut Button,Void]): mut GuiBuilder,
-  mut .canvas(height: Nat, width: Nat,
+  mut .animatedCanvas(width: Nat, height: Nat,
+     slot: mut MF[mut AnimatedCanvas,Void]): mut GuiBuilder,
+  mut .canvas(width: Nat, height: Nat,
      slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
   mut .checkBox(label: Str, f: mut MF[Void],
    	 slot: mut MF[mut CheckBox,Void]): mut GuiBuilder,
@@ -48,28 +51,38 @@ GuiBuilder: {
   mut .zone(gb: mut MF[mut ZoneBuilder, mut ZoneBuilder]): mut GuiBuilder,
 }
 Button: HasEnable {}
-Canvas:{mut .paint(gb: mut MF[mut Graphics,mut Graphics]) :Void,}
+AnimatedCanvas: HasEnable{mut .setPainter(painter: imm Repainter) : Void,}
+Repainter:{imm .paint(g: mut Graphics ,currentTime: Nat, processedPings: Nat,
+                 interpolatedTime: Float,width: Nat,height: Nat): mut Graphics, }
+Canvas: HasEnable{mut .paint(painter: mut MF[mut Graphics,mut Graphics]) :Void,}
 CheckBox: HasEnable{read .isSelected : Bool,}
 ComboBox: HasEnable{read .selectedItem : Nat,}
 Label: {}
 Hseparator: {}
 Vseparator: {}
-PasswordField: HasEnable{}
+PasswordField: HasFocus{}
 RadioButton: HasEnable{
   read .isSelected : Bool,}
-TextField: HasEnable{mut .addEvents(events: mut MF[TextEvents,Void]): TextField,}
-TextArea: HasEnable{
+TextField: HasFocus{mut .addEvents(events: mut MF[TextEvents,Void]): TextField,}
+TextArea: HasFocus{
   mut .addEvents(events: mut MF[TextEvents,Void]): TextArea,
 }
 MenuItem: HasEnable{}
 Menu: HasEnable{}
 MenuBar: HasEnable{}
+HasFocus: HasEnable{
+ mut .setFocus(focus: Bool): Void,
+ read .getFocus: Bool,
+}
 HasEnable: Actionable{
  read .enable : Bool,
  mut .enable(b : Bool) :Void,
 }
 Actionable:{
   mut .addActionListener(listener: MF[Void]) :Void,
+}
+AnimationLogic: {
+	mut .run(processedPings: Nat, attemptedPings: Nat, currentTime: Nat, keyEvents: mut List[Str]): Void,
 }
 MenuBuilder:{
   mut .menuItem(name: Str, f:mut MF[Void], slot: mut MF[MenuItem,Void]): mut MenuBuilder,
