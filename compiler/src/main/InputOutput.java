@@ -62,7 +62,6 @@ public interface InputOutput{
   static InputOutput userFolder(String entry, List<String> commandLineArguments, Path userFolder) {
     Path output= userFolder.resolve("out");
     List<Parser> inputFiles= InputOutputHelper.loadInputFiles(userFolder);
-    List<Parser> cachedFiles= InputOutputHelper.loadCachedFiles(output);
     return new FieldsInputOutput(
       entry,
       commandLineArguments,
@@ -71,7 +70,7 @@ public interface InputOutput{
       inputFiles,
       output,
       output,
-      cachedFiles,
+      List.of(),
       ResolveResource.asset("/default-aliases.fear")
     );
   }

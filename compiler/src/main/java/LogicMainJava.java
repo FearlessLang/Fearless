@@ -29,8 +29,9 @@ public interface LogicMainJava extends FullLogicMain<JavaProgram> {
     var magic = new JavaMagicImpls(null, null, mir.p());
     return new OptimisationBuilder(magic)
       .withAsIdFnOptimisation()
-      .withBoolIfOptimisation()
-      .withBlockOptimisation()
+      .withInliningOptimisation()
+//      .withBoolIfOptimisation()
+//      .withBlockOptimisation()
       .run(mir);
   }
   default JavaProgram codeGeneration(MIR.Program mir) {
