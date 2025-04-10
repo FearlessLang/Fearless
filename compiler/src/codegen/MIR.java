@@ -106,6 +106,9 @@ public sealed interface MIR {
     public MCall withRecv(E recv) {
       return new MCall(recv, name, args, t, originalRet, mdf, variant);
     }
+    public MCall withArgs(List<? extends E> args) {
+      return new MCall(recv, name, args, t, originalRet, mdf, variant);
+    }
 
     @Override public <R> R accept(MIRVisitor<R> v, boolean checkMagic) {
       return v.visitMCall(this, checkMagic);
