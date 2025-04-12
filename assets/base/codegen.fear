@@ -1,0 +1,4 @@
+package base.codegen
+
+/// Represents a null value in a code generation target. This should never be used directly.
+_Null: {}

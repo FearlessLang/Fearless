@@ -5,9 +5,10 @@ import codegen.MIR.FName
 import codegen.MIR.Fun
 import codegen.MIRCloneVisitor
 import id.Id
+import id.Mdf
 import magic.MagicImpls
 import utils.Bug
-import visitors.MIRVisitor
+import utils.Streams
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.jvm.optionals.getOrElse
@@ -63,9 +64,7 @@ class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
   }
 
   override fun visitMCall(call: MIR.MCall, checkMagic: Boolean): MIR.E {
-//    if (call.isConcrete()) {
-//      return super.visitMCall(call, checkMagic)
-//    }
+    assert(checkMagic)
     val hasAttemptedToInline = seen.contains(call)
     if (hasAttemptedToInline) {
       return super.visitMCall(call, checkMagic)
@@ -79,40 +78,72 @@ class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
 
     val recv = refinedCall.recv()
     if (recv is MIR.CreateObj) {
-      recv.meths.find { it.fName.isPresent && it.sig.name == call.name }?.let { meth ->
-        val body = funs!![meth.fName.get()]!!
-        seen.add(refinedCall)
-        val result = inline(body, refinedCall)
-        if (result.fullyInlined) {
-          return result.expr
-        }
-      }
-      seen.add(refinedCall)
-      return super.visitMCall(refinedCall, checkMagic)
+      return attemptInlining(recv, refinedCall)
     }
 
     val recvType = refinedCall.recv.t().name().getOrElse { return super.visitMCall(refinedCall, checkMagic) }
     val impl = program!!.of(recvType).singletonInstance.getOrElse {
       return super.visitMCall(refinedCall, checkMagic)
     }
-    impl.meths.find { it.fName.isPresent && it.sig.name == call.name }?.let { meth ->
+    return attemptInlining(impl, refinedCall)
+  }
+
+  private fun attemptInlining(recv: MIR.CreateObj, refinedCall: MIR.MCall): MIR.E {
+    recv.meths.find { it.fName.isPresent && it.sig.name == refinedCall.name }?.let { meth ->
       val body = funs!![meth.fName.get()]!!
       seen.add(refinedCall)
-      val result = inline(body, refinedCall)
+      val result = inline(refinedCall, meth, body)
       if (result.fullyInlined) {
         return result.expr
       }
     }
     seen.add(refinedCall)
-    return super.visitMCall(refinedCall, checkMagic)
+    return super.visitMCall(refinedCall, true)
   }
 
   private data class InlineResult(val expr: MIR.E, val fullyInlined: Boolean)
-  private fun inline(body: Fun, call: MIR.MCall): InlineResult {
+  private fun inline(call: MIR.MCall, meth: MIR.Meth, impl: Fun): InlineResult {
+    if (impl.name.capturesSelf) {
+      return InlineResult(call, true)
+    }
 //    val args = call.args.map { it.accept(this) }
 //    val newBody = body.body.map { it.accept(this) }
 //    return MIR.MCall(call.name, args, newBody)
-    throw Bug.todo()
+
+    val expr = impl.body.accept(AlphaRenamer(gamma), true)
+    val funParams: List<String> = (
+      meth.sig.xs.map { it.name } +
+      listOf("this") +
+      meth.captures
+      )
+    val funArgs: List<MIR.E> = (
+      call.args +
+      listOf(FearlessNull) +
+      meth.captures.map { MIR.X(it, gamma[it]!!) }
+      )
+    val args = funParams.zip(funArgs).associate { (k, v) -> k to v }
+
+    val inlined = expr.accept(Inliner(args), true)
+    val fullyInlined = inlined !is MIR.MCall
+    return InlineResult(inlined, fullyInlined)
+  }
+}
+
+private class AlphaRenamer(private val gamma: Map<String, MIR.MT>) : MIRCloneVisitor {
+  private val renamed = mutableMapOf<String, String>()
+  override fun visitX(x: MIR.X, checkMagic: Boolean): MIR.E {
+    if (x.name !in gamma) {
+      return super.visitX(x, checkMagic)
+    }
+    val newName = renamed.getOrPut(x.name) { astFull.E.X.freshName() }
+    return super.visitX(MIR.X(newName, x.t), checkMagic)
+  }
+}
+
+private class Inliner(private val args: Map<String, MIR.E>) : MIRCloneVisitor {
+  override fun visitX(x: MIR.X, checkMagic: Boolean): MIR.E {
+    args[x.name]?.let { return it }
+    return super.visitX(x, checkMagic)
   }
 }
 
@@ -136,6 +167,8 @@ private fun collectEffectivelyFinalTypes(p: MIR.Program): Set<Id.DecId> {
     .filter { it !in inheritedTypes }
     .collect(Collectors.toUnmodifiableSet())
 }
+
+private val FearlessNull = MIR.CreateObj(Mdf.iso, Id.DecId("base.codegen._Null", 0))
 
 //private class Evaluator(program: MIR.Program) : MIRCloneVisitor {
 //
