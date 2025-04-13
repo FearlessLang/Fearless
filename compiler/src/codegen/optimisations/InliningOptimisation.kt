@@ -1,21 +1,18 @@
 package codegen.optimisations
 
 import codegen.MIR
-import codegen.MIR.FName
-import codegen.MIR.Fun
 import codegen.MIRCloneVisitor
 import id.Id
 import id.Mdf
 import magic.MagicImpls
-import utils.Bug
-import utils.Streams
+import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.jvm.optionals.getOrElse
 
 class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
   private var program: MIR.Program? = null
-  private var funs: Map<FName, Fun>? = null
+  private var funs: Map<MIR.FName, MIR.Fun>? = null
   private var finalTypes: Set<Id.DecId>? = null
   private var gamma: MutableMap<String, MIR.MT> = mutableMapOf()
   private val seen = mutableSetOf<MIR.MCall>()
@@ -39,7 +36,7 @@ class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
     return super.visitMeth(meth)
   }
 
-  override fun visitFun(f: Fun): Fun {
+  override fun visitFun(f: MIR.Fun): MIR.Fun {
     gamma = f.args.associate { Pair(it.name, it.t) }.toMutableMap()
     return super.visitFun(f)
   }
@@ -65,6 +62,10 @@ class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
 
   override fun visitMCall(call: MIR.MCall, checkMagic: Boolean): MIR.E {
     assert(checkMagic)
+    if (!call.variant.contains(MIR.MCall.CallVariant.Standard) || magic.get(call.recv).isPresent) {
+      return super.visitMCall(call, checkMagic)
+    }
+
     val hasAttemptedToInline = seen.contains(call)
     if (hasAttemptedToInline) {
       return super.visitMCall(call, checkMagic)
@@ -96,16 +97,19 @@ class InliningOptimisation(private val magic: MagicImpls<*>) : MIRCloneVisitor {
       if (result.fullyInlined) {
         return result.expr
       }
+      seen.add(refinedCall)
+      return super.visitMCall(result.expr as MIR.MCall, true)
     }
     seen.add(refinedCall)
     return super.visitMCall(refinedCall, true)
   }
 
   private data class InlineResult(val expr: MIR.E, val fullyInlined: Boolean)
-  private fun inline(call: MIR.MCall, meth: MIR.Meth, impl: Fun): InlineResult {
+  private fun inline(call: MIR.MCall, meth: MIR.Meth, impl: MIR.Fun): InlineResult {
     if (impl.name.capturesSelf) {
       return InlineResult(call, true)
     }
+    println("attempting to inline ${impl.name}")
 //    val args = call.args.map { it.accept(this) }
 //    val newBody = body.body.map { it.accept(this) }
 //    return MIR.MCall(call.name, args, newBody)
@@ -144,6 +148,16 @@ private class Inliner(private val args: Map<String, MIR.E>) : MIRCloneVisitor {
   override fun visitX(x: MIR.X, checkMagic: Boolean): MIR.E {
     args[x.name]?.let { return it }
     return super.visitX(x, checkMagic)
+  }
+
+  override fun visitCreateObj(createObj: MIR.CreateObj, checkMagic: Boolean): MIR.CreateObj {
+    return MIR.CreateObj(
+      this.visitMT(createObj.t),
+      createObj.selfName,
+      createObj.meths.stream().map { meth -> this.visitMeth(meth) }.toList(),
+      createObj.unreachableMs.stream().map { meth -> this.visitMeth(meth) }.toList(),
+      createObj.captures,
+    )
   }
 }
 
