@@ -1,0 +1,137 @@
+package base.gui
+    alias base.Str as Str,
+    alias base.Int as Int,
+    alias base.Float as Float,
+    alias base.List as List,
+    alias base.Bool as Bool,
+    alias base.Void as Void,
+    alias base.caps.UnrestrictedIO as UnrestrictedIO,
+    alias base.MF as MF,
+    alias base.Main as Main,
+    alias base.Block as Block,
+    alias base.Nat as Nat,
+
+GuiBuilder: {
+  mut .build(title: Str): Void,
+  mut .build(title: Str, frameIntervalMs: Nat,dataUpdateIntervalMs: Nat, logic: mut AnimationLogic): Void,
+  mut .button(label: Str, f: mut MF[Void] ,
+     slot: mut MF[mut Button,Void]): mut GuiBuilder,
+  mut .animatedCanvas(width: Nat, height: Nat,
+     slot: mut MF[mut AnimatedCanvas,Void]): mut GuiBuilder,
+  mut .canvas(width: Nat, height: Nat,
+     slot: mut MF[mut Canvas,Void]): mut GuiBuilder,
+  mut .checkBox(label: Str, f: mut MF[Void],
+   	 slot: mut MF[mut CheckBox,Void]): mut GuiBuilder,
+  mut .comboBox(f: mut MF[Void],
+     slot: mut MF[mut ComboBox,Void],
+     gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .passwordField(defaultPw: Str, f: mut MF[Void],
+  	 slot: mut MF[mut PasswordField,Void]): mut GuiBuilder,
+  mut .label(label: Str, slot: mut MF[mut Label,Void]): mut GuiBuilder,
+  mut .hseparator(x: Nat, y: Nat,
+     slot: mut MF[mut Hseparator,Void]): mut GuiBuilder,
+  mut .vseparator(x: Nat, y: Nat,
+     slot: mut MF[mut Vseparator,Void]): mut GuiBuilder,
+  mut .radioButton(label: Str, f: mut MF[Void],
+  	 slot: mut MF[mut RadioButton,Void]): mut GuiBuilder,
+  mut .textField(text: Str, events: mut MF[TextEvents,Void],
+  	 slot: mut MF[mut TextField,Void]): mut GuiBuilder,
+  mut .textArea(text: Str, events: mut MF[TextEvents,Void],
+  	 slot: mut MF[mut TextArea,Void]): mut GuiBuilder,
+  mut .menuBar(mb: mut MF[mut MenuBuilder, mut MenuBuilder],
+  	 slot: mut MF[mut MenuBar,Void]): mut GuiBuilder,
+  mut .flex(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .hbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .vbox(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .grid(rows: Nat, columns: Nat, gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .gridBag(gbb: mut MF[mut GridBagBuilder, mut GridBagBuilder], gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut GuiBuilder,
+  mut .hsplit(gb: mut MF[mut HSplitBuilder, mut HSplitBuilder]): mut GuiBuilder,
+  mut .vsplit(gb: mut MF[mut VSplitBuilder, mut VSplitBuilder]): mut GuiBuilder,
+  mut .tabs(gb: mut MF[mut TabBuilder, mut TabBuilder]): mut GuiBuilder,
+  mut .zone(gb: mut MF[mut ZoneBuilder, mut ZoneBuilder]): mut GuiBuilder,
+}
+Button: HasEnable {}
+AnimatedCanvas: HasEnable{mut .setPainter(painter: imm Repainter) : Void,}
+Repainter:{imm .paint(g: mut Graphics ,currentTime: Nat, processedPings: Nat,
+                 interpolatedTime: Float,width: Nat,height: Nat): mut Graphics, }
+Canvas: HasEnable{mut .paint(painter: mut MF[mut Graphics,mut Graphics]) :Void,}
+CheckBox: HasEnable{read .isSelected : Bool,}
+ComboBox: HasEnable{read .selectedItem : Nat,}
+Label: {}
+Hseparator: {}
+Vseparator: {}
+PasswordField: HasFocus{}
+RadioButton: HasEnable{
+  read .isSelected : Bool,}
+TextField: HasFocus{mut .addEvents(events: mut MF[TextEvents,Void]): TextField,}
+TextArea: HasFocus{
+  mut .addEvents(events: mut MF[TextEvents,Void]): TextArea,
+}
+MenuItem: HasEnable{}
+Menu: HasEnable{}
+MenuBar: HasEnable{}
+HasFocus: HasEnable{
+ mut .setFocus(focus: Bool): Void,
+ read .getFocus: Bool,
+}
+HasEnable: Actionable{
+ read .enable : Bool,
+ mut .enable(b : Bool) :Void,
+}
+Actionable:{
+  mut .addActionListener(listener: MF[Void]) :Void,
+}
+AnimationLogic: {
+	mut .run(processedPings: Nat, attemptedPings: Nat, currentTime: Nat, keyEvents: mut List[Str]): Void,
+}
+MenuBuilder:{
+  mut .menuItem(name: Str, f:mut MF[Void], slot: mut MF[MenuItem,Void]): mut MenuBuilder,
+  mut .menu(name: Str, slot: mut MF[Menu,Void]): mut MenuBuilder,
+}
+HSplitBuilder:{
+  mut .left(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut HSplitBuilder,
+  mut .right(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut HSplitBuilder,
+}
+VSplitBuilder:{
+  mut .top(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
+  mut .bottom(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut VSplitBuilder,
+}
+TabBuilder:{
+ mut .tab(title: Str, gb: mut MF[mut GuiBuilder, mut GuiBuilder]):mut TabBuilder,
+}
+GridBagBuilder:{
+ mut .config(x: Nat, y: Nat, width: Nat, height: Nat): mut GridBagBuilder
+}
+ZoneBuilder:{
+  mut .center(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .north(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .east(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .south(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+  mut .west(gb: mut MF[mut GuiBuilder, mut GuiBuilder]): mut ZoneBuilder,
+}
+Graphics:{
+  mut .color(r: Nat, g: Nat, b: Nat): mut Graphics,
+  mut .clearScreen: mut Graphics,
+  mut .drawText(text: Str, x: Nat, y: Nat): mut Graphics,
+  mut .font(name: Str, style: Str, size: Nat): mut Graphics,
+  mut .drawLine(x1: Nat, y1: Nat, x2: Nat, y2: Nat): mut Graphics,
+  mut .stroke(width: Float): mut Graphics,
+  mut .dashedStroke(width: Float): mut Graphics,
+  mut .dottedStroke(width: Float): mut Graphics,
+  mut .drawRect(x: Nat, y: Nat, width: Nat, height: Nat, fill: Bool): mut Graphics,
+  mut .drawOval(x: Nat, y: Nat, width: Nat, height: Nat, fill: Bool): mut Graphics,
+  mut .drawPolygon(xPoints: List[Nat],yPoints: List[Nat], fill: Bool): mut Graphics,
+  mut .image(x: Nat, y: Nat, width: Nat, height: Nat, img: Str): mut Graphics,
+  mut .rotate(theta: Float): mut Graphics,
+  mut .translate(tx: Float, ty: Float): mut Graphics,
+}
+GuiEvents:{
+ // mut .start(title: Str) :mut GuiEvents ->this,
+  mut .stop : Void,
+}
+TextEvents:{
+	mut .onTextChange(handler: mut MF[mut Str,Void]): TextEvents,
+	mut .onKeyPress(handler: mut MF[mut Str,Void]): TextEvents,
+	mut .onFocusGained(handler: mut MF[mut Void]): TextEvents,
+	mut .onFocusLost(handler: mut MF[mut Void]): TextEvents,
+}
