@@ -10,4 +10,9 @@ module FearlessCompiler {
   requires org.apache.commons.text;
   requires org.apache.commons.lang3;
   requires commons.cli;
+  requires java.desktop;
+//  requires FearlessCompiler.base;
+  requires Fearles;
+  requires java.management;
+  requires jdk.management;
 }
