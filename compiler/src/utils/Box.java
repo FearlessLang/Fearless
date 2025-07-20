@@ -16,4 +16,9 @@ public class Box<T> {
     this.inner = f.apply(this.inner);
     return this.inner;
   }
+  public T thenUpdate(Function<T, T> f) {
+    var old = this.inner;
+    this.inner = f.apply(this.inner);
+    return old;
+  }
 }

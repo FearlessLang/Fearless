@@ -93,8 +93,8 @@ public class Magic {
     if(LiteralKind.isLiteral(d.name())){ return Optional.of(d.name()); }
     var supers = p.superDecIds(d);
     return supers.stream()
-      .filter(dec -> LiteralKind.isLiteral(dec.name()))
       .map(Id.DecId::name)
+      .filter(LiteralKind::isLiteral)
       .findFirst();
   }
 

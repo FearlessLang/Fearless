@@ -152,6 +152,13 @@ public interface InputOutput{
       workingDir,
       ResolveResource.artefact("/cachedBase"));
   }
+  static InputOutput programmaticAutoNoCache(List<String> files){
+    var workingDir = ResolveResource.freshTmpPath();
+    IoErr.of(()->Files.createDirectories(workingDir));
+    return programmatic("test.Test", List.of(),files,
+      workingDir,
+      workingDir);
+  }
 }
 class InputOutputHelper{
   static List<Parser> loadInputFiles(Path root) {
