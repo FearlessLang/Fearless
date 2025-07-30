@@ -13,12 +13,32 @@ public record JsMagicImpls(JsCodegen gen, ast.Program p) implements magic.MagicI
   @Override public MagicTrait<MIR.E, String> int_(MIR.E e) {
     return new MagicTrait<>() {
       @Override public Optional<String> instantiate() {
+        System.out.println("int_instantiate: "+e.toString());
         return Optional.of("\""+e.toString()+"\"");
       }
 
       @Override
       public Optional<String> call(Id.MethName m, List<? extends MIR.E> args, EnumSet<MIR.MCall.CallVariant> variants, MIR.MT expectedT) {
-        return Optional.of("\""+e.toString()+"."+m+"("+args+")"+"\"");
+//        return Optional.of("\""+e.toString()+"."+m+"("+args+")"+"\"");
+        String self = e.accept(gen, true);  // LHS
+        String arg = args.isEmpty() ? "" : args.get(0).accept(gen, true);  // RHS
+        System.out.printf("int_call: method=%s, self=%s, arg=%s%n", m.name(), self, arg);
+
+        if (m.equals(new Id.MethName("+", 1))) return Optional.of(self + " + " + arg);
+        if (m.equals(new Id.MethName("*", 1))) return Optional.of(self + " * " + arg);
+        if (m.equals(new Id.MethName("-", 1))) return Optional.of(self + " - " + arg);
+        if (m.equals(new Id.MethName("/", 1))) return Optional.of(self + " / " + arg);
+        if (m.equals(new Id.MethName("%", 1))) return Optional.of(self + " % " + arg);
+        if (m.equals(new Id.MethName("==", 1))) return Optional.of(self + " === " + arg);
+        if (m.equals(new Id.MethName("!=", 1))) return Optional.of(self + " !== " + arg);
+        if (m.equals(new Id.MethName(">", 1))) return Optional.of(self + " > " + arg);
+        if (m.equals(new Id.MethName("<", 1))) return Optional.of(self + " < " + arg);
+        if (m.equals(new Id.MethName(">=", 1))) return Optional.of(self + " >= " + arg);
+        if (m.equals(new Id.MethName("<=", 1))) return Optional.of(self + " <= " + arg);
+        if (m.equals(new Id.MethName(".str", 0))) {
+          return Optional.of("rt.Str.fromJavaStr(" + self + ".toString())");
+        }
+        return Optional.empty();
       }
     };
   }
