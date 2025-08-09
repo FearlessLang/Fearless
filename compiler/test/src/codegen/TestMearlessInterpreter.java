@@ -85,7 +85,7 @@ public class TestMearlessInterpreter {
     CreateObj[t=Usual[t=imm base.Void[]], selfName=this, meths=[], unreachableMs=[], captures=[]]
     """, """
     package test
-    Test: Main{s -> (Fib.seq 20 == 6765) ? {.then -> Abort!, .else -> Void}}
+    Test: Main{s -> (Fib.seq 20 == 6765) ? {.then -> Void, .else -> Abort!}}
     Fib: {
       .seq(n: Nat): Nat -> Block#
         .if {n <= 1} .return {n}

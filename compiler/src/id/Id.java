@@ -162,5 +162,8 @@ public class Id {
     public IT<astFull.T> toFullAstIT(Function<TT, astFull.T> transform) {
       return new IT<>(name, ts.stream().map(transform).toList());
     }
+    public Id.DecId toDecId() {
+      return new Id.DecId(name.name, name.gen);
+    }
   }
 }

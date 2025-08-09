@@ -8,7 +8,9 @@ import magic.LiteralKind;
 import magic.Magic;
 import magic.MagicImpls;
 import magic.MagicTrait;
+import parser.Parser;
 import utils.Bug;
+import visitors.FullEAntlrVisitor;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -43,14 +45,14 @@ public final class InterpreterMagicImpl implements MagicImpls<MIR.E> {
           var rhs = args.getFirst().accept(interpreter, true);
           var lhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), e.t().name().orElseThrow()).orElseThrow(), 10);
           var rhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), rhs.t().name().orElseThrow()).orElseThrow(), 10);
-          var res = LiteralKind.classify(Long.toUnsignedString(lhs_ + rhs_)).orElseThrow().toDecId();
+          var res = LiteralKind.toFullIt(Long.toUnsignedString(lhs_ + rhs_), List.of()).orElseThrow().toDecId();
           return Optional.of(new MIR.CreateObj(Mdf.imm, res));
         }
         if (m.equals(new Id.MethName("-", 1))) {
           var rhs = args.getFirst().accept(interpreter, true);
           var lhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), e.t().name().orElseThrow()).orElseThrow(), 10);
           var rhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), rhs.t().name().orElseThrow()).orElseThrow(), 10);
-          var res = LiteralKind.classify(Long.toUnsignedString(lhs_ - rhs_)).orElseThrow().toDecId();
+          var res = LiteralKind.toFullIt(Long.toUnsignedString(lhs_ - rhs_), List.of()).orElseThrow().toDecId();
           return Optional.of(new MIR.CreateObj(Mdf.imm, res));
         }
         if (m.equals(new Id.MethName("<=", 1))) {
@@ -60,7 +62,14 @@ public final class InterpreterMagicImpl implements MagicImpls<MIR.E> {
           var isLt = Long.compareUnsigned(lhs_, rhs_) <= 0 ? new Id.DecId("base.True", 0) : new Id.DecId("base.False", 0);
           return Optional.of(new MIR.CreateObj(Mdf.imm, isLt));
         }
-        throw Bug.todo();
+        if (m.equals(new Id.MethName("==", 1))) {
+          var rhs = args.getFirst().accept(interpreter, true);
+          var lhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), e.t().name().orElseThrow()).orElseThrow(), 10);
+          var rhs_ = Long.parseUnsignedLong(Magic.getLiteral(p(), rhs.t().name().orElseThrow()).orElseThrow(), 10);
+          var isEq = Long.compareUnsigned(lhs_, rhs_) == 0 ? new Id.DecId("base.True", 0) : new Id.DecId("base.False", 0);
+          return Optional.of(new MIR.CreateObj(Mdf.imm, isEq));
+        }
+        throw Bug.todo(m.toString());
       }
     };
   }
