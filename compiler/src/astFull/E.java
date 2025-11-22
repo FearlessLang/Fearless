@@ -26,7 +26,7 @@ public sealed interface E extends HasPos {
   E withPos(Optional<Pos> pos);
   E withT(T t);
 
-  record Lambda(LambdaId id, Optional<Mdf> mdf, List<Id.IT<T>>its, String selfName, List<Meth> meths, Optional<Id.IT<T>> it, Optional<Pos> pos) implements E {
+  record Lambda(LambdaId id, Optional<Mdf> mdf, List<Id.IT<T>> its, String selfName, List<Meth> meths, Optional<Id.IT<T>> it, Optional<Pos> pos) implements E {
     public Lambda {
       Objects.requireNonNull(mdf);
       Objects.requireNonNull(meths);
